@@ -227,7 +227,7 @@ html, body {
   position: relative;
   overflow: hidden;
   min-height: 0;
-  max-height: 55vh;
+  max-height: 42vh;
 }
 
 #cameraVideo, #capturedImg {
@@ -768,7 +768,7 @@ canvas#captureCanvas { display: none; }
     </div>
 
     <!-- CAMERA SCREEN -->
-    <div class="screen" id="screen-camera">
+    <div class="screen" id="screen-camera" style="height:100%;overflow:hidden">
       <div class="camera-screen">
         <div class="camera-viewfinder" id="viewfinder">
           <video id="cameraVideo" autoplay playsinline></video>
@@ -801,7 +801,7 @@ canvas#captureCanvas { display: none; }
         </div>
         <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
       </div>
-      <div id="cameraResults"></div>
+      <div id="cameraResults" style="overflow-y:auto;max-height:30vh"></div>
     </div>
 
     <!-- HISTORY SCREEN -->
@@ -939,7 +939,7 @@ async function fetchPrices(cardName, targetId) {
 価格不明は0。必ず検索して実際の価格を返すこと。`;
 
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1128,7 +1128,7 @@ async function analyzeCapture() {
     const smallBase64 = await resizeImageBase64(capturedBase64, 512, 0.6);
 
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
