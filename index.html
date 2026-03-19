@@ -1082,6 +1082,9 @@ function takePhoto() {
   
   document.getElementById('cornerMarkers').style.display = 'none';
   document.getElementById('analyzeBtn').classList.add('show');
+  
+  // 撮影後に自動でAI認識を開始
+  setTimeout(() => analyzeCapture(), 300);
 }
 
 function selectImage() {
