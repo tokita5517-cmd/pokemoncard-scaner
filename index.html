@@ -2,105 +2,95 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ポケカ買い取りサーチ</title>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポケカ価格チェック</title>
 <style>
-:root { --bg: #0a0a0f; --surface: #13131a; --text: #f2f2f8; --accent: #ff3b5c; --accent2: #ff9f1c; }
-body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); }
-header { padding: 20px; background: rgba(10,10,15,0.8); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-.logo { font-family: 'Dela Gothic One'; color: var(--accent); font-size: 20px; }
-main { padding: 20px; max-width: 500px; margin: 0 auto; }
-.card { background: var(--surface); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-input { width: 100%; background: #1c1c28; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
-.btn { width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; padding: 12px; margin-bottom: 10px; }
-.btn-primary { background: var(--accent); color: #fff; }
-.history-item { background: var(--surface); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; }
-.price { color: var(--accent2); font-family: 'Dela Gothic One'; }
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.modal { background: var(--surface); padding: 20px; border-radius: 15px; width: 100%; }
+  body { background: #0a0a0f; color: white; font-family: sans-serif; padding: 20px; }
+  .card { background: #13131a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+  input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #1c1c28; color: white; box-sizing: border-box; }
+  button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+  .btn-main { background: #ff3b5c; color: white; }
+  .btn-sub { background: #333; color: white; }
+  #result { margin-top: 20px; padding: 15px; background: #1c1c28; border-radius: 10px; display: none; }
+  .price { color: #ff9f1c; font-weight: bold; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">POKÉCA CHECK</div>
-  <button onclick="document.getElementById('setModal').style.display='flex'">⚙️</button>
-</header>
-
-<main>
-  <div class="card">
-    <input type="text" id="cardInput" placeholder="カード名を入力">
-    <button class="btn btn-primary" onclick="askAI(null)">検索する</button>
-    <button class="btn" style="background:#333; color:#fff;" onclick="document.getElementById('camIn').click()">📷 写真を撮る</button>
-    <input type="file" id="camIn" accept="image/*" capture="environment" style="display:none" onchange="handleCam(this)">
-  </div>
-  <div id="loading" style="display:none; text-align:center;">💎 AIが考え中...</div>
-  <div id="list"></div>
-</main>
-
-<div id="setModal" class="overlay">
-  <div class="modal">
-    <h3>APIキー設定</h3>
-    <input type="text" id="keyIn" placeholder="AIza...">
-    <button class="btn btn-primary" onclick="saveKey()">保存</button>
-  </div>
+<div class="card">
+  <h2>ポケカ価格サーチ</h2>
+  <p style="font-size: 12px; color: #888;">設定からAPIキーを入れてね ⚙️</p>
+  <input type="text" id="cardName" placeholder="例: ピカチュウ SAR">
+  <button class="btn-main" onclick="search()">検索する</button>
+  <button class="btn-sub" onclick="openSettings()">⚙️ 設定 (APIキー入力)</button>
 </div>
 
-<div id="resModal" class="overlay" onclick="this.style.display='none'">
-  <div class="modal" id="resCont"></div>
-</div>
+<div id="loading" style="display:none; text-align:center; margin-top:20px;">💎 解析中...</div>
+<div id="result"></div>
 
 <script>
-let key = localStorage.getItem('pokeca_key') || '';
-document.getElementById('keyIn').value = key;
+let apiKey = localStorage.getItem('pokeca_key') || '';
 
-function saveKey() {
-  key = document.getElementById('keyIn').value;
-  localStorage.setItem('pokeca_key', key);
-  document.getElementById('setModal').style.display = 'none';
+function openSettings() {
+  const key = prompt("Google AI StudioでコピーしたAPIキーを入れてね", apiKey);
+  if (key) {
+    apiKey = key.trim();
+    localStorage.setItem('pokeca_key', apiKey);
+    alert("保存したよ！");
+  }
 }
 
-async function handleCam(input) {
-  if(!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => askAI(e.target.result);
-  reader.readAsDataURL(input.files[0]);
-}
+async function search() {
+  if (!apiKey) return alert("先に設定からAPIキーを入れてね！");
+  
+  const name = document.getElementById('cardName').value;
+  if (!name) return alert("カード名を入れてね");
 
-async function askAI(img) {
-  if(!key) return alert('先に⚙️からAPIキーを入れてね！');
-  const txt = document.getElementById('cardInput').value || 'このカード';
   document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
 
   try {
-    const parts = [{ text: `ポケモンカード「${txt}」の買取価格をJSONで教えて。{"cardName":"","shops":[{"name":"","buyPrice":0}]}` }];
-    if(img) parts.push({ inline_data: { mime_type: "image/jpeg", data: img.split(',')[1] } });
+    // URLを「gemini-1.5-flash-latest」に変更して、より確実に！
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
-    // ★URLを v1 に修正！
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts }],
-        safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },{ category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },{ category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },{ category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }]
+        contents: [{
+          parts: [{ text: `ポケモンカード「${name}」の買取価格を教えて。必ず以下のJSON形式で答えて。{"name":"カード名","price":"10,000円"}` }]
+        }],
+        // 安全設定をすべてオフにする
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+        ]
       })
     });
 
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    
-    const ans = data.candidates[0].content.parts[0].text;
-    const json = JSON.parse(ans.match(/\{[\s\S]*\}/)[0]);
-    
-    document.getElementById('resCont').innerHTML = `<h2>${json.cardName}</h2>` + json.shops.map(s => `<div style="display:flex;justify-content:space-between"><span>${s.name}</span><span class="price">¥${s.buyPrice.toLocaleString()}</span></div>`).join('');
-    document.getElementById('resModal').style.display = 'flex';
-  } catch (e) {
-    alert('エラー: ' + e.message);
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(`エラーコード: ${data.error.code}\nメッセージ: ${data.error.message}`);
+    }
+
+    const text = data.candidates[0].content.parts[0].text;
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
+
+    const resDiv = document.getElementById('result');
+    resDiv.innerHTML = `<h3>${json.name}</h3><p>予想買取価格: <span class="price">${json.price}</span></p>`;
+    resDiv.style.display = 'block';
+
+  } catch (err) {
+    alert("エラーになっちゃった:\n" + err.message);
+    console.error(err);
   } finally {
     document.getElementById('loading').style.display = 'none';
   }
 }
 </script>
+
 </body>
 </html>
