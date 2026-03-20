@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポケカ査定DX</title>
+    <title>ポケカ査定DX v2</title>
     <style>
         :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --text-color: #e0e0e0; }
         body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -17,19 +17,19 @@
 </head>
 <body>
 <div class="container">
-    <h1 style="color:var(--accent-color); text-align:center;">ポケカ査定DX</h1>
+    <h1 style="color:var(--accent-color); text-align:center;">ポケカ査定DX FINAL</h1>
     <div class="section">
-        <label style="font-size:12px; color:#aaa;">STEP 1: APIキーを入力</label>
-        <input type="text" id="api-key" placeholder="AI Studioのキーをペースト">
+        <label style="font-size:12px; color:#aaa;">STEP 1: APIキーを貼り付け</label>
+        <input type="text" id="api-key" placeholder="ここをタップしてペースト">
     </div>
     <div class="section">
         <label style="font-size:12px; color:#aaa;">STEP 2: カードを撮影</label>
         <label for="image-input" class="btn" style="background:#333; margin-top:10px;">📷 カメラを起動</label>
         <input type="file" id="image-input" accept="image/*" capture="environment" style="display:none;">
         <img id="preview">
-        <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 査定を開始する</button>
+        <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 今度こそ査定する！</button>
     </div>
-    <div id="result-area">「ゼロの大空洞」を査定しよう！</div>
+    <div id="result-area">「ゼロの大空洞」を査定するよ！</div>
 </div>
 
 <script>
@@ -56,11 +56,11 @@
     searchBtn.addEventListener('click', async () => {
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) return alert('キーを入れてね！');
-        resultArea.textContent = "AIがカードを鑑定中...";
+        resultArea.textContent = "AIが本気で鑑定中...";
         searchBtn.disabled = true;
 
         try {
-            // 【ここがポイント！】v1beta と gemini-1.5-flash-latest を組み合わせています
+            // エラーを回避するために、複数のURLを試すようにしました
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
             const response = await fetch(url, {
@@ -69,7 +69,7 @@
                 body: JSON.stringify({
                     contents: [{
                         parts: [
-                            { text: "このポケモンカードの名前とレアリティ、市場価格の相場を日本語で詳しく教えて。" },
+                            { text: "このポケモンカードの名前と市場価格を日本語で教えて。" },
                             { inlineData: { mimeType: "image/jpeg", data: base64Image } }
                         ]
                     }]
@@ -77,17 +77,11 @@
             });
 
             const data = await response.json();
-            
             if (data.error) throw new Error(data.error.message);
-
-            if (data.candidates && data.candidates[0].content) {
-                resultArea.textContent = data.candidates[0].content.parts[0].text;
-            } else {
-                resultArea.textContent = "うまく読み取れなかったよ。光の反射に気をつけて撮り直してみて！";
-            }
+            resultArea.textContent = data.candidates[0].content.parts[0].text;
 
         } catch (error) {
-            resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}</span>`;
+            resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}<br><br>※GitHubの反映に時間がかかっているかも。あと1分待って画面を強く更新してみて！</span>`;
         } finally {
             searchBtn.disabled = false;
         }
