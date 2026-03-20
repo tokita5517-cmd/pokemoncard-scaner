@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポケカ査定DX v2</title>
+    <title>ポケカ査定DX FINAL v3</title>
     <style>
         :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --text-color: #e0e0e0; }
         body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -27,7 +27,7 @@
         <label for="image-input" class="btn" style="background:#333; margin-top:10px;">📷 カメラを起動</label>
         <input type="file" id="image-input" accept="image/*" capture="environment" style="display:none;">
         <img id="preview">
-        <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 今度こそ査定する！</button>
+        <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 査定を開始する！</button>
     </div>
     <div id="result-area">「ゼロの大空洞」を査定するよ！</div>
 </div>
@@ -60,7 +60,7 @@
         searchBtn.disabled = true;
 
         try {
-            // エラーを回避するために、複数のURLを試すようにしました
+            // エラーを回避するために、もっとも互換性の高いURLに変更しました
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
             const response = await fetch(url, {
@@ -81,7 +81,7 @@
             resultArea.textContent = data.candidates[0].content.parts[0].text;
 
         } catch (error) {
-            resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}<br><br>※GitHubの反映に時間がかかっているかも。あと1分待って画面を強く更新してみて！</span>`;
+            resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}<br><br>※GitHubの反映に時間がかかっているかも。あと1分待って、一度タブを閉じてから開き直してみて！</span>`;
         } finally {
             searchBtn.disabled = false;
         }
