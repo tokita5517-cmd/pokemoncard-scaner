@@ -6,179 +6,100 @@
 <title>ポケカ買い取りサーチ</title>
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c28;
-  --border: rgba(255,255,255,0.08); --text: #f2f2f8;
-  --muted: #6b6b80; --accent: #ff3b5c; --accent2: #ff9f1c;
-}
-* { box-sizing: border-box; }
+:root { --bg: #0a0a0f; --surface: #13131a; --text: #f2f2f8; --accent: #ff3b5c; --accent2: #ff9f1c; }
 body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); }
-header { padding: 20px; background: rgba(10,10,15,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.logo { font-family: 'Dela Gothic One', cursive; font-size: 20px; color: var(--accent); }
+header { padding: 20px; background: rgba(10,10,15,0.8); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+.logo { font-family: 'Dela Gothic One'; color: var(--accent); font-size: 20px; }
 main { padding: 20px; max-width: 500px; margin: 0 auto; }
-.search-card { background: var(--surface); border-radius: 20px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-.input-group { display: flex; gap: 8px; margin-bottom: 12px; }
-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 10px; }
-.btn { border: none; border-radius: 10px; font-weight: bold; cursor: pointer; padding: 12px; }
+.card { background: var(--surface); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+input { width: 100%; background: #1c1c28; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+.btn { width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; padding: 12px; margin-bottom: 10px; }
 .btn-primary { background: var(--accent); color: #fff; }
-.btn-outline { background: var(--surface2); color: #fff; width: 100%; margin-top: 8px; border: 1px solid var(--border); }
-.history-row { background: var(--surface); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
-.price { font-family: 'Dela Gothic One'; color: var(--accent2); }
+.history-item { background: var(--surface); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+.price { color: var(--accent2); font-family: 'Dela Gothic One'; }
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.modal { background: var(--surface); padding: 25px; border-radius: 20px; width: 100%; border: 1px solid var(--border); }
-#loader { display: none; text-align: center; margin: 20px 0; }
+.modal { background: var(--surface); padding: 20px; border-radius: 15px; width: 100%; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">POKÉCA CHECK</div>
-  <button class="btn" onclick="openSettings()" style="background:none; font-size:20px;">⚙️</button>
+  <button onclick="document.getElementById('setModal').style.display='flex'">⚙️</button>
 </header>
 
 <main>
-  <div class="search-card">
-    <div class="input-group">
-      <input type="text" id="cardInput" placeholder="カード名を入力">
-      <button class="btn btn-primary" onclick="searchByAI(null, document.getElementById('cardInput').value)">検索</button>
-    </div>
-    <button class="btn btn-outline" onclick="document.getElementById('cameraInput').click()">📷 写真で検索</button>
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+  <div class="card">
+    <input type="text" id="cardInput" placeholder="カード名を入力">
+    <button class="btn btn-primary" onclick="askAI(null)">検索する</button>
+    <button class="btn" style="background:#333; color:#fff;" onclick="document.getElementById('camIn').click()">📷 写真を撮る</button>
+    <input type="file" id="camIn" accept="image/*" capture="environment" style="display:none" onchange="handleCam(this)">
   </div>
-
-  <div id="loader">💎 解析中...</div>
-  <div id="historyList"></div>
+  <div id="loading" style="display:none; text-align:center;">💎 AIが考え中...</div>
+  <div id="list"></div>
 </main>
 
-<div id="settingsOverlay" class="overlay">
+<div id="setModal" class="overlay">
   <div class="modal">
-    <h3>設定</h3>
-    <p style="font-size:12px; color:var(--muted);">Gemini API Keyを貼り付けてね</p>
-    <input type="text" id="apiKeyInput" style="width:100%; margin-bottom:15px;">
-    <button class="btn btn-primary" style="width:100%" onclick="saveSettings()">保存して閉じる</button>
+    <h3>APIキー設定</h3>
+    <input type="text" id="keyIn" placeholder="AIza...">
+    <button class="btn btn-primary" onclick="saveKey()">保存</button>
   </div>
 </div>
 
-<div id="resultOverlay" class="overlay" onclick="this.style.display='none'">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div id="resultContent"></div>
-    <button class="btn btn-outline" onclick="document.getElementById('resultOverlay').style.display='none'">閉じる</button>
-  </div>
+<div id="resModal" class="overlay" onclick="this.style.display='none'">
+  <div class="modal" id="resCont"></div>
 </div>
 
 <script>
-let apiKey = localStorage.getItem('gemini_api_key') || '';
-let history = JSON.parse(localStorage.getItem('pokeca_history') || '[]');
-document.getElementById('apiKeyInput').value = apiKey;
-renderHistory();
+let key = localStorage.getItem('pokeca_key') || '';
+document.getElementById('keyIn').value = key;
 
-function openSettings() { document.getElementById('settingsOverlay').style.display = 'flex'; }
-function saveSettings() {
-  apiKey = document.getElementById('apiKeyInput').value.trim();
-  localStorage.setItem('gemini_api_key', apiKey);
-  document.getElementById('settingsOverlay').style.display = 'none';
+function saveKey() {
+  key = document.getElementById('keyIn').value;
+  localStorage.setItem('pokeca_key', key);
+  document.getElementById('setModal').style.display = 'none';
 }
 
-document.getElementById('cameraInput').onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const base64 = await toBase64(file);
-  searchByAI(base64, "このカード");
-};
+async function handleCam(input) {
+  if(!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => askAI(e.target.result);
+  reader.readAsDataURL(input.files[0]);
+}
 
-async function searchByAI(imageBase64, query) {
-  if (!apiKey) return openSettings();
-  const loader = document.getElementById('loader');
-  loader.style.display = 'block';
+async function askAI(img) {
+  if(!key) return alert('先に⚙️からAPIキーを入れてね！');
+  const txt = document.getElementById('cardInput').value || 'このカード';
+  document.getElementById('loading').style.display = 'block';
 
   try {
-    const prompt = `ポケモンカード「${query}」の最新の買取価格（日本円）を教えてください。
-必ず以下のJSON形式で、日本語で答えてください。
-{
-  "cardName": "カード名",
-  "rarity": "レアリティ",
-  "shops": [
-    {"name": "ショップ名", "buyPrice": 10000}
-  ]
-}`;
+    const parts = [{ text: `ポケモンカード「${txt}」の買取価格をJSONで教えて。{"cardName":"","shops":[{"name":"","buyPrice":0}]}` }];
+    if(img) parts.push({ inline_data: { mime_type: "image/jpeg", data: img.split(',')[1] } });
 
-    const contents = [{
-      parts: [{ text: prompt }]
-    }];
-
-    if (imageBase64) {
-      contents[0].parts.push({
-        inline_data: { mime_type: "image/jpeg", data: imageBase64.split(',')[1] }
-      });
-    }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // ★URLを v1 に修正！
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents,
-        // ★ここが大事！安全チェックをオフにする設定
-        safetySettings: [
-          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-        ],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
+        contents: [{ parts }],
+        safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },{ category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },{ category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },{ category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }]
       })
     });
 
-    const data = await response.json();
-    const text = data.candidates[0].content.parts[0].text;
-    const json = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
-
-    showResult(json);
-    saveHistory(json);
-  } catch (err) {
-    alert("エラーが発生したよ。APIキーや写真を確認してみてね！");
-    console.error(err);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    
+    const ans = data.candidates[0].content.parts[0].text;
+    const json = JSON.parse(ans.match(/\{[\s\S]*\}/)[0]);
+    
+    document.getElementById('resCont').innerHTML = `<h2>${json.cardName}</h2>` + json.shops.map(s => `<div style="display:flex;justify-content:space-between"><span>${s.name}</span><span class="price">¥${s.buyPrice.toLocaleString()}</span></div>`).join('');
+    document.getElementById('resModal').style.display = 'flex';
+  } catch (e) {
+    alert('エラー: ' + e.message);
   } finally {
-    loader.style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
   }
-}
-
-function showResult(data) {
-  const res = document.getElementById('resultContent');
-  res.innerHTML = `
-    <h2 style="color:var(--accent2)">${data.cardName}</h2>
-    <p>レアリティ: ${data.rarity}</p>
-    ${data.shops.map(s => `
-      <div style="display:flex; justify-content:space-between; margin:10px 0; padding:10px; background:var(--surface2); border-radius:10px;">
-        <span>${s.name}</span>
-        <span class="price">¥${s.buyPrice.toLocaleString()}</span>
-      </div>
-    `).join('')}
-  `;
-  document.getElementById('resultOverlay').style.display = 'flex';
-}
-
-function saveHistory(data) {
-  history.unshift({ ...data, date: new Date().toLocaleDateString() });
-  if (history.length > 10) history.pop();
-  localStorage.setItem('pokeca_history', JSON.stringify(history));
-  renderHistory();
-}
-
-function renderHistory() {
-  document.getElementById('historyList').innerHTML = history.map(h => `
-    <div class="history-row">
-      <div><b>${h.cardName}</b><br><small>${h.date}</small></div>
-      <div class="price">¥${h.shops[0]?.buyPrice.toLocaleString()}</div>
-    </div>
-  `).join('');
-}
-
-function toBase64(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.readAsDataURL(file);
-  });
 }
 </script>
 </body>
