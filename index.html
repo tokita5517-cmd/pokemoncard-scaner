@@ -3,89 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポケカ査定DX FINAL v3</title>
+    <title>ポケカ査定DX Premium</title>
     <style>
-        :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --text-color: #e0e0e0; }
-        body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 420px; }
-        .section { background: var(--card-bg); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        input[type="text"] { width: 100%; padding: 12px; background: #262626; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
-        .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; background: var(--accent-color); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #preview { width: 100%; border-radius: 10px; display: none; margin: 15px 0; border: 2px solid var(--accent-color); }
-        #result-area { margin-top: 20px; padding: 15px; background: #161616; border-radius: 10px; font-size: 14px; white-space: pre-wrap; min-height: 100px; border: 1px solid #2a2a2a; }
+        :root { --accent: #ff0000; --bg: #000; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .box { background: #1a1a1a; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        input[type="text"] { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 15px; }
+        .btn { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; }
+        #preview { width: 100%; border-radius: 10px; display: none; margin-top: 15px; border: 2px solid var(--accent); }
+        #res { width: 100%; max-width: 400px; background: #111; padding: 15px; border-radius: 10px; font-size: 14px; white-space: pre-wrap; line-height: 1.6; border: 1px solid #222; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1 style="color:var(--accent-color); text-align:center;">ポケカ査定DX FINAL</h1>
-    <div class="section">
-        <label style="font-size:12px; color:#aaa;">STEP 1: APIキーを貼り付け</label>
-        <input type="text" id="api-key" placeholder="ここをタップしてペースト">
-    </div>
-    <div class="section">
-        <label style="font-size:12px; color:#aaa;">STEP 2: カードを撮影</label>
-        <label for="image-input" class="btn" style="background:#333; margin-top:10px;">📷 カメラを起動</label>
-        <input type="file" id="image-input" accept="image/*" capture="environment" style="display:none;">
+    <h1 style="color:var(--accent)">ポケカ査定DX Premium</h1>
+    <div class="box">
+        <input type="text" id="api-key" placeholder="Google Cloudの新しいキーを貼る">
+        <label for="img" class="btn" style="background:#444">📷 カードを撮影</label>
+        <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
         <img id="preview">
-        <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 査定を開始する！</button>
+        <button id="go" class="btn" style="display:none; margin-top:15px">✨ 有料版で査定する</button>
     </div>
-    <div id="result-area">「ゼロの大空洞」を査定するよ！</div>
-</div>
+    <div id="res">ここに結果が出ます</div>
 
 <script>
-    const apiKeyInput = document.getElementById('api-key');
-    const imageInput = document.getElementById('image-input');
-    const preview = document.getElementById('preview');
-    const searchBtn = document.getElementById('search-btn');
-    const resultArea = document.getElementById('result-area');
-    let base64Image = null;
+    const keyInp = document.getElementById('api-key'), imgInp = document.getElementById('img'), pre = document.getElementById('preview'), btn = document.getElementById('go'), res = document.getElementById('res');
+    let b64 = null;
 
-    imageInput.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = event => {
-            preview.src = event.target.result;
-            preview.style.display = 'block';
-            searchBtn.style.display = 'flex';
-            base64Image = event.target.result.split(',')[1];
+    imgInp.onchange = e => {
+        const f = e.target.files[0];
+        if(!f) return;
+        const r = new FileReader();
+        r.onload = ev => {
+            pre.src = ev.target.result;
+            pre.style.display = 'block';
+            btn.style.display = 'block';
+            b64 = ev.target.result.split(',')[1];
         };
-        reader.readAsDataURL(file);
-    });
+        r.readAsDataURL(f);
+    };
 
-    searchBtn.addEventListener('click', async () => {
-        const apiKey = apiKeyInput.value.trim();
-        if (!apiKey) return alert('キーを入れてね！');
-        resultArea.textContent = "AIが本気で鑑定中...";
-        searchBtn.disabled = true;
-
+    btn.onclick = async () => {
+        const key = keyInp.value.trim();
+        res.innerText = "プレミアム鑑定中...";
         try {
-            // エラーを回避するために、もっとも互換性の高いURLに変更しました
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-
+            // 有料版Google Cloudキーに最適な最新エンドポイント
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: "このポケモンカードの名前と市場価格を日本語で教えて。" },
-                            { inlineData: { mimeType: "image/jpeg", data: base64Image } }
-                        ]
-                    }]
+                    contents: [{ parts: [
+                        { text: "このポケモンカードの名前、レアリティ、メルカリでの最新相場を日本語で詳しく教えて。" },
+                        { inlineData: { mimeType: "image/jpeg", data: b64 } }
+                    ]}]
                 })
             });
-
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            resultArea.textContent = data.candidates[0].content.parts[0].text;
-
-        } catch (error) {
-            resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}<br><br>※GitHubの反映に時間がかかっているかも。あと1分待って、一度タブを閉じてから開き直してみて！</span>`;
-        } finally {
-            searchBtn.disabled = false;
+            if(data.error) throw new Error(data.error.message);
+            res.innerText = data.candidates[0].content.parts[0].text;
+        } catch (e) {
+            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}<br><br>※Google Cloudの設定で「API制限なし」になっているか確認してね！</span>`;
         }
-    });
+    };
 </script>
 </body>
 </html>
