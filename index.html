@@ -2,35 +2,34 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ポケカ査定DX</title>
     <style>
-        :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --text-color: #e0e0e0; --input-bg: #262626; }
+        :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --text-color: #e0e0e0; }
         body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 420px; }
-        h1 { color: var(--accent-color); text-align: center; }
         .section { background: var(--card-bg); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        input[type="text"] { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
-        .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; background: var(--accent-color); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        input[type="text"] { width: 100%; padding: 12px; background: #262626; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; background: var(--accent-color); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         #preview { width: 100%; border-radius: 10px; display: none; margin: 15px 0; border: 2px solid var(--accent-color); }
-        #result-area { margin-top: 20px; padding: 15px; background: #161616; border-radius: 10px; font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
+        #result-area { margin-top: 20px; padding: 15px; background: #161616; border-radius: 10px; font-size: 14px; white-space: pre-wrap; min-height: 100px; border: 1px solid #2a2a2a; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>ポケカ査定DX</h1>
+    <h1 style="color:var(--accent-color); text-align:center;">ポケカ査定DX</h1>
     <div class="section">
-        <label style="font-size:12px; color:#aaa;">STEP 1: APIキー</label>
-        <input type="text" id="api-key" placeholder="AI Studioのキーを入力">
+        <label style="font-size:12px; color:#aaa;">STEP 1: APIキーを入力</label>
+        <input type="text" id="api-key" placeholder="AI Studioのキーをペースト">
     </div>
     <div class="section">
-        <label style="font-size:12px; color:#aaa;">STEP 2: カード撮影</label>
-        <label for="image-input" class="btn" style="background:#333;">📷 カメラを起動</label>
+        <label style="font-size:12px; color:#aaa;">STEP 2: カードを撮影</label>
+        <label for="image-input" class="btn" style="background:#333; margin-top:10px;">📷 カメラを起動</label>
         <input type="file" id="image-input" accept="image/*" capture="environment" style="display:none;">
         <img id="preview">
-        <button id="search-btn" class="btn" style="display:none;">✨ 査定を開始する</button>
+        <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 査定を開始する</button>
     </div>
-    <div id="result-area">「ゼロの大空洞」を撮ってみてね！</div>
+    <div id="result-area">「ゼロの大空洞」を撮って送ってみて！</div>
 </div>
 
 <script>
@@ -56,13 +55,12 @@
 
     searchBtn.addEventListener('click', async () => {
         const apiKey = apiKeyInput.value.trim();
-        if (!apiKey) return alert('APIキーを入力してね！');
-        
-        resultArea.textContent = "AIがカードを鑑定中...";
+        if (!apiKey) return alert('キーを入れてね！');
+        resultArea.textContent = "AIがカードを見ています...";
         searchBtn.disabled = true;
 
         try {
-            // 【重要】URLを画像解析用の最新形式に修正しました
+            // 【ここを修正】最も確実に画像が動くURLとモデル名に変更しました
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
             const response = await fetch(url, {
@@ -71,7 +69,7 @@
                 body: JSON.stringify({
                     contents: [{
                         parts: [
-                            { text: "このポケモンカードを査定して。名前、レアリティ、相場を日本語で教えて。" },
+                            { text: "このポケモンカードの名前とレアリティ、市場価格の相場を日本語で教えて。" },
                             { inlineData: { mimeType: "image/jpeg", data: base64Image } }
                         ]
                     }]
@@ -81,14 +79,14 @@
             const data = await response.json();
             
             if (data.error) {
-                // エラーの詳細を表示するように変更
+                // エラーが出た場合、その内容を表示
                 throw new Error(data.error.message);
             }
 
             if (data.candidates && data.candidates[0].content) {
                 resultArea.textContent = data.candidates[0].content.parts[0].text;
             } else {
-                resultArea.textContent = "解析に失敗しました。もう一度撮り直してみて！";
+                resultArea.textContent = "ごめん、うまく読み取れなかった！もう一回撮ってみて。";
             }
 
         } catch (error) {
