@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ポケカ価格チェック</title>
+<title>ポケカ価格サーチDX</title>
 <style>
   body { background: #0a0a0f; color: white; font-family: sans-serif; padding: 20px; }
   .card { background: #13131a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
@@ -11,56 +11,73 @@
   button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
   .btn-main { background: #ff3b5c; color: white; }
   .btn-sub { background: #333; color: white; }
-  #result { margin-top: 20px; padding: 15px; background: #1c1c28; border-radius: 10px; display: none; }
-  .price { color: #ff9f1c; font-weight: bold; }
+  #status { font-size: 12px; padding: 5px; margin-top: 5px; border-radius: 5px; text-align: center; }
+  .status-ok { background: #2ecc71; color: white; }
+  .status-ng { background: #e74c3c; color: white; }
+  #result { margin-top: 20px; padding: 15px; background: #1c1c28; border-radius: 10px; display: none; border-left: 5px solid #ff9f1c; }
+  .price { color: #ff9f1c; font-size: 24px; font-weight: bold; }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>ポケカ価格サーチ</h2>
-  <p style="font-size: 12px; color: #888;">設定からAPIキーを入れてね ⚙️</p>
-  <input type="text" id="cardName" placeholder="例: ピカチュウ SAR">
+  <h2>ポケカ価格サーチDX</h2>
+  
+  <div id="status" class="status-ng">APIキー未設定 ⚙️</div>
+  
+  <input type="text" id="cardName" placeholder="例: ナンジャモ SAR">
   <button class="btn-main" onclick="search()">検索する</button>
-  <button class="btn-sub" onclick="openSettings()">⚙️ 設定 (APIキー入力)</button>
+  <button class="btn-sub" onclick="openSettings()">⚙️ 設定 (APIキーを入力)</button>
 </div>
 
-<div id="loading" style="display:none; text-align:center; margin-top:20px;">💎 解析中...</div>
+<div id="loading" style="display:none; text-align:center; margin-top:20px;">💎 AIが世界中の価格を調査中...</div>
 <div id="result"></div>
 
 <script>
+// ページを開いたときにキーを確認
 let apiKey = localStorage.getItem('pokeca_key') || '';
+updateStatus();
+
+function updateStatus() {
+  const s = document.getElementById('status');
+  if (apiKey) {
+    s.innerText = "APIキー設定済み ✅";
+    s.className = "status-ok";
+  } else {
+    s.innerText = "APIキー未設定 ⚙️ ボタンから入力してね";
+    s.className = "status-ng";
+  }
+}
 
 function openSettings() {
-  const key = prompt("Google AI StudioでコピーしたAPIキーを入れてね", apiKey);
+  const key = prompt("Google AI StudioのAPIキー(AIza...)を貼り付けてね", apiKey);
   if (key) {
     apiKey = key.trim();
     localStorage.setItem('pokeca_key', apiKey);
-    alert("保存したよ！");
+    updateStatus();
+    alert("キーを保存しました！");
   }
 }
 
 async function search() {
-  if (!apiKey) return alert("先に設定からAPIキーを入れてね！");
-  
+  if (!apiKey) return alert("先に⚙️設定ボタンからAPIキーを入れてね！");
   const name = document.getElementById('cardName').value;
-  if (!name) return alert("カード名を入れてね");
+  if (!name) return alert("カード名を入力してね");
 
   document.getElementById('loading').style.display = 'block';
   document.getElementById('result').style.display = 'none';
 
   try {
-    // URLを「gemini-1.5-flash-latest」に変更して、より確実に！
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // 404エラーを防ぐため、一番安定している「v1beta」と「gemini-1.5-flash」を使用
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: `ポケモンカード「${name}」の買取価格を教えて。必ず以下のJSON形式で答えて。{"name":"カード名","price":"10,000円"}` }]
+          parts: [{ text: `ポケモンカード「${name}」の最新買取価格を日本円で教えて。必ずこのJSON形式で答えて: {"name":"カード名","price":"10,000円"}` }]
         }],
-        // 安全設定をすべてオフにする
         safetySettings: [
           { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
           { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -73,22 +90,43 @@ async function search() {
     const data = await response.json();
 
     if (data.error) {
-      throw new Error(`エラーコード: ${data.error.code}\nメッセージ: ${data.error.message}`);
+      // 404が出た場合、別のURL(v1)でもう一度試す仕組み
+      if (data.error.code === 404) {
+        return retryWithV1(name);
+      }
+      throw new Error(data.error.message);
     }
 
-    const text = data.candidates[0].content.parts[0].text;
-    const json = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
-
-    const resDiv = document.getElementById('result');
-    resDiv.innerHTML = `<h3>${json.name}</h3><p>予想買取価格: <span class="price">${json.price}</span></p>`;
-    resDiv.style.display = 'block';
+    showResult(data);
 
   } catch (err) {
-    alert("エラーになっちゃった:\n" + err.message);
-    console.error(err);
+    alert("エラー: " + err.message);
   } finally {
     document.getElementById('loading').style.display = 'none';
   }
+}
+
+// 404対策のリトライ機能
+async function retryWithV1(name) {
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `ポケモンカード「${name}」の買取価格を教えて。{"name":"カード名","price":"0円"}` }] }]
+    })
+  });
+  const data = await response.json();
+  if (data.error) alert("やっぱりエラーだよ: " + data.error.message);
+  else showResult(data);
+}
+
+function showResult(data) {
+  const text = data.candidates[0].content.parts[0].text;
+  const json = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
+  const resDiv = document.getElementById('result');
+  resDiv.innerHTML = `<h3>${json.name}</h3><p>予想買取価格:</p><p class="price">${json.price}</p>`;
+  resDiv.style.display = 'block';
 }
 </script>
 
