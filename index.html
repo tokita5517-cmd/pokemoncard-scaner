@@ -5,40 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ポケカ査定DX</title>
     <style>
-        :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --accent-hover: #e04a50; --text-color: #e0e0e0; --input-bg: #262626; --border-color: #333; --success-green: #4caf50; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --text-color: #e0e0e0; --input-bg: #262626; }
+        body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 420px; }
-        h1 { color: var(--accent-color); text-align: center; font-size: 28px; font-weight: 900; margin-bottom: 25px; text-shadow: 0 0 15px rgba(193, 39, 45, 0.4); }
-        .section { background: var(--card-bg); padding: 25px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); border: 1px solid var(--border-color); }
-        label { display: block; font-size: 13px; font-weight: 600; color: #b0b0b0; margin-bottom: 10px; }
-        input[type="text"] { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid #444; border-radius: 10px; color: white; font-size: 15px; box-sizing: border-box; }
-        .btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: var(--accent-color); color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn:disabled { background: #555; cursor: not-allowed; }
-        .file-label { background: #333; margin-bottom: 15px; border: 1px solid #444; }
-        #image-input { display: none; }
-        #preview { max-width: 100%; max-height: 350px; border-radius: 12px; display: none; border: 3px solid var(--accent-color); margin-bottom: 15px; }
-        #result-area { margin-top: 25px; padding: 20px; background: #161616; border-radius: 15px; font-size: 15px; line-height: 1.7; white-space: pre-wrap; border: 1px solid #2a2a2a; }
-        .status { font-size: 12px; text-align: center; margin-top: 8px; color: #888; }
-        .key-set { color: var(--success-green); font-weight: bold; }
+        h1 { color: var(--accent-color); text-align: center; }
+        .section { background: var(--card-bg); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #333; }
+        input[type="text"] { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 15px; background: var(--accent-color); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #preview { width: 100%; border-radius: 10px; display: none; margin: 15px 0; border: 2px solid var(--accent-color); }
+        #result-area { margin-top: 20px; padding: 15px; background: #161616; border-radius: 10px; font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>ポケカ査定DX</h1>
     <div class="section">
-        <label>STEP 1: APIキーを設定</label>
-        <input type="text" id="api-key" placeholder="APIキーをペースト">
-        <p class="status" id="key-status">※キーは安全に処理されます</p>
+        <label style="font-size:12px; color:#aaa;">STEP 1: APIキー</label>
+        <input type="text" id="api-key" placeholder="AI Studioのキーを入力">
     </div>
     <div class="section">
-        <label>STEP 2: カードを撮影</label>
-        <label for="image-input" class="btn file-label">📷 カメラを起動</label>
-        <input type="file" id="image-input" accept="image/*" capture="environment">
-        <img id="preview" src="" alt="プレビュー">
+        <label style="font-size:12px; color:#aaa;">STEP 2: カード撮影</label>
+        <label for="image-input" class="btn" style="background:#333;">📷 カメラを起動</label>
+        <input type="file" id="image-input" accept="image/*" capture="environment" style="display:none;">
+        <img id="preview">
         <button id="search-btn" class="btn" style="display:none;">✨ 査定を開始する</button>
     </div>
-    <div id="result-area">結果がここに表示されるよ！</div>
+    <div id="result-area">「ゼロの大空洞」を撮ってみてね！</div>
 </div>
+
 <script>
     const apiKeyInput = document.getElementById('api-key');
     const imageInput = document.getElementById('image-input');
@@ -62,25 +56,41 @@
 
     searchBtn.addEventListener('click', async () => {
         const apiKey = apiKeyInput.value.trim();
-        if (!apiKey) return alert('APIキーを入れてね！');
-        resultArea.textContent = "AIが鑑定中...";
+        if (!apiKey) return alert('APIキーを入力してね！');
+        
+        resultArea.textContent = "AIがカードを鑑定中...";
         searchBtn.disabled = true;
+
         try {
-            // URLを v1 に修正しました
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            // 【重要】URLを画像解析用の最新形式に修正しました
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [
-                        { text: "このポケモンカードの名前、レアリティ、市場価格を日本語で詳しく査定して。" },
-                        { inlineData: { mimeType: "image/jpeg", data: base64Image } }
-                    ]}]
+                    contents: [{
+                        parts: [
+                            { text: "このポケモンカードを査定して。名前、レアリティ、相場を日本語で教えて。" },
+                            { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+                        ]
+                    }]
                 })
             });
+
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            resultArea.textContent = data.candidates[0].content.parts[0].text;
+            
+            if (data.error) {
+                // エラーの詳細を表示するように変更
+                throw new Error(data.error.message);
+            }
+
+            if (data.candidates && data.candidates[0].content) {
+                resultArea.textContent = data.candidates[0].content.parts[0].text;
+            } else {
+                resultArea.textContent = "解析に失敗しました。もう一度撮り直してみて！";
+            }
+
         } catch (error) {
             resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}</span>`;
         } finally {
