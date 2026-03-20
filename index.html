@@ -5,363 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ポケカ査定DX</title>
     <style>
-        :root {
-            --bg-color: #0d0d0d; /* さらに深く、高級感のある黒 */
-            --card-bg: #1a1a1a; /* カードエリアの背景 */
-            --accent-color: #c1272d; /* ポケカ査定DXの赤 */
-            --accent-hover: #e04a50; /* ホバー時の明るい赤 */
-            --text-color: #e0e0e0;
-            --input-bg: #262626;
-            --border-color: #333;
-            --success-green: #4caf50;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 420px;
-        }
-
-        h1 {
-            color: var(--accent-color);
-            text-align: center;
-            font-size: 28px;
-            font-weight: 900;
-            margin-top: 10px;
-            margin-bottom: 25px;
-            text-shadow: 0 0 15px rgba(193, 39, 45, 0.4);
-            letter-spacing: 1px;
-        }
-
-        /* 各セクションのスタイル */
-        .section {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-            border: 1px solid var(--border-color);
-            transition: box-shadow 0.3s ease;
-        }
-
-        .section:hover {
-            box-shadow: 0 10px 40px rgba(193, 39, 45, 0.15);
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #b0b0b0;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
-
-        /* APIキー入力欄 */
-        input[type="text"] {
-            width: 100%;
-            padding: 14px;
-            background: var(--input-bg);
-            border: 1px solid #444;
-            border-radius: 10px;
-            color: white;
-            font-size: 15px;
-            font-family: monospace; /* キーは見やすく */
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 10px rgba(193, 39, 45, 0.3);
-        }
-
-        .status {
-            font-size: 12px;
-            text-align: center;
-            margin-top: 8px;
-            color: #888;
-        }
-
-        .key-set {
-            color: var(--success-green);
-            font-weight: bold;
-        }
-
-        /* ボタンの共通デザイン */
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 16px;
-            background: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 17px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .btn:hover {
-            background: var(--accent-hover);
-            box-shadow: 0 6px 15px rgba(193, 39, 45, 0.4);
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .btn:disabled {
-            background: #555;
-            color: #aaa;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        /* カメラ起動ボタンのカスタム */
-        .file-label {
-            background: #333;
-            margin-bottom: 15px;
-            border: 1px solid #444;
-        }
-        
-        .file-label:hover {
-            background: #444;
-        }
-
-        #image-input {
-            display: none; /* 実際のファイル入力は隠す */
-        }
-
-        /* 画像プレビュー */
-        .preview-container {
-            width: 100%;
-            text-align: center;
-            margin-top: 5px;
-            position: relative;
-        }
-
-        #preview {
-            max-width: 100%;
-            max-height: 350px; /* あまり大きくなりすぎないように */
-            border-radius: 12px;
-            display: none; /* 最初は隠す */
-            border: 3px solid var(--accent-color);
-            box-shadow: 0 0 20px rgba(193, 39, 45, 0.3);
-            margin-bottom: 15px;
-        }
-
-        /* 結果表示エリア */
-        #result-area {
-            margin-top: 25px;
-            padding: 20px;
-            background: #161616;
-            border-radius: 15px;
-            font-size: 15px;
-            line-height: 1.7;
-            color: #d0d0d0;
-            min-height: 80px;
-            white-space: pre-wrap; /* 改行を反映 */
-            border: 1px solid #2a2a2a;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-        }
-
-        .loading-text {
-            color: #aaa;
-            font-style: italic;
-            text-align: center;
-            display: block;
-        }
-
-        .error-text {
-            color: #ff6b6b;
-            font-weight: bold;
-        }
-
+        :root { --bg-color: #0d0d0d; --card-bg: #1a1a1a; --accent-color: #c1272d; --accent-hover: #e04a50; --text-color: #e0e0e0; --input-bg: #262626; --border-color: #333; --success-green: #4caf50; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .container { width: 100%; max-width: 420px; }
+        h1 { color: var(--accent-color); text-align: center; font-size: 28px; font-weight: 900; margin-bottom: 25px; text-shadow: 0 0 15px rgba(193, 39, 45, 0.4); }
+        .section { background: var(--card-bg); padding: 25px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); border: 1px solid var(--border-color); }
+        label { display: block; font-size: 13px; font-weight: 600; color: #b0b0b0; margin-bottom: 10px; }
+        input[type="text"] { width: 100%; padding: 14px; background: var(--input-bg); border: 1px solid #444; border-radius: 10px; color: white; font-size: 15px; box-sizing: border-box; }
+        .btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; background: var(--accent-color); color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn:disabled { background: #555; cursor: not-allowed; }
+        .file-label { background: #333; margin-bottom: 15px; border: 1px solid #444; }
+        #image-input { display: none; }
+        #preview { max-width: 100%; max-height: 350px; border-radius: 12px; display: none; border: 3px solid var(--accent-color); margin-bottom: 15px; }
+        #result-area { margin-top: 25px; padding: 20px; background: #161616; border-radius: 15px; font-size: 15px; line-height: 1.7; white-space: pre-wrap; border: 1px solid #2a2a2a; }
+        .status { font-size: 12px; text-align: center; margin-top: 8px; color: #888; }
+        .key-set { color: var(--success-green); font-weight: bold; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h1>ポケカ査定DX</h1>
-
     <div class="section">
-        <label for="api-key">STEP 1: Gemini APIキーを設定</label>
-        <input type="text" id="api-key" placeholder="Google AI Studioのキーをここにペースト">
-        <p class="status" id="key-status">※キーはインターネット上に送信されません（安全です）</p>
+        <label>STEP 1: APIキーを設定</label>
+        <input type="text" id="api-key" placeholder="APIキーをペースト">
+        <p class="status" id="key-status">※キーは安全に処理されます</p>
     </div>
-
     <div class="section">
-        <label>STEP 2: カードを撮影して査定</label>
-        
-        <label for="image-input" class="btn file-label">
-            <span>📷</span> カメラを起動して撮影
-        </label>
+        <label>STEP 2: カードを撮影</label>
+        <label for="image-input" class="btn file-label">📷 カメラを起動</label>
         <input type="file" id="image-input" accept="image/*" capture="environment">
-        
-        <div class="preview-container">
-            <img id="preview" src="" alt="カードのプレビュー">
-        </div>
-        
-        <button id="search-btn" class="btn" style="display:none;">
-            <span>✨</span> このカードを査定する
-        </button>
+        <img id="preview" src="" alt="プレビュー">
+        <button id="search-btn" class="btn" style="display:none;">✨ 査定を開始する</button>
     </div>
-
-    <div id="result-area">ここにAIの査定結果が表示されるよ！<br>まずはカメラでカードを撮ってみてね。</div>
+    <div id="result-area">結果がここに表示されるよ！</div>
 </div>
-
 <script>
-    // HTML要素を取得
     const apiKeyInput = document.getElementById('api-key');
-    const keyStatus = document.getElementById('key-status');
     const imageInput = document.getElementById('image-input');
     const preview = document.getElementById('preview');
     const searchBtn = document.getElementById('search-btn');
     const resultArea = document.getElementById('result-area');
+    let base64Image = null;
 
-    let base64Image = null; // 画像データを保存する変数
-
-    // APIキーが入力されたらステータスを変える
-    apiKeyInput.addEventListener('input', function() {
-        if (this.value.trim().length > 10) {
-            keyStatus.textContent = "キーが入力されました。査定可能です。";
-            keyStatus.classList.add('key-set');
-        } else {
-            keyStatus.textContent = "※キーはインターネット上に送信されません（安全です）";
-            keyStatus.classList.remove('key-set');
-        }
-    });
-
-    // 1. カメラで撮影/ファイルが選ばれた時の処理
-    imageInput.addEventListener('change', function(e) {
+    imageInput.addEventListener('change', e => {
         const file = e.target.files[0];
         if (!file) return;
-
-        // 画像の読み込みとプレビュー表示
         const reader = new FileReader();
-        reader.onload = function(event) {
-            // プレビュー画像を設定して表示
+        reader.onload = event => {
             preview.src = event.target.result;
             preview.style.display = 'block';
-            
-            // 査定ボタンを表示
             searchBtn.style.display = 'flex';
-            
-            // Gemini APIに送るために、Base64形式（テキスト）に変換して保存
             base64Image = event.target.result.split(',')[1];
-            
-            // 結果エリアのメッセージを更新
-            resultArea.innerHTML = "画像を取り込んだよ！<br>「このカードを査定する」ボタンを押してね。";
-            
-            // ボタンの位置までスクロール
-            searchBtn.scrollIntoView({ behavior: 'smooth' });
         };
         reader.readAsDataURL(file);
     });
 
-    // 2. 「査定する」ボタンが押された時の処理
-    searchBtn.addEventListener('click', async function() {
-        // APIキーのチェック
+    searchBtn.addEventListener('click', async () => {
         const apiKey = apiKeyInput.value.trim();
-        if (!apiKey) {
-            alert('先に上の入力欄にGemini APIキーを設定してね！');
-            apiKeyInput.focus();
-            return;
-        }
-
-        // 画像のチェック
-        if (!base64Image) {
-            alert('画像が読み込まれていません。もう一度撮影してください。');
-            return;
-        }
-
-        // 状態を「査定中」にする
-        resultArea.innerHTML = '<span class="loading-text">AIがカードを鑑定中...<br>（10〜30秒ほどかかる場合があります）</span>';
-        searchBtn.disabled = true; // ボタンを押せなくする
-        searchBtn.innerHTML = '<span>⏳</span> 査定しています...';
-
+        if (!apiKey) return alert('APIキーを入れてね！');
+        resultArea.textContent = "AIが鑑定中...";
+        searchBtn.disabled = true;
         try {
-            // Gemini APIのURL (画像認識が得意な 1.5 Flashモデルを使用)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-            // APIへのリクエストデータを作成
-            const payload = {
-                contents: [{
-                    parts: [
-                        // AIへのプロンプト（命令）
-                        { text: "あなたは世界最高峰のポケモンカード鑑定士です。この画像に写っているポケモンカードについて、正確なカード名（日本語）、収録セット名、レアリティ、そして現在のメルカリやフリマアプリでの一般的な市場価格の相場（円）を、日本語で詳しく査定してください。最後に、このカードの強さやコレクションとしての魅力をプロの視点で一言添えてください。" },
-                        // 画像データ
-                        {
-                            inlineData: {
-                                mimeType: "image/jpeg", // 簡易的にjpegとして扱う
-                                data: base64Image
-                            }
-                        }
-                    ]
-                }]
-            };
-
-            // APIにリクエストを送信
+            // URLを v1 に修正しました
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             const response = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [
+                        { text: "このポケモンカードの名前、レアリティ、市場価格を日本語で詳しく査定して。" },
+                        { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+                    ]}]
+                })
             });
-
-            // レポンスを解析
             const data = await response.json();
-
-            // API側からのエラーチェック
-            if (data.error) {
-                throw new Error(data.error.message);
-            }
-
-            // AIの回答テキストを取得して表示
-            if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
-                const textResult = data.candidates[0].content.parts[0].text;
-                // テキストを表示（Markdownの改行などを反映させる）
-                resultArea.textContent = textResult; 
-            } else {
-                resultArea.textContent = 'ごめんなさい、この画像からはカードをうまく認識できなかったよ。もっと明るい場所で、カード全体が写るように撮ってみてね。';
-            }
-
+            if (data.error) throw new Error(data.error.message);
+            resultArea.textContent = data.candidates[0].content.parts[0].text;
         } catch (error) {
-            // エラーが発生した場合の処理
-            console.error('Error:', error);
-            resultArea.innerHTML = `<span class="error-text">エラーが発生したよ:</span><br>${error.message}`;
-            // APIキーが間違っている可能性が高い場合のメッセージ
-            if (error.message.includes('API_KEY_INVALID') || error.message.includes('not found')) {
-                 resultArea.innerHTML += "<br><br><strong>APIキーが間違っているか、古い可能性があります。Google AI Studioで新しいキーを確認してね。</strong>";
-            }
+            resultArea.innerHTML = `<span style="color:#ff6b6b">エラー: ${error.message}</span>`;
         } finally {
-            // 査定が終わったら、ボタンの状態を元に戻す
             searchBtn.disabled = false;
-            searchBtn.innerHTML = '<span>✨</span> このカードを査定する';
         }
     });
 </script>
-
 </body>
 </html>
