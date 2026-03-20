@@ -20,185 +20,25 @@
   --muted: #6b6b80;
   --accent: #ff3b5c;
   --accent2: #ff9f1c;
-  --gold: #ffd700;
-  --silver: #c0c0c0;
-  --bronze: #cd7f32;
 }
-
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body {
-  margin: 0;
-  font-family: 'Noto Sans JP', sans-serif;
-  background-color: var(--bg);
-  color: var(--text);
-  overflow-x: hidden;
-  line-height: 1.5;
-}
-
-/* Header */
-header {
-  padding: env(safe-area-inset-top) 20px 15px;
-  background: rgba(10, 10, 15, 0.8);
-  backdrop-filter: blur(20px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.logo {
-  font-family: 'Dela Gothic One', cursive;
-  font-size: 20px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.settings-btn {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-/* Main Layout */
-main { padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
-
-/* Search Box */
-.search-card {
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 20px;
-  border: 1px solid var(--border);
-  margin-bottom: 24px;
-}
-.search-input-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-input[type="text"] {
-  flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 14px 18px;
-  border-radius: 14px;
-  font-size: 16px;
-  outline: none;
-}
-.btn {
-  border: none;
-  border-radius: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: transform 0.1s;
-}
+body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 50px; }
+header { padding: 50px 20px 15px; background: rgba(10,10,15,0.8); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.logo { font-family: 'Dela Gothic One', cursive; font-size: 20px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.settings-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 40px; height: 40px; border-radius: 12px; cursor: pointer; }
+main { padding: 20px; max-width: 600px; margin: 0 auto; }
+.search-card { background: var(--surface); border-radius: 24px; padding: 20px; border: 1px solid var(--border); margin-bottom: 24px; }
+.search-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+input[type="text"] { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 14px; border-radius: 14px; outline: none; }
+.btn { border: none; border-radius: 14px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
 .btn:active { transform: scale(0.96); }
 .btn-primary { background: var(--accent); color: white; padding: 0 20px; }
-.btn-camera { 
-  background: var(--surface2); 
-  border: 1px solid var(--border); 
-  color: var(--text); 
-  width: 100%; 
-  padding: 14px;
-  margin-top: 10px;
-}
-
-/* History */
-.section-title {
-  font-family: 'Dela Gothic One', cursive;
-  font-size: 18px;
-  margin: 30px 0 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.history-list { display: flex; flex-direction: column; gap: 12px; }
-.history-row {
-  background: var(--surface);
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.history-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-.history-meta { font-size: 12px; color: var(--muted); }
-.history-price { font-family: 'Dela Gothic One'; color: var(--accent2); font-size: 16px; }
-
-/* Modal & Overlay */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(10px);
-  z-index: 1000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.modal {
-  background: var(--surface);
-  width: 100%;
-  max-width: 500px;
-  border-radius: 28px;
-  border: 1px solid var(--border);
-  padding: 24px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-.close-btn { font-size: 24px; color: var(--muted); cursor: pointer; }
-
-/* Result Style */
-.res-card-name { font-family: 'Dela Gothic One'; font-size: 22px; text-align: center; margin-bottom: 20px; color: var(--accent2); }
-.shop-item {
-  background: var(--surface2);
-  padding: 15px;
-  border-radius: 16px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid transparent;
-}
-.shop-item.best { border-color: var(--gold); background: rgba(255,215,0,0.05); }
-.shop-name { font-weight: 700; }
-.shop-price { font-family: 'Dela Gothic One'; color: var(--accent); }
-
-/* Loading Animation */
-.loader {
-  display: none;
-  text-align: center;
-  padding: 40px;
-}
-.spinner {
-  width: 40px; height: 40px;
-  border: 4px solid rgba(255,255,255,0.1);
-  border-left-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 15px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Hidden inputs */
-#cameraInput { display: none; }
+.btn-camera { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 100%; padding: 14px; margin-top: 10px; }
+.loader { display: none; text-align: center; padding: 20px; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal { background: var(--surface); width: 100%; max-width: 500px; border-radius: 28px; padding: 24px; border: 1px solid var(--border); }
+.res-card-name { font-family: 'Dela Gothic One'; font-size: 22px; color: var(--accent2); text-align: center; margin-bottom: 15px; }
+.shop-item { background: var(--surface2); padding: 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -211,219 +51,97 @@ input[type="text"] {
 <main>
   <div class="search-card">
     <div class="search-input-group">
-      <input type="text" id="cardInput" placeholder="カード名を入力 (例: ナンジャモ SAR)">
+      <input type="text" id="cardInput" placeholder="カード名を入力">
       <button class="btn btn-primary" onclick="searchByText()">検索</button>
     </div>
-    <button class="btn btn-camera" onclick="triggerCamera()">
-      <span>📷</span> 写真を撮って検索
-    </button>
-    <input type="file" id="cameraInput" accept="image/*" capture="environment">
+    <button class="btn btn-camera" onclick="triggerCamera()">📷 写真で検索</button>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
   </div>
-
-  <div id="loader" class="loader">
-    <div class="spinner"></div>
-    <div id="loaderText">最新価格を調査中...</div>
-  </div>
-
-  <div class="section-title"><span>🕒</span> 最近の検索</div>
-  <div id="historyList" class="history-list">
-    </div>
+  <div id="loader" class="loader">🔍 調査中...</div>
+  <div id="historyList"></div>
 </main>
 
 <div id="resultOverlay" class="overlay">
   <div class="modal">
-    <div class="modal-header">
-      <div style="font-weight: bold;">査定結果</div>
-      <div class="close-btn" onclick="closeModal('resultOverlay')">×</div>
-    </div>
     <div id="resultContent"></div>
+    <button class="btn btn-primary" style="width:100%; margin-top:20px; padding:12px;" onclick="closeModal('resultOverlay')">閉じる</button>
   </div>
 </div>
 
 <div id="settingsOverlay" class="overlay">
   <div class="modal">
-    <div class="modal-header">
-      <div style="font-weight: bold;">設定</div>
-      <div class="close-btn" onclick="closeModal('settingsOverlay')">×</div>
-    </div>
-    <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Gemini API Key</p>
-    <input type="text" id="apiKeyInput" style="width: 100%; margin-bottom: 20px;" placeholder="AIZA...">
-    <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="saveSettings()">保存して閉じる</button>
+    <h3>設定</h3>
+    <input type="text" id="apiKeyInput" style="width:100%; margin-bottom:20px;" placeholder="APIキーを入力">
+    <button class="btn btn-primary" style="width:100%; padding:14px;" onclick="saveSettings()">保存</button>
   </div>
 </div>
 
 <script>
 let apiKey = localStorage.getItem('gemini_api_key') || '';
-let history = JSON.parse(localStorage.getItem('pokeca_history') || '[]');
-
 document.getElementById('apiKeyInput').value = apiKey;
-renderHistory();
 
-// 1. 設定
 function openSettings() { document.getElementById('settingsOverlay').style.display = 'flex'; }
 function saveSettings() {
   apiKey = document.getElementById('apiKeyInput').value.trim();
   localStorage.setItem('gemini_api_key', apiKey);
-  closeModal('settingsOverlay');
+  document.getElementById('settingsOverlay').style.display = 'none';
 }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-// 2. カメラ起動
 function triggerCamera() { document.getElementById('cameraInput').click(); }
 document.getElementById('cameraInput').onchange = async (e) => {
-  if (!e.target.files[0]) return;
-  const base64 = await resizeImageBase64(e.target.files[0]);
-  searchByAI(base64);
+  if (e.target.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (ev) => searchByAI(ev.target.result);
+    reader.readAsDataURL(e.target.files[0]);
+  }
 };
 
-// 3. AI検索 (テキスト/画像共通)
 async function searchByText() {
   const query = document.getElementById('cardInput').value.trim();
-  if (!query) return;
-  searchByAI(null, query);
+  if (query) searchByAI(null, query);
 }
 
 async function searchByAI(imageBase64, textQuery = "") {
-  if (!apiKey) {
-    alert("先に右上の⚙️からAPIキーを入力してね！");
-    openSettings();
-    return;
-  }
-
-  const loader = document.getElementById('loader');
-  loader.style.display = 'block';
-  loader.scrollIntoView({ behavior: 'smooth' });
+  if (!apiKey) return openSettings();
+  document.getElementById('loader').style.display = 'block';
 
   try {
-    const prompt = `ポケモンカードの最新買取価格を教えてください。
-必ず以下のJSON形式のみで返答してください。余計な説明文は一切不要です。
-{
-  "cardName": "カード名",
-  "rarity": "レアリティ",
-  "shops": [
-    {"name": "ショップA", "buyPrice": 12000},
-    {"name": "ショップB", "buyPrice": 11500}
-  ]
-}
-対象: ${textQuery || "添付画像"}
-現在の市場価値を推測して回答してください。`;
-
+    const prompt = `以下のカードの買取価格をJSON形式で教えて。{"cardName":"名","shops":[{"name":"店","buyPrice":1000}]} 形式で。対象: ${textQuery || "画像"}`;
     const parts = [{ text: prompt }];
-    if (imageBase64) {
-      parts.push({
-        inline_data: { mime_type: "image/jpeg", data: imageBase64.split(',')[1] }
-      });
-    }
+    if (imageBase64) parts.push({ inline_data: { mime_type: "image/jpeg", data: imageBase64.split(',')[1] } });
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
-    const resp = await fetch(endpoint, {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: parts }],
-        // フリーズ防止のため tools (google_search) を削除
-        generationConfig: { 
-          temperature: 0.2,
-          topP: 0.8,
-          topK: 40,
-          maxOutputTokens: 1000 
-        }
+        // 【重要】ここでセーフティ設定を強制オフにしているよ！
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+        ],
+        generationConfig: { temperature: 0.2 }
       })
     });
 
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || '通信エラー');
-
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    // JSONだけを確実に抽出する正規表現
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('AIがデータを生成できませんでした');
+    const text = data.candidates[0].content.parts[0].text;
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)[0]);
     
-    const result = JSON.parse(jsonMatch[0]);
-    saveHistory(result);
-    renderHistory();
-    showResult(result);
-
-  } catch (err) {
-    console.error(err);
-    alert("エラー: " + err.message);
+    let html = `<div class="res-card-name">${json.cardName}</div>`;
+    json.shops.forEach(s => {
+      html += `<div class="shop-item"><span>${s.name}</span><b>¥${s.buyPrice.toLocaleString()}</b></div>`;
+    });
+    document.getElementById('resultContent').innerHTML = html;
+    document.getElementById('resultOverlay').style.display = 'flex';
+  } catch (e) {
+    alert("エラーが発生したよ。APIキーや画像を確認してね。");
   } finally {
-    loader.style.display = 'none';
+    document.getElementById('loader').style.display = 'none';
   }
-}
-
-// 4. 結果表示
-function showResult(data) {
-  const shops = (data.shops || []).sort((a,b) => b.buyPrice - a.buyPrice);
-  const html = `
-    <div class="res-card-name">${data.cardName} <span style="font-size:14px; opacity:0.7">${data.rarity || ''}</span></div>
-    ${shops.map((s, i) => `
-      <div class="shop-item ${i === 0 ? 'best' : ''}">
-        <div>
-          <div class="shop-name">${i === 0 ? '👑 ' : ''}${s.name}</div>
-        </div>
-        <div class="shop-price">¥${s.buyPrice.toLocaleString()}</div>
-      </div>
-    `).join('')}
-  `;
-  document.getElementById('resultContent').innerHTML = html;
-  document.getElementById('resultOverlay').style.display = 'flex';
-}
-
-// 5. 画像リサイズ (ブラウザ負荷軽減)
-function resizeImageBase64(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const max = 512; // サイズを少し小さくして処理を速くする
-        if (width > height) {
-          if (width > max) { height *= max / width; width = max; }
-        } else {
-          if (height > max) { width *= max / height; height = max; }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// 6. 履歴
-function saveHistory(data) {
-  const entry = {
-    id: Date.now(),
-    cardName: data.cardName,
-    rarity: data.rarity,
-    bestPrice: data.shops?.[0]?.buyPrice || 0,
-    date: new Date().toLocaleDateString('ja-JP', {month:'short', day:'numeric'}),
-    data
-  };
-  history.unshift(entry);
-  if (history.length > 20) history.pop();
-  localStorage.setItem('pokeca_history', JSON.stringify(history));
-}
-
-function renderHistory() {
-  const el = document.getElementById('historyList');
-  el.innerHTML = history.map(h => `
-    <div class="history-row" onclick='showResult(${JSON.stringify(h.data)})'>
-      <div>
-        <div class="history-name">${h.cardName}</div>
-        <div class="history-meta">${h.rarity || ''} · ${h.date}</div>
-      </div>
-      <div class="history-price">¥${h.bestPrice.toLocaleString()}</div>
-    </div>
-  `).join('');
 }
 </script>
 </body>
