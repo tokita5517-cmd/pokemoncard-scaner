@@ -44,7 +44,7 @@
         if(!key) return alert('キーを入れてね！');
         res.innerText = "有料エンジンで超速鑑定中...";
         try {
-            // 【★ここが有料版の正解★】 v1beta を使い、モデル名は gemini-1.5-flash に固定。最後に :generateContent をつける
+            // 【究極の修正】Google Cloud有料キーで最も通るURLの書き方
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
             
             const response = await fetch(url, {
@@ -60,17 +60,21 @@
 
             const data = await response.json();
             
+            // エラーチェックを強化
             if (data.error) {
+                if (data.error.message.includes("API key not valid")) {
+                    throw new Error("APIキーが間違っているか、まだ有効になっていないよ。");
+                }
                 throw new Error(data.error.message);
             }
 
             if (data.candidates && data.candidates[0].content) {
                 res.innerText = data.candidates[0].content.parts[0].text;
             } else {
-                res.innerText = "解析失敗...もう一度撮ってみて！";
+                res.innerText = "ごめん！解析できなかった。もう一度だけ撮ってみて！";
             }
         } catch (e) {
-            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}</span>`;
+            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}<br><br>※もし解決しない場合は、キーを作り直して5分待ってみて！</span>`;
         }
     };
 </script>
