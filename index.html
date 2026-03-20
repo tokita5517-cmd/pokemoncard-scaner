@@ -23,1274 +23,407 @@
   --gold: #ffd700;
   --silver: #c0c0c0;
   --bronze: #cd7f32;
-  --green: #0fdb8e;
-  --safe: env(safe-area-inset-bottom, 0px);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
   font-family: 'Noto Sans JP', sans-serif;
-  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.5;
 }
-
-/* App Shell */
-#app {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  max-width: 480px;
-  margin: 0 auto;
-  position: relative;
-}
-
-/* Status bar spacer */
-.safe-top { height: env(safe-area-inset-top, 0px); background: var(--bg); }
 
 /* Header */
-.app-header {
-  padding: 12px 20px 10px;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
+header {
+  padding: env(safe-area-inset-top) 20px 15px;
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
   border-bottom: 1px solid var(--border);
-}
-
-.header-logo {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
 }
-
-.logo-mark {
-  width: 34px;
-  height: 34px;
-  background: var(--accent);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 0 20px rgba(255,59,92,0.4);
-  flex-shrink: 0;
-}
-
-.logo-text {
+.logo {
   font-family: 'Dela Gothic One', cursive;
-  font-size: 17px;
-  letter-spacing: -0.5px;
-  line-height: 1.1;
+  font-size: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-
-.logo-text span { color: var(--accent2); }
-
 .settings-btn {
-  width: 36px;
-  height: 36px;
-  background: var(--surface);
+  background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-/* Scrollable content */
-.content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 20px;
-}
-
-/* Screens */
-.screen { display: none; }
-.screen.active { display: block; }
-
-/* ====== SEARCH SCREEN ====== */
-.search-hero {
-  padding: 20px 20px 0;
-}
-
-.search-bar {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.search-input-wrap {
-  flex: 1;
-  position: relative;
-}
-
-.search-input-wrap input {
-  width: 100%;
-  padding: 14px 16px 14px 44px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
   color: var(--text);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.search-input-wrap input:focus { border-color: var(--accent); }
-.search-input-wrap input::placeholder { color: var(--muted); }
-
-.search-input-wrap .search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
-  pointer-events: none;
-}
-
-.search-go-btn {
-  width: 50px;
-  height: 50px;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255,59,92,0.35);
-  transition: transform 0.15s, box-shadow 0.15s;
-  flex-shrink: 0;
 }
 
-.search-go-btn:active { transform: scale(0.93); box-shadow: none; }
+/* Main Layout */
+main { padding: 20px; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
 
-/* Chips */
-.chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 10px 0;
-  scrollbar-width: none;
-}
-
-.chips::-webkit-scrollbar { display: none; }
-
-.chip {
-  padding: 7px 14px;
+/* Search Box */
+.search-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: 13px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.15s;
-  color: var(--muted);
-}
-
-.chip:active { background: var(--accent); color: white; border-color: var(--accent); }
-
-/* Section */
-.section {
-  padding: 16px 20px 0;
-}
-
-.section-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
-
-/* ====== CAMERA SCREEN ====== */
-.camera-screen {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.camera-viewfinder {
-  flex: 1;
-  background: #000;
-  position: relative;
-  overflow: hidden;
-  min-height: 0;
-  max-height: 42vh;
-}
-
-#cameraVideo, #capturedImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: none;
-}
-
-#cameraVideo.active, #capturedImg.active { display: block; }
-
-.camera-empty {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.camera-empty .big-icon { font-size: 56px; }
-
-/* Corner markers */
-.corner-markers {
-  position: absolute;
-  inset: 40px;
-  pointer-events: none;
-}
-
-.corner {
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  border-color: white;
-  border-style: solid;
-  opacity: 0.8;
-}
-
-.corner.tl { top: 0; left: 0; border-width: 3px 0 0 3px; }
-.corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; }
-.corner.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
-.corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
-
-/* Scan line */
-.scan-line {
-  position: absolute;
-  left: 40px;
-  right: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  animation: scan 2.5s ease-in-out infinite;
-  display: none;
-}
-
-.scan-line.active { display: block; }
-
-@keyframes scan {
-  0% { top: 40px; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { top: calc(100% - 40px); opacity: 0; }
-}
-
-/* Camera bottom controls */
-.camera-controls {
-  background: var(--bg);
+  border-radius: 24px;
   padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 12px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.cam-btn-secondary {
-  width: 52px;
-  height: 52px;
-  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 50%;
+  margin-bottom: 24px;
+}
+.search-input-group {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  cursor: pointer;
-  transition: transform 0.15s;
+  gap: 10px;
+  margin-bottom: 15px;
 }
-
-.cam-btn-secondary:active { transform: scale(0.9); }
-
-.shutter-btn {
-  width: 70px;
-  height: 70px;
-  background: white;
-  border: 4px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 0 0 3px var(--bg), 0 0 20px rgba(255,255,255,0.2);
-  transition: transform 0.1s;
-  flex-shrink: 0;
-}
-
-.shutter-btn:active { transform: scale(0.88); }
-.shutter-btn-inner {
-  width: 52px;
-  height: 52px;
-  background: white;
-  border-radius: 50%;
-}
-
-.analyze-btn-large {
-  padding: 16px 28px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 16px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255,59,92,0.4);
-  transition: transform 0.15s;
+input[type="text"] {
   flex: 1;
-  max-width: 220px;
-  display: none;
-}
-
-.analyze-btn-large.show { display: block; }
-.analyze-btn-large:active { transform: scale(0.96); }
-
-/* ====== RESULTS ====== */
-.results-wrap {
-  padding: 0 20px;
-}
-
-.card-identity {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.card-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.card-identity-info h2 {
-  font-size: 18px;
-  font-weight: 900;
-  line-height: 1.2;
-  margin-bottom: 4px;
-}
-
-.card-identity-info .meta {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.best-price-banner {
-  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,159,28,0.1));
-  border: 1px solid rgba(255,215,0,0.3);
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.best-label { font-size: 12px; color: var(--accent2); font-weight: 700; }
-.best-shop-name { font-size: 15px; font-weight: 700; }
-.best-price-val {
-  font-family: 'Dela Gothic One', cursive;
-  font-size: 32px;
-  color: var(--gold);
-  line-height: 1;
-}
-
-.best-price-yen { font-size: 14px; }
-
-.ranking-list { display: flex; flex-direction: column; gap: 10px; }
-
-.shop-row {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: transform 0.15s;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-}
-
-.shop-row:active { transform: scale(0.98); }
-
-.rank-badge {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-.rank-1 { background: var(--gold); color: #000; }
-.rank-2 { background: var(--silver); color: #000; }
-.rank-3 { background: var(--bronze); color: #fff; }
-.rank-n { background: var(--surface2); color: var(--muted); }
-
-.shop-info { flex: 1; }
-.shop-info .name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-.shop-info .cond { font-size: 11px; color: var(--muted); }
-
-.shop-price-col { text-align: right; }
-.shop-price-num {
-  font-family: 'Dela Gothic One', cursive;
-  font-size: 22px;
-  color: var(--text);
-  line-height: 1;
-}
-
-.shop-row.rank1 .shop-price-num { color: var(--gold); }
-.shop-price-label { font-size: 10px; color: var(--muted); }
-
-.no-data { color: var(--muted); font-size: 13px; }
-
-.arrow { color: var(--muted); font-size: 14px; }
-
-.disclaimer {
-  text-align: center;
-  font-size: 11px;
-  color: var(--muted);
-  padding: 20px 20px 0;
-  line-height: 1.6;
-}
-
-/* Loading */
-.loading-screen {
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.pokeball-loader {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 20px;
-  border-radius: 50%;
-  background: linear-gradient(to bottom, var(--accent) 50%, white 50%);
-  border: 3px solid var(--surface2);
-  box-shadow: 0 0 0 3px var(--accent);
-  position: relative;
-  animation: rotate 1s linear infinite;
-}
-
-.pokeball-loader::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
-  border: 3px solid var(--accent);
-}
-
-@keyframes rotate { to { transform: rotate(360deg); } }
-
-.loading-text {
-  font-size: 14px;
-  color: var(--muted);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
-
-/* Shimmer */
-.shimmer-row {
-  height: 74px;
-  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
-  background-size: 300% 100%;
-  border-radius: 16px;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer { to { background-position: -300% 0; } }
-
-/* Error */
-.error-card {
-  background: rgba(255,59,92,0.1);
-  border: 1px solid rgba(255,59,92,0.3);
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-}
-
-.error-card .error-icon { font-size: 32px; margin-bottom: 8px; }
-.error-card .error-msg { font-size: 14px; color: var(--accent); margin-bottom: 4px; font-weight: 700; }
-.error-card .error-detail { font-size: 12px; color: var(--muted); }
-
-/* Settings modal */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 100;
-  align-items: flex-end;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-}
-
-.modal-overlay.show { display: flex; }
-
-.modal-sheet {
-  background: var(--surface);
-  border-radius: 24px 24px 0 0;
-  padding: 20px 24px calc(24px + var(--safe));
-  width: 100%;
-  max-width: 480px;
-  border-top: 1px solid var(--border);
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.modal-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  margin: 0 auto 20px;
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 900;
-  margin-bottom: 20px;
-}
-
-.field-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-
-.field-input {
-  width: 100%;
-  padding: 13px 16px;
   background: var(--surface2);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--border);
   color: var(--text);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 15px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 16px;
   outline: none;
-  margin-bottom: 16px;
 }
-
-.field-input:focus { border-color: var(--accent); }
-.field-input::placeholder { color: var(--muted); }
-
-.modal-save-btn {
-  width: 100%;
-  padding: 16px;
-  background: var(--accent);
-  color: white;
+.btn {
   border: none;
   border-radius: 14px;
-  font-family: 'Noto Sans JP', sans-serif;
   font-weight: 700;
-  font-size: 16px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(255,59,92,0.4);
-}
-
-.api-status {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-}
-
-.api-status.ok { background: rgba(15,219,142,0.1); color: var(--green); border: 1px solid rgba(15,219,142,0.3); }
-.api-status.ng { background: rgba(255,59,92,0.1); color: var(--accent); border: 1px solid rgba(255,59,92,0.3); }
-
-/* Bottom Nav */
-.bottom-nav {
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  display: flex;
-  padding-bottom: var(--safe);
-  flex-shrink: 0;
-}
-
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 0 8px;
-  cursor: pointer;
-  gap: 4px;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
+  gap: 8px;
+  transition: transform 0.1s;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--accent); color: white; padding: 0 20px; }
+.btn-camera { 
+  background: var(--surface2); 
+  border: 1px solid var(--border); 
+  color: var(--text); 
+  width: 100%; 
+  padding: 14px;
+  margin-top: 10px;
 }
 
-.nav-icon { font-size: 22px; transition: transform 0.2s; }
-.nav-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 0.5px; }
-.nav-item.active .nav-label { color: var(--accent); }
-.nav-item.active .nav-icon { transform: scale(1.15); }
-
-/* History screen */
-.history-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
-
+/* History */
+.section-title {
+  font-family: 'Dela Gothic One', cursive;
+  font-size: 18px;
+  margin: 30px 0 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.history-list { display: flex; flex-direction: column; gap: 12px; }
 .history-row {
   background: var(--surface);
+  padding: 16px;
+  border-radius: 18px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 16px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  cursor: pointer;
-  transition: transform 0.15s;
-}
-
-.history-row:active { transform: scale(0.98); }
-.history-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-.history-meta { font-size: 11px; color: var(--muted); }
-.history-best { font-family: 'Dela Gothic One', cursive; font-size: 18px; color: var(--accent2); }
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--muted);
-}
-.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state p { font-size: 14px; }
-
-canvas#captureCanvas { display: none; }
-
-/* Add to homescreen banner */
-.pwa-banner {
-  background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin: 0 20px 16px;
-  display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
 }
+.history-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.history-meta { font-size: 12px; color: var(--muted); }
+.history-price { font-family: 'Dela Gothic One'; color: var(--accent2); font-size: 16px; }
 
-.pwa-banner-text { flex: 1; color: var(--muted); line-height: 1.4; }
-.pwa-banner-close {
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--muted);
-  padding: 4px;
+/* Modal & Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
+.modal {
+  background: var(--surface);
+  width: 100%;
+  max-width: 500px;
+  border-radius: 28px;
+  border: 1px solid var(--border);
+  padding: 24px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.close-btn { font-size: 24px; color: var(--muted); cursor: pointer; }
+
+/* Result Style */
+.res-card-name { font-family: 'Dela Gothic One'; font-size: 22px; text-align: center; margin-bottom: 20px; color: var(--accent2); }
+.shop-item {
+  background: var(--surface2);
+  padding: 15px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+}
+.shop-item.best { border-color: var(--gold); background: rgba(255,215,0,0.05); }
+.shop-name { font-weight: 700; }
+.shop-price { font-family: 'Dela Gothic One'; color: var(--accent); }
+
+/* Loading Animation */
+.loader {
+  display: none;
+  text-align: center;
+  padding: 40px;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-left-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Hidden inputs */
+#cameraInput { display: none; }
 </style>
 </head>
 <body>
 
-<div id="app">
-  <div class="safe-top"></div>
+<header>
+  <div class="logo">POKÉCA CHECK</div>
+  <button class="settings-btn" onclick="openSettings()">⚙️</button>
+</header>
 
-  <!-- Header -->
-  <header class="app-header">
-    <div class="header-logo">
-      <div class="logo-mark">🃏</div>
-      <div class="logo-text">ポケカ<span>価格</span>サーチ</div>
+<main>
+  <div class="search-card">
+    <div class="search-input-group">
+      <input type="text" id="cardInput" placeholder="カード名を入力 (例: ナンジャモ SAR)">
+      <button class="btn btn-primary" onclick="searchByText()">検索</button>
     </div>
-    <div class="settings-btn" onclick="openSettings()">⚙️</div>
-  </header>
-
-  <!-- Content -->
-  <div class="content" id="contentArea">
-
-    <!-- SEARCH SCREEN -->
-    <div class="screen active" id="screen-search">
-      <div class="search-hero">
-        <div class="search-bar">
-          <div class="search-input-wrap">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="カード名を入力..." onkeydown="if(event.key==='Enter')doSearch()">
-          </div>
-          <button class="search-go-btn" onclick="doSearch()">→</button>
-        </div>
-        <div class="chips">
-          <div class="chip" onclick="searchChip('リザードンex SAR')">リザードンex</div>
-          <div class="chip" onclick="searchChip('ピカチュウex')">ピカチュウex</div>
-          <div class="chip" onclick="searchChip('カビゴンex SAR')">カビゴンex</div>
-          <div class="chip" onclick="searchChip('ルギアex SAR')">ルギアex</div>
-          <div class="chip" onclick="searchChip('ミュウex SAR')">ミュウex</div>
-          <div class="chip" onclick="searchChip('マリィ SR')">マリィSR</div>
-        </div>
-      </div>
-      <div id="searchResults"></div>
-    </div>
-
-    <!-- CAMERA SCREEN -->
-    <div class="screen" id="screen-camera" style="height:100%;overflow:hidden">
-      <div class="camera-screen">
-        <div class="camera-viewfinder" id="viewfinder">
-          <video id="cameraVideo" autoplay playsinline></video>
-          <img id="capturedImg" />
-          <canvas id="captureCanvas"></canvas>
-          <div class="camera-empty" id="cameraEmpty">
-            <div class="big-icon">📷</div>
-            <p>カメラを起動してカードを撮影<br>または画像ファイルを選択</p>
-          </div>
-          <div class="corner-markers" id="cornerMarkers" style="display:none">
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
-          </div>
-          <div class="scan-line" id="scanLine"></div>
-        </div>
-        <div class="camera-controls" id="cameraControls">
-          <button class="cam-btn-secondary" onclick="selectImage()" title="画像選択">🖼️</button>
-          <button class="shutter-btn" onclick="takePhoto()" id="shutterBtn">
-            <div class="shutter-btn-inner"></div>
-          </button>
-          <button class="cam-btn-secondary" onclick="startCamera()" title="カメラ起動">📷</button>
-        </div>
-        <button class="analyze-btn-large" id="analyzeBtn" onclick="analyzeCapture()">✨ AIでカード認識</button>
-        <!-- スキャンモード切替 -->
-        <div style="display:flex;gap:8px;padding:0 20px 12px;justify-content:center" id="scanModeBar">
-          <button onclick="setScanMode('full')" id="modeBtn-full" style="flex:1;padding:8px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🃏 カード全体</button>
-          <button onclick="setScanMode('number')" id="modeBtn-number" style="flex:1;padding:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🔢 番号接写</button>
-        </div>
-        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
-      </div>
-      <div id="cameraResults" style="overflow-y:auto;max-height:30vh"></div>
-    </div>
-
-    <!-- HISTORY SCREEN -->
-    <div class="screen" id="screen-history">
-      <div class="history-list" id="historyList"></div>
-    </div>
-
+    <button class="btn btn-camera" onclick="triggerCamera()">
+      <span>📷</span> 写真を撮って検索
+    </button>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment">
   </div>
 
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchScreen('search')" id="nav-search">
-      <div class="nav-icon">🔍</div>
-      <div class="nav-label">検索</div>
+  <div id="loader" class="loader">
+    <div class="spinner"></div>
+    <div id="loaderText">最新価格を調査中...</div>
+  </div>
+
+  <div class="section-title"><span>🕒</span> 最近の検索</div>
+  <div id="historyList" class="history-list">
     </div>
-    <div class="nav-item" onclick="switchScreen('camera')" id="nav-camera">
-      <div class="nav-icon">📷</div>
-      <div class="nav-label">カメラ</div>
+</main>
+
+<div id="resultOverlay" class="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="font-weight: bold;">査定結果</div>
+      <div class="close-btn" onclick="closeModal('resultOverlay')">×</div>
     </div>
-    <div class="nav-item" onclick="switchScreen('history')" id="nav-history">
-      <div class="nav-icon">🕐</div>
-      <div class="nav-label">履歴</div>
-    </div>
-  </nav>
+    <div id="resultContent"></div>
+  </div>
 </div>
 
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settingsModal" onclick="closeSettings(event)">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title">⚙️ 設定</div>
-    <div id="apiStatusBadge"></div>
-    <div class="field-label">Google AI (Gemini) API Key</div>
-    <input type="password" class="field-input" id="apiKeyField" placeholder="AIzaSy..." autocomplete="off">
-    <button class="modal-save-btn" onclick="saveApiKey()">保存する</button>
+<div id="settingsOverlay" class="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="font-weight: bold;">設定</div>
+      <div class="close-btn" onclick="closeModal('settingsOverlay')">×</div>
+    </div>
+    <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Gemini API Key</p>
+    <input type="text" id="apiKeyInput" style="width: 100%; margin-bottom: 20px;" placeholder="AIZA...">
+    <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="saveSettings()">保存して閉じる</button>
   </div>
 </div>
 
 <script>
-// ========== STATE ==========
-let apiKey = '';
-let cameraStream = null;
-let capturedBase64 = null;
-let scanMode = 'full';
+let apiKey = localStorage.getItem('gemini_api_key') || '';
 let history = JSON.parse(localStorage.getItem('pokeca_history') || '[]');
 
-try {
-  apiKey = atob(localStorage.getItem('pokeca_ak') || '');
-} catch(e) {}
+document.getElementById('apiKeyInput').value = apiKey;
+renderHistory();
 
-function setScanMode(mode) {
-  scanMode = mode;
-  const isNumber = mode === 'number';
-  document.getElementById('modeBtn-full').style.cssText = `flex:1;padding:8px;background:${isNumber?'var(--surface)':'var(--accent)'};color:${isNumber?'var(--muted)':'white'};border:${isNumber?'1px solid var(--border)':'none'};border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer`;
-  document.getElementById('modeBtn-number').style.cssText = `flex:1;padding:8px;background:${isNumber?'var(--accent)':'var(--surface)'};color:${isNumber?'white':'var(--muted)'};border:${isNumber?'none':'1px solid var(--border)'};border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer`;
-  const hint = document.getElementById('cameraEmpty');
-  if (hint) hint.innerHTML = isNumber
-    ? '<div class="big-icon">🔢</div><p>カード左下の番号部分を<br>画面いっぱいに接写してください</p>'
-    : '<div class="big-icon">📷</div><p>カメラを起動してカードを撮影<br>または画像ファイルを選択</p>';
+// 1. 設定
+function openSettings() { document.getElementById('settingsOverlay').style.display = 'flex'; }
+function saveSettings() {
+  apiKey = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('gemini_api_key', apiKey);
+  closeModal('settingsOverlay');
+}
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// 2. カメラ起動
+function triggerCamera() { document.getElementById('cameraInput').click(); }
+document.getElementById('cameraInput').onchange = async (e) => {
+  if (!e.target.files[0]) return;
+  const base64 = await resizeImageBase64(e.target.files[0]);
+  searchByAI(base64);
+};
+
+// 3. AI検索 (テキスト/画像共通)
+async function searchByText() {
+  const query = document.getElementById('cardInput').value.trim();
+  if (!query) return;
+  searchByAI(null, query);
 }
 
-// ========== NAVIGATION ==========
-function switchScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
-  document.getElementById('contentArea').scrollTop = 0;
-  if (name !== 'camera' && cameraStream) stopCamera();
-  if (name === 'history') renderHistory();
-  if (name === 'camera') initCameraScreen();
-}
-
-function initCameraScreen() {
-  // ready state
-}
-
-// ========== SETTINGS ==========
-function openSettings() {
-  document.getElementById('apiKeyField').value = '';
-  const badge = document.getElementById('apiStatusBadge');
-  if (apiKey) {
-    badge.innerHTML = '<div class="api-status ok">✓ APIキー設定済み</div>';
-  } else {
-    badge.innerHTML = '<div class="api-status ng">⚠ APIキー未設定</div>';
-  }
-  document.getElementById('settingsModal').classList.add('show');
-}
-
-function closeSettings(e) {
-  if (e.target === document.getElementById('settingsModal')) {
-    document.getElementById('settingsModal').classList.remove('show');
-  }
-}
-
-function saveApiKey() {
-  const val = document.getElementById('apiKeyField').value.trim();
-  if (val && val.length > 10) {
-    apiKey = val;
-    localStorage.setItem('pokeca_ak', btoa(val));
-    document.getElementById('settingsModal').classList.remove('show');
-  } else {
-    alert('有効なGoogle AI APIキーを入力してください');
-  }
-}
-
-// ========== SEARCH ==========
-function searchChip(name) {
-  document.getElementById('searchInput').value = name;
-  doSearch();
-}
-
-function doSearch() {
-  const q = document.getElementById('searchInput').value.trim();
-  if (!q) return;
-  fetchPrices(q, 'searchResults');
-}
-
-async function fetchPrices(cardName, targetId) {
-  const el = document.getElementById(targetId);
+async function searchByAI(imageBase64, textQuery = "") {
   if (!apiKey) {
-    el.innerHTML = `<div class="section"><div class="error-card"><div class="error-icon">🔑</div><div class="error-msg">APIキー未設定</div><div class="error-detail">右上の設定からGoogle AI APIキーを設定してください</div></div></div>`;
+    alert("先に右上の⚙️からAPIキーを入力してね！");
+    openSettings();
     return;
   }
 
-  el.innerHTML = `
-    <div class="loading-screen">
-      <div class="pokeball-loader"></div>
-      <div class="loading-text">Google検索で価格を調査中...</div>
-    </div>`;
+  const loader = document.getElementById('loader');
+  loader.style.display = 'block';
+  loader.scrollIntoView({ behavior: 'smooth' });
 
   try {
-    const prompt = `「${cardName}」のポケモンカード買い取り価格を日本のサイトで検索。以下JSONのみ返答（説明文不要）:
-{"cardName":"正式名","rarity":"レア","set":"セット","shops":[{"name":"カードラッシュ","buyPrice":数値,"url":"https://www.cardrush-pokemon.jp/"},{"name":"トレトク","buyPrice":数値,"url":"https://toretoku.jp/"},{"name":"遊々亭","buyPrice":数値,"url":"https://yuyu-tei.jp/"},{"name":"駿河屋","buyPrice":数値,"url":"https://www.suruga-ya.jp/"},{"name":"まんだらけ","buyPrice":数値,"url":"https://mandarake.co.jp/"}],"note":""}
-価格不明は0。必ず検索して実際の価格を返すこと。`;
+    const prompt = `ポケモンカードの最新買取価格を教えてください。
+必ず以下のJSON形式のみで返答してください。余計な説明文は一切不要です。
+{
+  "cardName": "カード名",
+  "rarity": "レアリティ",
+  "shops": [
+    {"name": "ショップA", "buyPrice": 12000},
+    {"name": "ショップB", "buyPrice": 11500}
+  ]
+}
+対象: ${textQuery || "添付画像"}
+現在の市場価値を推測して回答してください。`;
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          tools: [{ google_search: {} }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
-        })
-      }
-    );
-
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
-
-    const text = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const m = clean.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error('解析エラー');
-    const parsed = JSON.parse(m[0]);
-
-    if (parsed.error) {
-      el.innerHTML = `<div class="section"><div class="error-card"><div class="error-icon">🤷</div><div class="error-msg">カードが見つかりませんでした</div><div class="error-detail">別の名前やレアリティで検索してみてください</div></div></div>`;
-      return;
+    const parts = [{ text: prompt }];
+    if (imageBase64) {
+      parts.push({
+        inline_data: { mime_type: "image/jpeg", data: imageBase64.split(',')[1] }
+      });
     }
 
-    renderPriceResults(parsed, el);
-    saveHistory(parsed);
-
-  } catch(e) {
-    el.innerHTML = `<div class="section"><div class="error-card"><div class="error-icon">⚠️</div><div class="error-msg">エラーが発生しました</div><div class="error-detail">${e.message}</div></div></div>`;
-  }
-}
-
-function renderPriceResults(data, container) {
-  const shops = (data.shops || []).filter(s => s.buyPrice > 0).sort((a,b) => b.buyPrice - a.buyPrice);
-  
-  let html = `
-    <div class="section" style="padding-top:20px">
-      <div class="card-identity">
-        <div class="card-icon">🃏</div>
-        <div class="card-identity-info">
-          <h2>${data.cardName}</h2>
-          <div class="meta">${[data.rarity, data.set].filter(Boolean).join(' · ')}</div>
-        </div>
-      </div>
-  `;
-
-  if (shops.length > 0) {
-    html += `
-      <div class="best-price-banner">
-        <div>
-          <div class="best-label">🏆 最高買取</div>
-          <div class="best-shop-name">${shops[0].name}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="best-price-val">¥${shops[0].buyPrice.toLocaleString()}</div>
-        </div>
-      </div>
-      <div class="section-title">全店舗比較</div>
-      <div class="ranking-list">
-    `;
-
-    shops.forEach((s, i) => {
-      const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
-      const rowClass = i === 0 ? 'shop-row rank1' : 'shop-row';
-      html += `
-        <a class="${rowClass}" href="${s.url}" target="_blank" rel="noopener">
-          <div class="rank-badge ${rankClass}">${i+1}</div>
-          <div class="shop-info">
-            <div class="name">${s.name}</div>
-            <div class="cond">${s.condition || '—'}</div>
-          </div>
-          <div class="shop-price-col">
-            <div class="shop-price-num">¥${s.buyPrice.toLocaleString()}</div>
-            <div class="shop-price-label">買取価格</div>
-          </div>
-          <div class="arrow">›</div>
-        </a>
-      `;
-    });
-
-    html += `</div>`;
-  } else {
-    html += `<div class="section-title">買取情報</div><div class="error-card"><div class="error-detail">現在の買い取り情報が取得できませんでした</div></div>`;
-  }
-
-  html += `</div>`;
-
-  if (data.note) {
-    html += `<div class="section"><div class="error-card" style="background:rgba(255,159,28,0.08);border-color:rgba(255,159,28,0.3)"><div class="error-detail" style="color:var(--accent2)">📌 ${data.note}</div></div></div>`;
-  }
-
-  html += `<p class="disclaimer">※AIによる推定価格です。最新・正確な価格は各店舗サイトでご確認ください</p><br>`;
-
-  container.innerHTML = html;
-  document.getElementById('contentArea').scrollTop = 0;
-}
-
-// ========== CAMERA ==========
-async function startCamera() {
-  try {
-    if (cameraStream) stopCamera();
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } }
-    });
-    cameraStream = stream;
-    const vid = document.getElementById('cameraVideo');
-    vid.srcObject = stream;
-    vid.classList.add('active');
-    document.getElementById('capturedImg').classList.remove('active');
-    document.getElementById('cameraEmpty').style.display = 'none';
-    document.getElementById('cornerMarkers').style.display = 'block';
-    document.getElementById('analyzeBtn').classList.remove('show');
-    capturedBase64 = null;
-  } catch(e) {
-    alert('カメラにアクセスできません: ' + e.message);
-  }
-}
-
-function stopCamera() {
-  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
-}
-
-function takePhoto() {
-  const vid = document.getElementById('cameraVideo');
-  if (!vid.classList.contains('active')) { startCamera(); return; }
-  
-  const canvas = document.getElementById('captureCanvas');
-  canvas.width = vid.videoWidth;
-  canvas.height = vid.videoHeight;
-  canvas.getContext('2d').drawImage(vid, 0, 0);
-  
-  capturedBase64 = canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
-  
-  const img = document.getElementById('capturedImg');
-  img.src = 'data:image/jpeg;base64,' + capturedBase64;
-  img.classList.add('active');
-  vid.classList.remove('active');
-  stopCamera();
-  
-  document.getElementById('cornerMarkers').style.display = 'none';
-  document.getElementById('analyzeBtn').classList.add('show');
-  
-  // 撮影後に自動でAI認識を開始
-  setTimeout(() => analyzeCapture(), 300);
-}
-
-function selectImage() {
-  document.getElementById('fileInput').click();
-}
-
-function handleFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    capturedBase64 = ev.target.result.split(',')[1];
-    const img = document.getElementById('capturedImg');
-    img.src = ev.target.result;
-    img.classList.add('active');
-    document.getElementById('cameraVideo').classList.remove('active');
-    document.getElementById('cameraEmpty').style.display = 'none';
-    document.getElementById('cornerMarkers').style.display = 'none';
-    document.getElementById('analyzeBtn').classList.add('show');
-    stopCamera();
-    // auto analyze
-    analyzeCapture();
-  };
-  reader.readAsDataURL(file);
-  e.target.value = '';
-}
-
-async function analyzeCapture() {
-  if (!capturedBase64) return;
-  if (!apiKey) {
-    document.getElementById('cameraResults').innerHTML = `<div class="section"><div class="error-card"><div class="error-icon">🔑</div><div class="error-msg">APIキー未設定</div><div class="error-detail">設定からAPIキーを入力してください</div></div></div>`;
-    return;
-  }
-
-  document.getElementById('scanLine').classList.add('active');
-  document.getElementById('analyzeBtn').classList.remove('show');
-  document.getElementById('cameraResults').innerHTML = `
-    <div class="loading-screen">
-      <div class="pokeball-loader"></div>
-      <div class="loading-text">カードのテキストを読み取り中...</div>
-    </div>`;
-
-  try {
-    const smallBase64 = await resizeImageBase64(capturedBase64, 512, 0.6);
-
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            role: 'user',
-            parts: [
-              { inline_data: { mime_type: 'image/jpeg', data: smallBase64 } },
-              { text: scanMode === 'number'
-                ? 'この画像はポケモンカード左下部分の接写です。カード番号（例:104/193）を正確に読み取りJSONのみ返答:\n{"cardNo":"読み取った番号（スラッシュ含む）","confidence":"high/medium/low"}\n読めない場合{"cardNo":"unknown"}'
-                : 'このポケモンカードの左上のカード名と、あればexやVなどの種別を読み取ってください。JSONのみ返答:\n{"isCard":true,"cardName":"左上の名前+ex/V等をそのまま","rarity":"SAR/SR/AR/RR/R等のレアリティ記号","set":"セット名(不明なら空)","confidence":"high/medium/low"}\nポケモンカードでない場合{"isCard":false}' }
-            ]
-          }],
-          generationConfig: { temperature: 0, maxOutputTokens: 300 }
-        })
-      }
-    );
-
-    document.getElementById('scanLine').classList.remove('active');
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error?.message || `HTTP ${resp.status}`);
-
-    const text = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const m = clean.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error('認識失敗');
-    const card = JSON.parse(m[0]);
-
-    // 番号接写モード
-    if (scanMode === 'number') {
-      const no = card.cardNo && card.cardNo !== 'unknown' ? card.cardNo : null;
-      document.getElementById('cameraResults').innerHTML = `
-        <div class="section" style="padding-top:16px">
-          <div class="section-title">カード番号読み取り結果</div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px">
-            <div style="font-size:11px;color:var(--muted);margin-bottom:6px">カード番号</div>
-            <input type="text" id="recognizedNo" value="${no || ''}" placeholder="例: 104/193" style="width:100%;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:18px;font-family:inherit;outline:none;margin-bottom:10px;text-align:center;letter-spacing:2px">
-            <div style="font-size:11px;color:var(--muted);margin-bottom:6px">カード名（手入力）</div>
-            <input type="text" id="recognizedName" value="" placeholder="例: ミュウex" style="width:100%;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none">
-          </div>
-          <button onclick="searchFromRecognition()" style="width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 4px 16px rgba(255,59,92,0.35)">🔍 買い取り価格を検索</button>
-        </div>`;
-      return;
-    }
-
-    if (!card.isCard) {
-      document.getElementById('cameraResults').innerHTML = `<div class="section"><div class="error-card"><div class="error-icon">❓</div><div class="error-msg">カードを認識できませんでした</div><div class="error-detail">明るい場所でカードを正面から撮影してください</div></div></div>`;
-      document.getElementById('analyzeBtn').classList.add('show');
-      return;
-    }
-
-    // 認識結果を表示して編集・確認してから検索
-    document.getElementById('cameraResults').innerHTML = `
-      <div class="section" style="padding-top:16px">
-        <div class="section-title">認識結果（修正可能）</div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">カード名</div>
-          <input type="text" id="recognizedName" value="${card.cardName || ''}" style="width:100%;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">レアリティ（SAR/SR/AR/RR/R など）</div>
-          <input type="text" id="recognizedRarity" value="${card.rarity || ''}" style="width:100%;padding:8px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none">
-        </div>
-        <button onclick="searchFromRecognition()" style="width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 4px 16px rgba(255,59,92,0.35)">🔍 この内容で買い取り価格を検索</button>
-      </div>
-    `;
-
-  } catch(e) {
-    document.getElementById('scanLine').classList.remove('active');
-    document.getElementById('cameraResults').innerHTML = `<div class="section"><div class="error-card"><div class="error-icon">⚠️</div><div class="error-msg">エラー</div><div class="error-detail">${e.message}</div></div></div>`;
-    document.getElementById('analyzeBtn').classList.add('show');
-  }
-}
-
-function searchFromRecognition() {
-  const name = document.getElementById('recognizedName')?.value.trim();
-  const rarity = document.getElementById('recognizedRarity')?.value.trim();
-  const no = document.getElementById('recognizedNo')?.value.trim();
-  if (!name && !no) return;
-  const query = [name, rarity, no].filter(Boolean).join(' ');
-  fetchPrices(query, 'cameraResults');
-}
-
-// ========== RATE LIMIT RETRY ==========
-async function fetchWithRetry(url, options, maxRetries = 2) {
-  for (let i = 0; i <= maxRetries; i++) {
-    const resp = await fetch(url, options);
-    if (resp.status === 429 || (resp.ok === false && i < maxRetries)) {
-      const data = await resp.json().catch(() => ({}));
-      const msg = data.error?.message || '';
-      if (msg.includes('rate limit') || resp.status === 429) {
-        // Show countdown
-        const waitSec = 60;
-        for (let s = waitSec; s > 0; s--) {
-          const els = document.querySelectorAll('.loading-text');
-          els.forEach(el => el.textContent = `レート制限中... ${s}秒後に再試行`);
-          await new Promise(r => setTimeout(r, 1000));
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: parts }],
+        // フリーズ防止のため tools (google_search) を削除
+        generationConfig: { 
+          temperature: 0.2,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 1000 
         }
-        continue;
-      }
-    }
-    return resp;
+      })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || '通信エラー');
+
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // JSONだけを確実に抽出する正規表現
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('AIがデータを生成できませんでした');
+    
+    const result = JSON.parse(jsonMatch[0]);
+    saveHistory(result);
+    renderHistory();
+    showResult(result);
+
+  } catch (err) {
+    console.error(err);
+    alert("エラー: " + err.message);
+  } finally {
+    loader.style.display = 'none';
   }
 }
 
-function resizeImageBase64(base64, maxWidth = 800, quality = 0.7) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxWidth / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
+// 4. 結果表示
+function showResult(data) {
+  const shops = (data.shops || []).sort((a,b) => b.buyPrice - a.buyPrice);
+  const html = `
+    <div class="res-card-name">${data.cardName} <span style="font-size:14px; opacity:0.7">${data.rarity || ''}</span></div>
+    ${shops.map((s, i) => `
+      <div class="shop-item ${i === 0 ? 'best' : ''}">
+        <div>
+          <div class="shop-name">${i === 0 ? '👑 ' : ''}${s.name}</div>
+        </div>
+        <div class="shop-price">¥${s.buyPrice.toLocaleString()}</div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('resultContent').innerHTML = html;
+  document.getElementById('resultOverlay').style.display = 'flex';
+}
+
+// 5. 画像リサイズ (ブラウザ負荷軽減)
+function resizeImageBase64(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const max = 512; // サイズを少し小さくして処理を速くする
+        if (width > height) {
+          if (width > max) { height *= max / width; width = max; }
+        } else {
+          if (height > max) { width *= max / height; height = max; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = e.target.result;
     };
-    img.src = 'data:image/jpeg;base64,' + base64;
+    reader.readAsDataURL(file);
   });
 }
 
-
+// 6. 履歴
 function saveHistory(data) {
-  const shops = (data.shops || []).filter(s => s.buyPrice > 0).sort((a,b) => b.buyPrice - a.buyPrice);
   const entry = {
     id: Date.now(),
     cardName: data.cardName,
     rarity: data.rarity,
-    bestShop: shops[0]?.name || '—',
-    bestPrice: shops[0]?.buyPrice || 0,
-    date: new Date().toLocaleDateString('ja-JP', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+    bestPrice: data.shops?.[0]?.buyPrice || 0,
+    date: new Date().toLocaleDateString('ja-JP', {month:'short', day:'numeric'}),
     data
   };
   history.unshift(entry);
-  if (history.length > 30) history = history.slice(0, 30);
+  if (history.length > 20) history.pop();
   localStorage.setItem('pokeca_history', JSON.stringify(history));
 }
 
 function renderHistory() {
   const el = document.getElementById('historyList');
-  if (history.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>検索履歴がまだありません</p></div>`;
-    return;
-  }
   el.innerHTML = history.map(h => `
-    <div class="history-row" onclick="loadFromHistory(${h.id})">
+    <div class="history-row" onclick='showResult(${JSON.stringify(h.data)})'>
       <div>
         <div class="history-name">${h.cardName}</div>
-        <div class="history-meta">${h.rarity || ''} · ${h.date} · ${h.bestShop}</div>
+        <div class="history-meta">${h.rarity || ''} · ${h.date}</div>
       </div>
-      <div class="history-best">¥${(h.bestPrice||0).toLocaleString()}</div>
+      <div class="history-price">¥${h.bestPrice.toLocaleString()}</div>
     </div>
   `).join('');
-}
-
-function loadFromHistory(id) {
-  const entry = history.find(h => h.id === id);
-  if (!entry) return;
-  switchScreen('search');
-  document.getElementById('searchInput').value = entry.cardName;
-  renderPriceResults(entry.data, document.getElementById('searchResults'));
 }
 </script>
 </body>
