@@ -25,15 +25,27 @@
     <div id="res">準備完了！</div>
 
 <script>
-    const keyInp = document.getElementById('api-key'), imgInp = document.getElementById('img'), pre = document.getElementById('preview'), btn = document.getElementById('go'), res = document.getElementById('res');
+    const keyInp = document.getElementById('api-key'),
+          imgInp = document.getElementById('img'),
+          pre    = document.getElementById('preview'),
+          btn    = document.getElementById('go'),
+          res    = document.getElementById('res');
+
     let b64 = null;
+    let mimeType = 'image/jpeg'; // ← ファイルごとに上書きする
 
     imgInp.onchange = e => {
         const f = e.target.files[0];
-        if(!f) return;
+        if (!f) return;
+
+        // ★修正①: 実際のMIMEタイプを取得
+        mimeType = f.type || 'image/jpeg';
+
         const r = new FileReader();
         r.onload = ev => {
-            pre.src = ev.target.result; pre.style.display = 'block'; btn.style.display = 'block';
+            pre.src = ev.target.result;
+            pre.style.display = 'block';
+            btn.style.display = 'block';
             b64 = ev.target.result.split(',')[1];
         };
         r.readAsDataURL(f);
@@ -41,40 +53,62 @@
 
     btn.onclick = async () => {
         const key = keyInp.value.trim();
-        if(!key) return alert('キーを入れてね！');
+        if (!key) return alert('キーを入れてね！');
+        if (!b64)  return alert('カード画像を選んでね！');
+
         res.innerText = "有料エンジンで超速鑑定中...";
+        btn.disabled = true;
+
         try {
-            // 【究極の修正】Google Cloud有料キーで最も通るURLの書き方
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-            
+            // ★修正②: モデルを最新の gemini-2.0-flash に更新
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [
-                        { text: "このポケモンカードの名前、レアリティ、最新のメルカリ相場を詳しく教えて。" },
-                        { inlineData: { mimeType: "image/jpeg", data: b64 } }
-                    ]}]
+                    contents: [{
+                        parts: [
+                            { text: "このポケモンカードの名前、レアリティ、最新のメルカリ相場を詳しく教えて。" },
+                            // ★修正①: mimeType を動的に使用
+                            { inlineData: { mimeType: mimeType, data: b64 } }
+                        ]
+                    }]
                 })
             });
 
             const data = await response.json();
-            
-            // エラーチェックを強化
+
+            // APIエラー処理
             if (data.error) {
-                if (data.error.message.includes("API key not valid")) {
-                    throw new Error("APIキーが間違っているか、まだ有効になっていないよ。");
+                const msg = data.error.message || '';
+                if (msg.includes('API key not valid') || msg.includes('API_KEY_INVALID')) {
+                    throw new Error('APIキーが無効だよ。コピーミスや有効化待ちの可能性あり！');
                 }
-                throw new Error(data.error.message);
+                throw new Error(msg || 'APIエラーが発生しました');
             }
 
-            if (data.candidates && data.candidates[0].content) {
-                res.innerText = data.candidates[0].content.parts[0].text;
-            } else {
-                res.innerText = "ごめん！解析できなかった。もう一度だけ撮ってみて！";
+            // ★修正③: candidates・finishReason・セーフティフィルターを正しく処理
+            const candidate = data.candidates?.[0];
+            if (!candidate) {
+                throw new Error('応答が空でした。もう一度試してみて！');
             }
+
+            if (candidate.finishReason === 'SAFETY') {
+                throw new Error('セーフティフィルターにかかってしまいました。別の角度から撮り直してみて！');
+            }
+
+            const text = candidate.content?.parts?.[0]?.text;
+            if (text) {
+                res.innerText = text;
+            } else {
+                throw new Error('テキストを取得できませんでした。もう一度撮ってみて！');
+            }
+
         } catch (e) {
-            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}<br><br>※もし解決しない場合は、キーを作り直して5分待ってみて！</span>`;
+            res.innerHTML = `<span style="color:#ff6b6b">❌ エラー: ${e.message}<br><br>💡 解決しない場合は、キーを作り直して5分待ってから試してみて！</span>`;
+        } finally {
+            btn.disabled = false;
         }
     };
 </script>
