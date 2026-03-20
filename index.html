@@ -3,25 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポケカ査定DX Premium</title>
+    <title>ポケカ査定DX Premium FINAL</title>
     <style>
-        :root { --accent: #ff0000; --bg: #000; }
+        :root { --accent: #ff0000; --bg: #0d0d0d; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .box { background: #1a1a1a; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        input[type="text"] { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 15px; }
-        .btn { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; }
+        input[type="text"] { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
+        .btn { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; }
         #preview { width: 100%; border-radius: 10px; display: none; margin-top: 15px; border: 2px solid var(--accent); }
-        #res { width: 100%; max-width: 400px; background: #111; padding: 15px; border-radius: 10px; font-size: 14px; white-space: pre-wrap; line-height: 1.6; border: 1px solid #222; }
+        #res { width: 100%; max-width: 400px; background: #111; padding: 15px; border-radius: 10px; font-size: 14px; white-space: pre-wrap; line-height: 1.6; border: 1px solid #222; min-height: 100px; }
     </style>
 </head>
 <body>
     <h1 style="color:var(--accent)">ポケカ査定DX Premium</h1>
     <div class="box">
-        <input type="text" id="api-key" placeholder="Google Cloudの新しいキーを貼る">
+        <label style="font-size:11px; color:#888;">Google Cloud APIキーを貼り付け</label>
+        <input type="text" id="api-key" placeholder="AIza...で始まるキー">
         <label for="img" class="btn" style="background:#444">📷 カードを撮影</label>
         <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
         <img id="preview">
-        <button id="go" class="btn" style="display:none; margin-top:15px">✨ 有料版で査定する</button>
+        <button id="go" class="btn" style="display:none; margin-top:15px">✨ プレミアム査定を開始</button>
     </div>
     <div id="res">ここに結果が出ます</div>
 
@@ -44,25 +45,42 @@
 
     btn.onclick = async () => {
         const key = keyInp.value.trim();
-        res.innerText = "プレミアム鑑定中...";
+        if(!key) return alert('キーを入れてね！');
+        res.innerText = "有料版エンジンで鑑定中...";
+        btn.disabled = true;
+
         try {
-            // 有料版Google Cloudキーに最適な最新エンドポイント
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            // 【重要】有料版キーに最も適した最新の安定URL（v1）に変更しました
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [
-                        { text: "このポケモンカードの名前、レアリティ、メルカリでの最新相場を日本語で詳しく教えて。" },
+                        { text: "このポケモンカードの名前、レアリティ、現在のメルカリ相場を詳しく教えて。" },
                         { inlineData: { mimeType: "image/jpeg", data: b64 } }
                     ]}]
                 })
             });
+
             const data = await response.json();
-            if(data.error) throw new Error(data.error.message);
-            res.innerText = data.candidates[0].content.parts[0].text;
+            
+            if(data.error) {
+                // エラーの詳細を表示
+                throw new Error(data.error.message);
+            }
+
+            if(data.candidates && data.candidates[0].content) {
+                res.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                res.innerText = "解析に失敗しました。もう一度撮ってみて！";
+            }
+
         } catch (e) {
-            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}<br><br>※Google Cloudの設定で「API制限なし」になっているか確認してね！</span>`;
+            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}<br><br>※Google Cloudで「Generative Language API」が有効になっているか確認してね。</span>`;
+        } finally {
+            btn.disabled = false;
         }
     };
 </script>
