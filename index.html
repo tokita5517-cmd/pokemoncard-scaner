@@ -3,65 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ポケカサーチ 最終版</title>
+<title>ポケカ査定DX</title>
 <style>
-  body { background: #0a0a0f; color: white; font-family: sans-serif; padding: 20px; }
-  .box { background: #13131a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-  input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #1c1c28; color: white; box-sizing: border-box; }
-  button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: #ff3b5c; color: white; }
-  #res { margin-top: 20px; padding: 15px; background: #1c1c28; border-radius: 10px; display: none; }
+  body { background: #050508; color: white; font-family: sans-serif; padding: 20px; }
+  .box { background: #12121a; padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center; }
+  input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #1c1c28; color: white; box-sizing: border-box; font-size: 16px; }
+  .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #ff3b5c; color: white; font-size: 16px; }
+  #res { margin-top: 20px; padding: 15px; background: #1c1c28; border-radius: 15px; display: none; border: 2px solid #ff9f1c; }
 </style>
 </head>
 <body>
 
 <div class="box">
-  <h2>ポケカ価格サーチ</h2>
-  <p id="st" style="color:#888; font-size:12px;">APIキーを入れてね ⚙️</p>
-  <input type="text" id="name" placeholder="例: リザードン SAR">
-  <button onclick="search()">査定する</button>
-  <button onclick="setKey()" style="background:#333; margin-top:10px;">⚙️ 設定</button>
+  <h2 style="color:#ff3b5c;">ポケカ査定DX</h2>
+  <div id="keyDisp" style="font-size:10px; color:#888; margin-bottom:10px;">APIキーを設定してください</div>
+  <input type="text" id="cardName" placeholder="例: ピカチュウ SAR">
+  <button class="btn" onclick="checkAndSearch()">査定する</button>
+  <button onclick="inputKey()" style="background:#333; color:white; border:none; padding:10px; margin-top:15px; border-radius:8px; width:100%;">⚙️ APIキーを設定しなおす</button>
 </div>
 
 <div id="loading" style="display:none; text-align:center; margin-top:20px;">💎 AIが調査中...</div>
 <div id="res"></div>
 
 <script>
-let key = localStorage.getItem('pokekey') || '';
-if(key) document.getElementById('st').innerText = "準備OK! ✅";
+// 1. キーを読み込む
+let myKey = localStorage.getItem('pokekey_v2') || '';
+updateKeyDisplay();
 
-function setKey() {
-  const k = prompt("APIキー(AIza...)を入れてね", key);
-  if(k) { key = k.trim(); localStorage.setItem('pokekey', key); location.reload(); }
+function updateKeyDisplay() {
+  const d = document.getElementById('keyDisp');
+  if(myKey) {
+    d.innerText = "キー設定済み: " + myKey.substring(0,6) + "********";
+    d.style.color = "#2ecc71";
+  }
 }
 
-async function search() {
-  if(!key) return alert("設定からキーを入れてね");
-  const val = document.getElementById('name').value;
+function inputKey() {
+  const k = prompt("Google AI Studioでコピーした『AIza...』から始まるキーを貼り付けてね");
+  if(k && k.trim().length > 10) {
+    myKey = k.trim();
+    localStorage.setItem('pokekey_v2', myKey);
+    updateKeyDisplay();
+    alert("キーを保存したよ！もう一度検索してみてね。");
+  } else {
+    alert("キーが正しくないみたい。もう一度コピーしてきてね。");
+  }
+}
+
+async function checkAndSearch() {
+  if(!myKey) return inputKey();
+  
+  const name = document.getElementById('cardName').value;
+  if(!name) return alert("カード名を入れてね");
+
   document.getElementById('loading').style.display = 'block';
+  document.getElementById('res').style.display = 'none';
 
   try {
-    // ★ここが超重要！「flash-8b」という一番軽いモデルを使う
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${key}`;
+    // どんな環境でも一番動きやすいURL
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${myKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `「${val}」の買取価格をJSONで教えて。{"name":"${val}","price":"1000円"}` }] }]
+        contents: [{ parts: [{ text: `ポケモンカード「${name}」の買取価格を教えて。必ずJSON形式 {"name":"${name}","price":"1000円"} で。` }] }]
       })
     });
 
     const data = await response.json();
-    if(data.error) throw new Error(data.error.message);
+    
+    if(data.error) {
+      if(data.error.status === "PERMISSION_DENIED") {
+        throw new Error("APIキーが間違っているか、有効になっていないよ。もう一度⚙️から設定してみて！");
+      }
+      throw new Error(data.error.message);
+    }
 
     const txt = data.candidates[0].content.parts[0].text;
     const json = JSON.parse(txt.match(/\{[\s\S]*\}/)[0]);
 
     const r = document.getElementById('res');
-    r.innerHTML = `<h3>${json.name}</h3><p style="color:#ff9f1c; font-size:24px;">${json.price}</p>`;
+    r.innerHTML = `<h3 style="margin:0;">${json.name}</h3><p style="color:#ff9f1c; font-size:30px; font-weight:bold; margin:10px 0;">${json.price}</p>`;
     r.style.display = 'block';
   } catch(e) {
-    alert("エラー: " + e.message);
+    alert("エラーが発生したよ:\n" + e.message);
   } finally {
     document.getElementById('loading').style.display = 'none';
   }
