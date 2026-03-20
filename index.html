@@ -29,7 +29,7 @@
         <img id="preview">
         <button id="search-btn" class="btn" style="display:none; margin-top:15px;">✨ 査定を開始する</button>
     </div>
-    <div id="result-area">「ゼロの大空洞」を撮って送ってみて！</div>
+    <div id="result-area">「ゼロの大空洞」を査定しよう！</div>
 </div>
 
 <script>
@@ -56,12 +56,12 @@
     searchBtn.addEventListener('click', async () => {
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) return alert('キーを入れてね！');
-        resultArea.textContent = "AIがカードを見ています...";
+        resultArea.textContent = "AIがカードを鑑定中...";
         searchBtn.disabled = true;
 
         try {
-            // 【ここを修正】最も確実に画像が動くURLとモデル名に変更しました
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            // 【ここがポイント！】v1beta と gemini-1.5-flash-latest を組み合わせています
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -69,7 +69,7 @@
                 body: JSON.stringify({
                     contents: [{
                         parts: [
-                            { text: "このポケモンカードの名前とレアリティ、市場価格の相場を日本語で教えて。" },
+                            { text: "このポケモンカードの名前とレアリティ、市場価格の相場を日本語で詳しく教えて。" },
                             { inlineData: { mimeType: "image/jpeg", data: base64Image } }
                         ]
                     }]
@@ -78,15 +78,12 @@
 
             const data = await response.json();
             
-            if (data.error) {
-                // エラーが出た場合、その内容を表示
-                throw new Error(data.error.message);
-            }
+            if (data.error) throw new Error(data.error.message);
 
             if (data.candidates && data.candidates[0].content) {
                 resultArea.textContent = data.candidates[0].content.parts[0].text;
             } else {
-                resultArea.textContent = "ごめん、うまく読み取れなかった！もう一回撮ってみて。";
+                resultArea.textContent = "うまく読み取れなかったよ。光の反射に気をつけて撮り直してみて！";
             }
 
         } catch (error) {
