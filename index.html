@@ -16,7 +16,7 @@
 <body>
     <h1 style="color:#ff0000">ポケカ査定DX Premium</h1>
     <div class="box">
-        <input type="text" id="api-key" placeholder="AIza...で始まる新しいキーを貼る">
+        <input type="text" id="api-key" placeholder="APIキー(AIza...)を貼る">
         <label for="img" class="btn" style="background:#444">📷 カードを撮影</label>
         <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
         <img id="preview">
@@ -44,15 +44,15 @@
         if(!key) return alert('キーを貼ってね！');
         res.innerText = "プレミアムエンジンで鑑定中...";
         try {
-            // Google Cloudのキーで確実に動くURL形式
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            // 【修正ポイント】モデル名を gemini-1.5-flash-latest に変更しました
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
             
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [
-                        { text: "このポケモンカードの名前、レアリティ、メルカリの相場を詳しく教えて。" },
+                        { text: "このポケモンカードの名前、レアリティ、メルカリの最新相場（最高値と最安値）を日本語で詳しく教えて。" },
                         { inlineData: { mimeType: "image/jpeg", data: b64 } }
                     ]}]
                 })
@@ -62,7 +62,7 @@
             if(data.error) throw new Error(data.error.message);
             res.innerText = data.candidates[0].content.parts[0].text;
         } catch (e) {
-            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}</span>`;
+            res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}<br><br>※GitHubの反映に少し時間がかかる場合があります。</span>`;
         }
     };
 </script>
