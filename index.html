@@ -242,6 +242,10 @@
                             </select>
                         </div>
                     </div>
+                    <div style="margin-bottom:8px">
+                        <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">（左下の小さい文字 例:sv8a, M2a）</span></label>
+                        <input class="form-input" id="ocr-setcode-input" placeholder="例: sv8a, M2a, sv7a">
+                    </div>
                     <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
                 </div>
                 <div style="display:flex;gap:8px">
@@ -307,8 +311,8 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0">
-                    <label class="form-label">セット名（任意）</label>
-                    <input class="form-input" id="m-set-hint" placeholder="例：黒炎の支配者">
+                    <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">例:sv8a, M2a</span></label>
+                    <input class="form-input" id="m-setcode" placeholder="例: M2a, sv8a">
                 </div>
             </div>
             <button class="btn btn-red" id="manual-search-btn">🔍 査定・画像検索</button>
@@ -511,6 +515,8 @@ function resetScan(){
     if(_naEl)_naEl.value='';
     if(_nbEl)_nbEl.value='';
     if(rarEl)rarEl.value='';
+    const _scClear=document.getElementById('ocr-setcode-input');
+    if(_scClear)_scClear.value='';
 }
 
 // Claude API共通
@@ -549,8 +555,8 @@ document.getElementById('go-btn').onclick=async()=>{
             {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
             {type:'text',text:`このポケモンカードから以下の情報を読み取ってください。
 JSON形式のみで返してください:
-{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"左下のレアリティ記号（SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字）"}
-カード名は左上、カード番号は左下の数字/数字の部分、レアリティは番号の隣の記号です。`}
+{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分、不明なら空文字）"}
+カード名は左上、カード番号は左下の数字/数字の部分、レアリティは番号の隣の記号、セットコードは番号の左側の英数字です。`}
         ]}]);
         let ocr={name:'',number:'',rarity:''};
         try{
@@ -564,6 +570,8 @@ JSON形式のみで返してください:
             if(m)ocr.number=m[0];
         }
         document.getElementById('ocr-name-input').value=ocr.name||'';
+        const _scEl=document.getElementById('ocr-setcode-input');
+        if(_scEl)_scEl.value=ocr.setcode||'';
         const _parts=(ocr.number||'').split('/');
         document.getElementById('ocr-num-a').value=_parts[0]||'';
         document.getElementById('ocr-num-b').value=_parts[1]||'';
@@ -596,16 +604,16 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
 };
 
 // カード検索（番号 or 名前）
-async function lookupAndDisplay(number,name,rarity,callback){
+async function lookupAndDisplay(number,name,rarity,setcode,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
 
         // web_searchは複数ターン必要なのでmessages配列で対応
         const messages=[{role:'user',content:`ポケモンカードを特定して価格を調べてください。
-カード番号:${number||'不明'} カード名:${name||'不明'} レアリティ:${rarity||'不明'}
-まずweb_searchで「ポケモンカード ${number||name} ${rarity||''} メルカリ 相場」を検索し、
+セットコード:${setcode||'不明'} カード番号:${number||'不明'} カード名:${name||'不明'} レアリティ:${rarity||'不明'}
+まずweb_searchで「ポケモンカード ${setcode?setcode+'-':''}${number||name} ${rarity||''} メルカリ 相場」を検索し、
 その結果をもとに以下のJSON形式のみで返してください（価格は整数）:
-{"name":"カード名","card_number":"${number||'不明'}","rarity":"${rarity||'RR'}","type":"fire","set":"セット名","price_nm_min":3000,"price_nm_max":5000,"price_lp_min":2000,"price_lp_max":3500,"price_mp_min":500,"price_mp_max":1500,"note":"調査した相場","tcg_name":"english name"}`}];
+{"name":"カード名","card_number":"${setcode?setcode+'-':''}${number||'不明'}","rarity":"${rarity||'RR'}","type":"fire","set":"セット名","price_nm_min":3000,"price_nm_max":5000,"price_lp_min":2000,"price_lp_max":3500,"price_mp_min":500,"price_mp_max":1500,"note":"調査した相場","tcg_name":"english name"}`}];
 
         let finalText='';
         let loopCount=0;
@@ -744,6 +752,7 @@ document.getElementById('manual-search-btn').onclick=async()=>{
     const num=(_mna&&_mnb)?`${_mna}/${_mnb}`:(_mna||_mnb||'');
     const name=document.getElementById('m-name').value.trim();
     const rarity=document.getElementById('m-rarity-search').value;
+    const setcode=document.getElementById('m-setcode')?.value.trim()||'';
     if(!num&&!name){showToast('番号またはカード名を入力してください','var(--red)');return;}
     document.getElementById('manual-search-btn').textContent='検索中...';
     document.getElementById('manual-search-btn').disabled=true;
