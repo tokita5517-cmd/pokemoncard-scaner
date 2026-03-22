@@ -556,10 +556,17 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
 async function lookupAndDisplay(number,name,rarity,callback){
     try{
         const query=number?`カード番号${number}のポケモンカード（${name||''}）`:name;
-        const raw=await callClaude([{role:'user',content:`ポケモンカード「${query}」${rarity?'レアリティ:'+rarity:''}を查定してください。必ずJSON形式のみで返してください：
-{"name":"正式カード名","card_number":"${number||'?'}","rarity":"SAR/SR/AR/RRR/RR/R/U/C/OTHER","type":"fire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknown","set":"収録セット名","price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"note":"一言コメント","tcg_name":"ポケモンTCG APIで検索するための英語カード名"}
-価格はメルカリ相場（円）。`}],768);
-        const p=JSON.parse(raw.replace(/```json|```/g,'').trim());
+        const raw=await callClaude([{role:'user',content:`ポケモンカード「${query}」${rarity?'レアリティ:'+rarity:''}を査定してください。
+以下のJSON形式のみで返答してください。説明文や前置きは不要です。数値フィールドは必ず整数で入力してください：
+{"name":"正式カード名","card_number":"${number||'不明'}","rarity":"SAR","type":"fire","set":"収録セット名","price_nm_min":1000,"price_nm_max":2000,"price_lp_min":800,"price_lp_max":1500,"price_mp_min":500,"price_mp_max":1000,"note":"コメント","tcg_name":"English card name"}
+rarity は SAR/SR/AR/RRR/RR/R/U/C/OTHER のいずれか。type は fire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknown のいずれか。価格はメルカリ相場（円）の整数。`}],1024);
+        let jsonStr=raw.replace(/```json|```/g,'').trim();
+        // JSONブロックだけ抽出
+        const jstart=jsonStr.indexOf('{');const jend=jsonStr.lastIndexOf('}');
+        if(jstart>=0&&jend>jstart)jsonStr=jsonStr.slice(jstart,jend+1);
+        const p=JSON.parse(jsonStr);
+        // 価格フィールドが欠けていたらデフォルト値を補完
+        ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{if(typeof p[k]!=='number')p[k]=0;});
 
         // ポケモンTCG APIで画像取得
         let imgUrl=null;
@@ -598,13 +605,16 @@ async function lookupAndDisplay(number,name,rarity,callback){
 }
 
 function priceGridHTML(p){
-    const nm=Math.round((p.price_nm_min+p.price_nm_max)/2);
-    const lp=Math.round((p.price_lp_min+p.price_lp_max)/2);
-    const mp=Math.round((p.price_mp_min+p.price_mp_max)/2);
+    const nm=Math.round(((p.price_nm_min||0)+(p.price_nm_max||0))/2);
+    const lp=Math.round(((p.price_lp_min||0)+(p.price_lp_max||0))/2);
+    const mp=Math.round(((p.price_mp_min||0)+(p.price_mp_max||0))/2);
+    const nm_min=p.price_nm_min||nm;const nm_max=p.price_nm_max||nm;
+    const lp_min=p.price_lp_min||lp;const lp_max=p.price_lp_max||lp;
+    const mp_min=p.price_mp_min||mp;const mp_max=p.price_mp_max||mp;
     return {html:`<div class="price-grid">
-        <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${p.price_nm_min.toLocaleString()}〜¥${p.price_nm_max.toLocaleString()}</div></div>
-        <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${p.price_lp_min.toLocaleString()}〜¥${p.price_lp_max.toLocaleString()}</div></div>
-        <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${p.price_mp_min.toLocaleString()}〜¥${p.price_mp_max.toLocaleString()}</div></div>
+        <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
+        <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
+        <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
     </div>`,nm,lp,mp};
 }
 
