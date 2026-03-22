@@ -596,15 +596,22 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     const _na=document.getElementById('ocr-num-a').value.trim();
     const _nb=document.getElementById('ocr-num-b').value.trim();
     const num=(_na&&_nb)?`${_na}/${_nb}`:(_na||_nb||'');
-    if(!num){showToast('番号を入力してください','var(--red)');return;}
+    const name=document.getElementById('ocr-name-input')?.value.trim()||'';
+    const rarity=document.getElementById('ocr-rarity-input')?.value||'';
+    const setcode=document.getElementById('ocr-setcode-input')?.value.trim()||'';
+    if(!num&&!name){showToast('番号またはカード名を入力してください','var(--red)');return;}
     document.getElementById('search-by-number-btn').textContent='検索中...';
     document.getElementById('search-by-number-btn').disabled=true;
-    await lookupAndDisplay(num,'','',(result,imgUrl)=>{
-        showCardFound(result,imgUrl);
-        // step3
-    });
-    document.getElementById('search-by-number-btn').textContent='🔍 このカードを検索';
-    document.getElementById('search-by-number-btn').disabled=false;
+    try{
+        await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl)=>{
+            if(result)showCardFound(result,imgUrl);
+        });
+    }catch(e){
+        showToast('エラー: '+e.message,'var(--red)');
+    }finally{
+        document.getElementById('search-by-number-btn').textContent='🔍 このカードを検索';
+        document.getElementById('search-by-number-btn').disabled=false;
+    }
 };
 
 // カード検索（番号 or 名前）
@@ -666,7 +673,11 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
         const a=s.indexOf('{'),b2=s.lastIndexOf('}');
         if(a>=0&&b2>a)s=s.slice(a,b2+1);
         let p;
-        try{p=JSON.parse(s);}catch(e){throw new Error('解析失敗。再度試してください。');}
+        try{p=JSON.parse(s);}catch(e){
+            // JSON解析失敗時はカード名だけでも返す
+            console.error('JSON parse error:', s.slice(0,200));
+            throw new Error('価格データの解析に失敗しました。もう一度お試しください。');
+        }
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;
         });
@@ -776,7 +787,7 @@ document.getElementById('manual-search-btn').onclick=async()=>{
     document.getElementById('manual-search-btn').textContent='検索中...';
     document.getElementById('manual-search-btn').disabled=true;
     document.getElementById('manual-result').style.display='none';
-    await lookupAndDisplay(num,name,rarity,(p,imgUrl)=>{
+    try{ await lookupAndDisplay(num,name,rarity,setcode,(p,imgUrl)=>{
         if(!p){document.getElementById('manual-search-btn').textContent='🔍 査定・画像検索';document.getElementById('manual-search-btn').disabled=false;return;}
         manualResult={...p};
         const {html,nm,lp,mp}=priceGridHTML(p);
@@ -799,8 +810,11 @@ document.getElementById('manual-search-btn').onclick=async()=>{
         document.getElementById('manual-result').style.display='block';
         manualQty=1;document.getElementById('m-qty-display').textContent='1';
     });
-    document.getElementById('manual-search-btn').textContent='🔍 査定・画像検索';
-    document.getElementById('manual-search-btn').disabled=false;
+    }catch(e){showToast('エラー: '+e.message,'var(--red)');}
+    finally{
+        document.getElementById('manual-search-btn').textContent='🔍 査定・画像検索';
+        document.getElementById('manual-search-btn').disabled=false;
+    }
 };
 
 document.getElementById('manual-save-btn').onclick=()=>{
