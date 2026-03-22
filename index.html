@@ -11,12 +11,14 @@
         .btn { display: block; width: 100%; padding: 15px; background: #ff0000; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         #preview { width: 100%; border-radius: 10px; display: none; margin-top: 15px; border: 2px solid #ff0000; }
         #res { margin-top: 20px; background: #111; padding: 15px; border-radius: 10px; text-align: left; white-space: pre-wrap; min-height: 100px; border: 1px solid #222; font-size: 14px; line-height: 1.6; }
+        .key-saved { font-size: 11px; color: #888; margin-top: -10px; margin-bottom: 10px; text-align: right; }
     </style>
 </head>
 <body>
     <h1 style="color:#ff0000">ポケカ査定DX Premium</h1>
     <div class="box">
-        <input type="text" id="api-key" placeholder="Claude APIキーを貼ってね（sk-ant-...）">
+        <input type="password" id="api-key" placeholder="Claude APIキーを貼ってね（sk-ant-...）">
+        <div class="key-saved" id="key-status"></div>
         <label for="img" class="btn" style="background:#444">📷 カードを撮影</label>
         <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
         <img id="preview">
@@ -25,8 +27,24 @@
     <div id="res">カードを撮影してAPIキーを入れてね！</div>
 
 <script>
-    const keyInp = document.getElementById('api-key'), imgInp = document.getElementById('img'), pre = document.getElementById('preview'), btn = document.getElementById('go'), res = document.getElementById('res');
+    const keyInp = document.getElementById('api-key'), imgInp = document.getElementById('img'), pre = document.getElementById('preview'), btn = document.getElementById('go'), res = document.getElementById('res'), keyStatus = document.getElementById('key-status');
     let b64 = null, mimeType = 'image/jpeg';
+
+    // 保存済みキーを読み込む
+    const savedKey = localStorage.getItem('claude_api_key');
+    if(savedKey) {
+        keyInp.value = savedKey;
+        keyStatus.textContent = '✅ APIキー保存済み';
+    }
+
+    // キーが変わったら自動保存
+    keyInp.addEventListener('input', () => {
+        const key = keyInp.value.trim();
+        if(key.startsWith('sk-ant-')) {
+            localStorage.setItem('claude_api_key', key);
+            keyStatus.textContent = '✅ APIキー保存済み';
+        }
+    });
 
     imgInp.onchange = e => {
         const f = e.target.files[0];
