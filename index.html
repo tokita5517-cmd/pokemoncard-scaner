@@ -5,62 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ポケカ査定DX Premium</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-        .box { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; max-width: 400px; margin: auto; }
-        input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
-        .btn { display: block; width: 100%; padding: 15px; background: #ff0000; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        * { box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .screen { display: none; max-width: 400px; margin: auto; }
+        .screen.active { display: block; }
+        .box { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        input[type=text], input[type=password] { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
+        .btn { display: block; width: 100%; padding: 15px; background: #ff0000; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .btn-gray { background: #444; }
+        .btn-small { padding: 10px; font-size: 13px; margin-top: 8px; }
         #preview { width: 100%; border-radius: 10px; display: none; margin-top: 15px; border: 2px solid #ff0000; }
-        #res { margin-top: 20px; background: #111; padding: 15px; border-radius: 10px; text-align: left; white-space: pre-wrap; min-height: 100px; border: 1px solid #222; font-size: 14px; line-height: 1.6; }
-        .key-saved { font-size: 11px; color: #888; margin-top: -10px; margin-bottom: 10px; text-align: right; }
+        #res { margin-top: 20px; background: #111; padding: 15px; border-radius: 10px; text-align: left; white-space: pre-wrap; min-height: 80px; border: 1px solid #222; font-size: 14px; line-height: 1.6; }
+        .settings-icon { position: fixed; top: 15px; right: 15px; font-size: 24px; cursor: pointer; background: #1a1a1a; border: 1px solid #333; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+        .hint { font-size: 12px; color: #888; margin-bottom: 15px; text-align: left; }
+        .saved-badge { background: #1a3a1a; border: 1px solid #2a5a2a; color: #4caf50; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-    <h1 style="color:#ff0000">ポケカ査定DX Premium</h1>
+
+<!-- メイン画面 -->
+<div id="main-screen" class="screen active">
+    <h1 style="color:#ff0000">ポケカ査定DX</h1>
     <div class="box">
-        <input type="password" id="api-key" placeholder="Claude APIキーを貼ってね（sk-ant-...）">
-        <div class="key-saved" id="key-status"></div>
-        <label for="img" class="btn" style="background:#444">📷 カードを撮影</label>
+        <label for="img" class="btn btn-gray">📷 カードを撮影</label>
         <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
         <img id="preview">
         <button id="go" class="btn" style="display:none; margin-top:15px">✨ プレミアム査定を開始</button>
     </div>
-    <div id="res">カードを撮影してAPIキーを入れてね！</div>
+    <div id="res">カードを撮影して査定を開始してね！</div>
+    <div id="no-key-msg" style="display:none; margin-top:15px; color:#ff6b6b; font-size:13px">
+        ⚠️ APIキーが未設定です。右上の⚙️から設定してください。
+    </div>
+</div>
+
+<!-- 設定画面 -->
+<div id="settings-screen" class="screen">
+    <h1 style="color:#ff0000">⚙️ 設定</h1>
+    <div class="box">
+        <p style="text-align:left; font-size:14px; color:#aaa; margin-top:0">Claude APIキーを入力してください。<br>一度保存すれば次回から不要です。</p>
+        <div class="hint">🔑 sk-ant-... で始まるキー</div>
+        <input type="password" id="key-input" placeholder="sk-ant-api03-...">
+        <button class="btn" id="save-btn">💾 保存する</button>
+        <button class="btn btn-gray btn-small" id="back-btn">← もどる</button>
+        <div id="save-msg" style="display:none; margin-top:12px;" class="saved-badge">✅ 保存しました！</div>
+    </div>
+</div>
+
+<!-- 設定ボタン（常に右上に表示） -->
+<div class="settings-icon" id="settings-btn">⚙️</div>
 
 <script>
-    const keyInp = document.getElementById('api-key'), imgInp = document.getElementById('img'), pre = document.getElementById('preview'), btn = document.getElementById('go'), res = document.getElementById('res'), keyStatus = document.getElementById('key-status');
+    const imgInp = document.getElementById('img');
+    const pre = document.getElementById('preview');
+    const btn = document.getElementById('go');
+    const res = document.getElementById('res');
+    const noKeyMsg = document.getElementById('no-key-msg');
+    const keyInput = document.getElementById('key-input');
     let b64 = null, mimeType = 'image/jpeg';
 
-    // 保存済みキーを読み込む
-    const savedKey = localStorage.getItem('claude_api_key');
-    if(savedKey) {
-        keyInp.value = savedKey;
-        keyStatus.textContent = '✅ APIキー保存済み';
+    function getKey() { return localStorage.getItem('claude_api_key') || ''; }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
     }
 
-    // キーが変わったら自動保存
-    keyInp.addEventListener('input', () => {
-        const key = keyInp.value.trim();
-        if(key.startsWith('sk-ant-')) {
-            localStorage.setItem('claude_api_key', key);
-            keyStatus.textContent = '✅ APIキー保存済み';
-        }
-    });
+    // 起動時にキー確認
+    window.onload = () => {
+        if(!getKey()) noKeyMsg.style.display = 'block';
+        else noKeyMsg.style.display = 'none';
+    };
 
+    // 設定画面へ
+    document.getElementById('settings-btn').onclick = () => {
+        keyInput.value = getKey();
+        document.getElementById('save-msg').style.display = 'none';
+        showScreen('settings-screen');
+    };
+
+    // 保存
+    document.getElementById('save-btn').onclick = () => {
+        const key = keyInput.value.trim();
+        if(!key) { alert('キーを入力してください'); return; }
+        localStorage.setItem('claude_api_key', key);
+        document.getElementById('save-msg').style.display = 'block';
+        noKeyMsg.style.display = 'none';
+        setTimeout(() => showScreen('main-screen'), 1000);
+    };
+
+    // もどる
+    document.getElementById('back-btn').onclick = () => showScreen('main-screen');
+
+    // 撮影
     imgInp.onchange = e => {
         const f = e.target.files[0];
         if(!f) return;
         mimeType = f.type || 'image/jpeg';
         const r = new FileReader();
         r.onload = ev => {
-            pre.src = ev.target.result; pre.style.display = 'block'; btn.style.display = 'block';
+            pre.src = ev.target.result;
+            pre.style.display = 'block';
+            btn.style.display = 'block';
             b64 = ev.target.result.split(',')[1];
         };
         r.readAsDataURL(f);
     };
 
+    // 査定
     btn.onclick = async () => {
-        const key = keyInp.value.trim();
-        if(!key) { res.innerText = 'APIキーを入力してください'; return; }
+        const key = getKey();
+        if(!key) { res.innerText = '⚠️ 右上の⚙️からAPIキーを設定してください'; return; }
         if(!b64) { res.innerText = 'カードを撮影してください'; return; }
         res.innerText = 'Claude AIで鑑定中...';
         try {
@@ -78,14 +132,8 @@
                     messages: [{
                         role: 'user',
                         content: [
-                            {
-                                type: 'image',
-                                source: { type: 'base64', media_type: mimeType, data: b64 }
-                            },
-                            {
-                                type: 'text',
-                                text: 'このポケモンカードについて以下を教えてください：\n1. カード名\n2. レアリティ（記号や番号から判断）\n3. 収録セット\n4. メルカリでの現在の相場（予想）\n5. 状態による価格の変動\n\nわかりやすく日本語で教えてください。'
-                            }
+                            { type: 'image', source: { type: 'base64', media_type: mimeType, data: b64 } },
+                            { type: 'text', text: 'このポケモンカードについて以下を教えてください：\n1. カード名\n2. レアリティ（記号や番号から判断）\n3. 収録セット\n4. メルカリでの現在の相場（予想）\n5. 状態による価格の変動\n\nわかりやすく日本語で教えてください。' }
                         ]
                     }]
                 })
@@ -93,7 +141,7 @@
             const data = await response.json();
             if(data.error) throw new Error(data.error.message);
             res.innerText = data.content[0].text;
-        } catch (e) {
+        } catch(e) {
             res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}</span>`;
         }
     };
