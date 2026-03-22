@@ -226,7 +226,11 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                         <div>
                             <label class="form-label">カード番号</label>
-                            <input class="form-input" id="ocr-number-input" placeholder="例: 223/187">
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <input class="form-input" id="ocr-num-a" placeholder="223" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
+                                <span style="color:var(--muted);font-size:20px;font-weight:700">/</span>
+                                <input class="form-input" id="ocr-num-b" placeholder="187" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
+                            </div>
                         </div>
                         <div>
                             <label class="form-label">レアリティ（任意）</label>
@@ -281,8 +285,12 @@
     <div id="manual-mode" style="display:none">
         <div class="card-box">
             <div class="form-group">
-                <label class="form-label">🔢 カード番号（優先）</label>
-                <input class="form-input" id="m-number" placeholder="例: 229/193 ← 左下の数字">
+                <label class="form-label">🔢 カード番号</label>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <input class="form-input" id="m-num-a" placeholder="229" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px;letter-spacing:1px" maxlength="4" inputmode="numeric">
+                    <span style="color:var(--muted);font-size:24px;font-weight:700;flex-shrink:0">/</span>
+                    <input class="form-input" id="m-num-b" placeholder="193" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px;letter-spacing:1px" maxlength="4" inputmode="numeric">
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">📝 カード名（番号不明の場合）</label>
@@ -495,10 +503,13 @@ function resetScan(){
     b64=null;scanResult=null;imgInp.value='';addQty=1;
     document.getElementById('qty-display').textContent='1';
     const nameEl=document.getElementById('ocr-name-input');
-    const numEl=document.getElementById('ocr-number-input');
+    const numEl=null; // replaced by ocr-num-a/b
     const rarEl=document.getElementById('ocr-rarity-input');
     if(nameEl)nameEl.value='';
-    if(numEl)numEl.value='';
+    const _naEl=document.getElementById('ocr-num-a');
+    const _nbEl=document.getElementById('ocr-num-b');
+    if(_naEl)_naEl.value='';
+    if(_nbEl)_nbEl.value='';
     if(rarEl)rarEl.value='';
 }
 
@@ -514,6 +525,18 @@ async function callClaude(messages,maxTokens=512){
     if(data.error)throw new Error(data.error.message);
     return data.content[0].text;
 }
+
+// 番号入力：前フィールドが埋まったら自動で次へ
+['ocr-num-a','m-num-a'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('input',function(){
+        if(this.value.length>=this.maxLength){
+            const nextId=id.replace('-a','-b');
+            const next=document.getElementById(nextId);
+            if(next)next.focus();
+        }
+    });
+});
 
 // 撮影→OCR読み取り（名前・番号・レアリティを一度に）
 document.getElementById('go-btn').onclick=async()=>{
@@ -541,7 +564,9 @@ JSON形式のみで返してください:
             if(m)ocr.number=m[0];
         }
         document.getElementById('ocr-name-input').value=ocr.name||'';
-        document.getElementById('ocr-number-input').value=ocr.number||'';
+        const _parts=(ocr.number||'').split('/');
+        document.getElementById('ocr-num-a').value=_parts[0]||'';
+        document.getElementById('ocr-num-b').value=_parts[1]||'';
         const rarityEl=document.getElementById('ocr-rarity-input');
         const rarityVal=ocr.rarity||'';
         for(let opt of rarityEl.options){if(opt.value===rarityVal||opt.text===rarityVal){rarityEl.value=opt.value;break;}}
@@ -556,7 +581,9 @@ JSON形式のみで返してください:
 
 // STEP2: 番号でカード特定
 document.getElementById('search-by-number-btn').onclick=async()=>{
-    const num=document.getElementById('ocr-number-input').value.trim();
+    const _na=document.getElementById('ocr-num-a').value.trim();
+    const _nb=document.getElementById('ocr-num-b').value.trim();
+    const num=(_na&&_nb)?`${_na}/${_nb}`:(_na||_nb||'');
     if(!num){showToast('番号を入力してください','var(--red)');return;}
     document.getElementById('search-by-number-btn').textContent='検索中...';
     document.getElementById('search-by-number-btn').disabled=true;
@@ -573,83 +600,81 @@ async function lookupAndDisplay(number,name,rarity,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
 
-        // STEP1: カード特定（web_searchで実際に検索）
-        const searchQuery=[number?`番号${number}`:'', name||'', rarity||''].filter(Boolean).join(' ') || number || name;
-        const identResp=await fetch('https://api.anthropic.com/v1/messages',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-            body:JSON.stringify({
-                model:'claude-haiku-4-5-20251001',
-                max_tokens:1024,
-                system:'あなたはポケモンカードの専門家です。必ずJSON形式のみで回答してください。説明文・前置き・マークダウンは不要です。',
-                tools:[{type:'web_search_20250305',name:'web_search'}],
-                messages:[{role:'user',content:`ポケモンカード カード番号「${number||'不明'}」カード名ヒント「${name||'不明'}」レアリティ「${rarity||'不明'}」を特定してください。番号だけでも特定可能です。
-以下のJSON形式のみで返してください:
-{"name":"正式なカード名（例:イーブイex）","card_number":"${number||'不明'}","rarity":"SAR","type":"colorless","set":"セット名","tcg_name":"eevee ex","note":"一言コメント"}`}]
-            })
-        });
-        const identData=await identResp.json();
-        if(identData.error)throw new Error(identData.error.message);
+        // web_searchは複数ターン必要なのでmessages配列で対応
+        const messages=[{role:'user',content:`ポケモンカードを特定して価格を調べてください。
+カード番号:${number||'不明'} カード名:${name||'不明'} レアリティ:${rarity||'不明'}
+まずweb_searchで「ポケモンカード ${number||name} ${rarity||''} メルカリ 相場」を検索し、
+その結果をもとに以下のJSON形式のみで返してください（価格は整数）:
+{"name":"カード名","card_number":"${number||'不明'}","rarity":"${rarity||'RR'}","type":"fire","set":"セット名","price_nm_min":3000,"price_nm_max":5000,"price_lp_min":2000,"price_lp_max":3500,"price_mp_min":500,"price_mp_max":1500,"note":"調査した相場","tcg_name":"english name"}`}];
 
-        // テキストブロックだけ結合
-        const identText=identData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-        let cardInfo;
-        try{
-            let s=identText.replace(/```json|```/g,'').trim();
-            const a=s.indexOf('{'),b=s.lastIndexOf('}');
-            if(a>=0&&b>a)s=s.slice(a,b+1);
-            cardInfo=JSON.parse(s);
-        }catch(e){
-            throw new Error('カード特定エラー: '+identText.slice(0,80));
+        let finalText='';
+        let loopCount=0;
+        while(loopCount<4){
+            loopCount++;
+            const resp=await fetch('https://api.anthropic.com/v1/messages',{
+                method:'POST',
+                headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+                body:JSON.stringify({
+                    model:'claude-haiku-4-5-20251001',
+                    max_tokens:1024,
+                    system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。',
+                    tools:[{type:'web_search_20250305',name:'web_search'}],
+                    messages
+                })
+            });
+            const data=await resp.json();
+            if(data.error){
+                if(data.error.type==='rate_limit_error')throw new Error('レート制限中です。少し待ってから再試行してください');
+                throw new Error(data.error.message);
+            }
+
+            // アシスタントの返答をmessagesに追加
+            messages.push({role:'assistant',content:data.content});
+
+            if(data.stop_reason==='end_turn'){
+                // 最後のテキストブロックを取得
+                const textBlocks=data.content.filter(b=>b.type==='text');
+                finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+                break;
+            } else if(data.stop_reason==='tool_use'){
+                // ツール結果をmessagesに追加して続行
+                const toolResults=data.content
+                    .filter(b=>b.type==='tool_use')
+                    .map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
+                if(toolResults.length>0)messages.push({role:'user',content:toolResults});
+            } else {
+                const textBlocks=data.content.filter(b=>b.type==='text');
+                finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+                break;
+            }
         }
 
-        // STEP2: 価格をweb_searchで実際に検索
-        const priceResp=await fetch('https://api.anthropic.com/v1/messages',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-            body:JSON.stringify({
-                model:'claude-haiku-4-5-20251001',
-                max_tokens:1024,
-                system:'あなたはポケモンカードの価格調査専門家です。必ずJSON形式のみで回答してください。',
-                tools:[{type:'web_search_20250305',name:'web_search'}],
-                messages:[{role:'user',content:`「${cardInfo.name}」(${cardInfo.rarity||rarity||''}) ${cardInfo.card_number||number||''}のポケモンカードについて、メルカリや買取サイトで現在の相場を調べて、以下のJSON形式のみで返してください（価格は円の整数）:
-{"price_nm_min":5000,"price_nm_max":8000,"price_lp_min":3000,"price_lp_max":5000,"price_mp_min":1000,"price_mp_max":3000,"note":"調査した相場の一言コメント"}`}]
-            })
-        });
-        const priceData=await priceResp.json();
-        if(priceData.error)throw new Error(priceData.error.message);
+        if(!finalText)throw new Error('応答を取得できませんでした');
 
-        const priceText=priceData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-        let priceInfo;
-        try{
-            let s=priceText.replace(/```json|```/g,'').trim();
-            const a=s.indexOf('{'),b=s.lastIndexOf('}');
-            if(a>=0&&b>a)s=s.slice(a,b+1);
-            priceInfo=JSON.parse(s);
-        }catch(e){
-            priceInfo={price_nm_min:0,price_nm_max:0,price_lp_min:0,price_lp_max:0,price_mp_min:0,price_mp_max:0,note:'価格取得失敗'};
-        }
-
-        const p={...cardInfo,...priceInfo};
+        let s=finalText.replace(/```json|```/g,'').trim();
+        const a=s.indexOf('{'),b2=s.lastIndexOf('}');
+        if(a>=0&&b2>a)s=s.slice(a,b2+1);
+        let p;
+        try{p=JSON.parse(s);}
+        catch(e){throw new Error('解析失敗。再度試してください。');}
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;
         });
 
-        // STEP3: 画像取得
+        // 画像取得
         let imgUrl=null;
         try{
             const numPart=number?number.split('/')[0]:null;
-            let apiUrl=`https://api.pokemontcg.io/v2/cards?pageSize=5`;
+            let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=5';
             if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
             else if(numPart)apiUrl+=`&q=number:${numPart}`;
-            const imgResp=await fetch(apiUrl);
-            const imgData=await imgResp.json();
-            if(imgData.data&&imgData.data.length>0){
-                // 番号が一致するものを優先
-                let card=imgData.data[0];
+            const ir=await fetch(apiUrl);
+            const id=await ir.json();
+            if(id.data&&id.data.length>0){
+                let card=id.data[0];
                 if(number){
                     const n=number.split('/')[0];
-                    const match=imgData.data.find(c=>c.number===n||c.number===parseInt(n).toString());
+                    const match=id.data.find(c=>c.number===n||c.number===parseInt(n).toString());
                     if(match)card=match;
                 }
                 imgUrl=card.images?.large||card.images?.small||null;
@@ -714,7 +739,9 @@ document.getElementById('m-qty-minus').onclick=()=>{if(manualQty>1){manualQty--;
 document.getElementById('m-qty-plus').onclick=()=>{manualQty++;document.getElementById('m-qty-display').textContent=manualQty;};
 
 document.getElementById('manual-search-btn').onclick=async()=>{
-    const num=document.getElementById('m-number').value.trim();
+    const _mna=document.getElementById('m-num-a').value.trim();
+    const _mnb=document.getElementById('m-num-b').value.trim();
+    const num=(_mna&&_mnb)?`${_mna}/${_mnb}`:(_mna||_mnb||'');
     const name=document.getElementById('m-name').value.trim();
     const rarity=document.getElementById('m-rarity-search').value;
     if(!num&&!name){showToast('番号またはカード名を入力してください','var(--red)');return;}
@@ -744,7 +771,7 @@ document.getElementById('manual-save-btn').onclick=()=>{
     if(!manualResult)return;
     addToCollection(manualResult,manualQty);
     document.getElementById('manual-result').style.display='none';
-    document.getElementById('m-name').value='';document.getElementById('m-number').value='';
+    document.getElementById('m-name').value='';document.getElementById('m-num-a').value='';document.getElementById('m-num-b').value='';
 };
 
 // ===== コレクション =====
@@ -824,21 +851,39 @@ window.changeQty=(id,d)=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(!
 
 async function callUpdateAPI(name,rarity){
     const key=getKey();if(!key)throw new Error('APIキーが未設定です');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({
-            model:'claude-haiku-4-5-20251001',max_tokens:512,
-            system:'あなたはポケモンカードの価格調査専門家です。必ずJSON形式のみで回答してください。',
-            tools:[{type:'web_search_20250305',name:'web_search'}],
-            messages:[{role:'user',content:`「${name}」(${rarity})のポケモンカードのメルカリ・買取サイト最新相場を調べて、以下のJSON形式のみで返してください（整数）:
-{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0}`}]
-        })
-    });
-    const data=await resp.json();
-    if(data.error)throw new Error(data.error.message);
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    let s=text.replace(/```json|```/g,'').trim();
+    const messages=[{role:'user',content:`「${name}」(${rarity})のポケモンカードのメルカリ最新相場をweb_searchで調べて、以下のJSON形式のみで返してください（整数）:
+{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0}`}];
+    let finalText='';
+    let loopCount=0;
+    while(loopCount<4){
+        loopCount++;
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+            body:JSON.stringify({
+                model:'claude-haiku-4-5-20251001',max_tokens:512,
+                system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。',
+                tools:[{type:'web_search_20250305',name:'web_search'}],
+                messages
+            })
+        });
+        const data=await resp.json();
+        if(data.error)throw new Error(data.error.message);
+        messages.push({role:'assistant',content:data.content});
+        if(data.stop_reason==='end_turn'){
+            const textBlocks=data.content.filter(b=>b.type==='text');
+            finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+            break;
+        } else if(data.stop_reason==='tool_use'){
+            const toolResults=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
+            if(toolResults.length>0)messages.push({role:'user',content:toolResults});
+        } else {
+            const textBlocks=data.content.filter(b=>b.type==='text');
+            finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+            break;
+        }
+    }
+    let s=finalText.replace(/```json|```/g,'').trim();
     const a=s.indexOf('{'),b=s.lastIndexOf('}');
     if(a>=0&&b>a)s=s.slice(a,b+1);
     return JSON.parse(s);
