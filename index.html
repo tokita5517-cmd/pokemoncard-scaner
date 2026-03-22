@@ -556,41 +556,30 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
 async function lookupAndDisplay(number,name,rarity,callback){
     try{
         const query=number?`カード番号${number}のポケモンカード（${name||''}）`:name;
-        // 2段階: まずカード特定、次に価格取得
-        const identRaw=await callClaude([
-            {role:'user',content:`You are a Pokemon card database. Return ONLY a JSON object, no explanation.
-Pokemon card info: number="${number||'unknown'}", name hint="${name||'unknown'}", rarity hint="${rarity||'unknown'}"
-Return this exact JSON structure with real values:
-{"name":"Japanese card name","card_number":"${number||'???'}","rarity":"R","type":"fire","set":"Set name in Japanese","tcg_name":"English name for API search"}
-rarity must be one of: SAR,SR,AR,RRR,RR,R,U,C,OTHER
-type must be one of: fire,water,grass,lightning,psychic,fighting,dark,metal,colorless,dragon,fairy,unknown`}
-        ],512);
-        let cardInfo;
-        try{
-            let s=identRaw.replace(/\`\`\`json|\`\`\`/g,'').trim();
-            const a=s.indexOf('{'),b=s.lastIndexOf('}');
-            if(a>=0&&b>a)s=s.slice(a,b+1);
-            cardInfo=JSON.parse(s);
-        }catch(e){
-            throw new Error('カード特定エラー。番号を確認してください。');
-        }
-
-        // 価格は別リクエストで確実に数値だけ取得
-        const priceRaw=await callClaude([
-            {role:'user',content:`Return ONLY a JSON object with Japanese Pokemon card "${cardInfo.name}" (${cardInfo.rarity}) mercari market prices in yen as integers.
-{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"one line comment in Japanese"}
-All price values must be integers (numbers only, no text).`}
-        ],512);
-        let priceInfo;
-        try{
-            let s=priceRaw.replace(/\`\`\`json|\`\`\`/g,'').trim();
-            const a=s.indexOf('{'),b=s.lastIndexOf('}');
-            if(a>=0&&b>a)s=s.slice(a,b+1);
-            priceInfo=JSON.parse(s);
-        }catch(e){
-            priceInfo={price_nm_min:0,price_nm_max:0,price_lp_min:0,price_lp_max:0,price_mp_min:0,price_mp_max:0,note:''};
-        }
-        const p={...cardInfo,...priceInfo};
+        // カード特定＋価格を1リクエストで取得
+        // system roleでJSONのみを強制
+        const key2=getKey();
+        const resp2=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-api-key':key2,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+            body:JSON.stringify({
+                model:'claude-haiku-4-5-20251001',
+                max_tokens:1024,
+                system:'あなたはポケモンカードの専門家です。必ずJSON形式のみで回答してください。説明文・前置き・マークダウン記法は一切不要です。',
+                messages:[{role:'user',content:`ポケモンカード番号「${number||'不明'}」名前ヒント「${name||'不明'}」レアリティヒント「${rarity||'不明'}」のカードを特定し、メルカリ相場を教えてください。
+以下のJSON形式のみで返してください（数値は整数）:
+{"name":"カード名","card_number":"${number||'不明'}","rarity":"SAR","type":"colorless","set":"セット名","price_nm_min":5000,"price_nm_max":8000,"price_lp_min":3000,"price_lp_max":5000,"price_mp_min":1000,"price_mp_max":3000,"note":"コメント","tcg_name":"eevee ex"}`}]
+            })
+        });
+        const d2=await resp2.json();
+        if(d2.error)throw new Error(d2.error.message);
+        const raw2=d2.content[0].text;
+        let s2=raw2.replace(/\`\`\`json|\`\`\`/g,'').trim();
+        const a2=s2.indexOf('{'),b2=s2.lastIndexOf('}');
+        if(a2>=0&&b2>a2)s2=s2.slice(a2,b2+1);
+        let p;
+        try{p=JSON.parse(s2);}
+        catch(e){throw new Error('JSON解析失敗。もう一度試してください。');}
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;});
 
         // ポケモンTCG APIで画像取得
