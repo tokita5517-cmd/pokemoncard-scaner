@@ -469,19 +469,15 @@ imgInp.onchange=e=>{
     const f=e.target.files[0];if(!f)return;
     const img=new Image(),url=URL.createObjectURL(f);
     img.onload=()=>{
-        // 左下1/2 x 1/3エリアを切り出して拡大（番号認識に特化）
+        // 元画像をそのままAPIに送る（トリミングしない）
+        // サイズだけ適度に圧縮してトークン節約
         const canvas=document.createElement('canvas');
-        const cw=img.width,ch=img.height;
-        // 左下エリア：左半分の下1/3
-        const sx=0,sy=Math.floor(ch*0.65),sw=Math.floor(cw*0.55),sh=Math.floor(ch*0.35);
-        // 2倍に拡大して精度UP
-        canvas.width=sw*2;canvas.height=sh*2;
-        const ctx=canvas.getContext('2d');
-        ctx.imageSmoothingEnabled=false;
-        ctx.drawImage(img,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
-        b64=canvas.toDataURL('image/jpeg',.92).split(',')[1];
-        // プレビューは元画像
-        pre.src=img.src;pre.style.display='block';
+        const maxW=900;
+        const scale=Math.min(1,maxW/img.width);
+        canvas.width=img.width*scale;canvas.height=img.height*scale;
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        b64=canvas.toDataURL('image/jpeg',.88).split(',')[1];
+        pre.src=canvas.toDataURL('image/jpeg',.88);pre.style.display='block';
         document.getElementById('cam-guide-wrap').style.display='none';
         document.getElementById('preview-actions').style.display='flex';
         document.getElementById('ocr-status').style.display='none';
@@ -526,12 +522,12 @@ document.getElementById('go-btn').onclick=async()=>{
     document.getElementById('go-btn').textContent='読み取り中...';
     document.getElementById('go-btn').disabled=true;
     try{
-        // 左下番号だけを読み取るプロンプト（シンプルに）
         const raw=await callClaude([{role:'user',content:[
             {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-            {type:'text',text:`この画像はポケモンカードの左下部分を拡大したものです。カード番号（例：081/193、229/193のような「数字/数字」の形式）を読み取ってください。番号のみをそのまま返してください。見つからない場合は「不明」と返してください。`}
+            {type:'text',text:`このポケモンカード画像のカード番号を読み取ってください。カード番号は左下に「174/193」「081/193」「229/193」のように印刷された「数字/数字」形式の番号です。その番号だけ返してください。例: 174/193`}
         ]}]);
-        const num=raw.trim().replace(/[^0-9\/]/g,'').trim()||'';
+        const match=raw.match(/\d{1,4}\/\d{1,4}/);
+        const num=match?match[0]:'';
         document.getElementById('ocr-number-input').value=num;
         document.getElementById('ocr-status').style.display='block';
         setStep(2);
