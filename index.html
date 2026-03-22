@@ -202,62 +202,55 @@
         </div>
     </div>
 
-    <!-- ===== 番号スキャンモード ===== -->
+    <!-- ===== 撮影スキャンモード ===== -->
     <div id="camera-mode">
-        <!-- ステップ表示 -->
-        <div class="step-indicator" id="step-indicator">
-            <div class="step active" id="s1">1</div>
-            <div class="step-line" id="sl1"></div>
-            <div class="step waiting" id="s2">2</div>
-            <div class="step-line" id="sl2"></div>
-            <div class="step waiting" id="s3">3</div>
-        </div>
-        <div id="step-label" style="font-size:12px;color:var(--muted);margin-bottom:12px;text-align:center">
-            ① カード左下の番号（例：229/193）をアップで撮影してください
-        </div>
-
         <!-- 撮影エリア -->
         <div id="shoot-area" class="card-box">
-            <!-- 撮影前：ガイド付きプレースホルダー -->
-            <div id="cam-guide-wrap" style="position:relative;border-radius:12px;overflow:hidden;cursor:pointer;" onclick="document.getElementById('img').click()">
-                <!-- サンプルガイド画像 -->
-                <div style="background:#111;border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-                    <!-- カード模式図 -->
-                    <div style="width:120px;height:168px;background:#1a1a2e;border-radius:8px;border:1px solid #444;position:relative;flex-shrink:0">
-                        <div style="position:absolute;top:4px;left:4px;right:4px;height:100px;background:#2a2a4a;border-radius:4px"></div>
-                        <div style="position:absolute;bottom:24px;left:4px;right:4px;height:30px;background:#222;border-radius:3px"></div>
-                        <!-- 番号エリアをハイライト -->
-                        <div style="position:absolute;bottom:4px;left:4px;width:52px;height:18px;border:2px solid var(--gold);border-radius:3px;background:rgba(255,214,10,0.15)">
-                            <div style="font-family:Oswald;font-size:9px;color:var(--gold);text-align:center;line-height:16px;letter-spacing:1px">081/193</div>
-                        </div>
-                    </div>
-                    <!-- 矢印 -->
-                    <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center">
-                        <div style="font-size:28px">👈</div>
-                        <div style="background:var(--gold);color:#000;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;margin-top:4px;white-space:nowrap">ここを撮影！</div>
-                    </div>
+            <div id="cam-guide-wrap" style="cursor:pointer;" onclick="document.getElementById('img').click()">
+                <div class="cam-placeholder" id="cam-ph">
+                    <span style="font-size:40px">📷</span>
+                    <span style="font-weight:700">カード全体を撮影</span>
+                    <span style="font-size:12px;color:var(--muted)">名前・番号を自動で読み取ります</span>
                 </div>
             </div>
             <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
             <img id="preview" style="width:100%;border-radius:12px;display:none;margin-bottom:10px">
-            <div id="preview-actions" style="display:none;gap:8px;margin-top:10px">
-                <button class="btn btn-red" id="go-btn" style="flex:1">🔍 番号を読み取る</button>
-                <button class="btn btn-dark btn-sm" id="retake-btn">📷 撮り直す</button>
+            <div id="preview-actions" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
+                <!-- OCR読み取り後に表示される編集フォーム -->
+                <div id="ocr-edit-form" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 読み取り結果（修正できます）</div>
+                    <div class="form-group" style="margin-bottom:8px">
+                        <label class="form-label">カード名</label>
+                        <input class="form-input" id="ocr-name-input" placeholder="例：イーブイex">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                        <div>
+                            <label class="form-label">カード番号</label>
+                            <input class="form-input" id="ocr-number-input" placeholder="例: 223/187">
+                        </div>
+                        <div>
+                            <label class="form-label">レアリティ（任意）</label>
+                            <select class="form-select" id="ocr-rarity-input">
+                                <option value="">不明</option>
+                                <option>SAR</option><option>SR</option><option>AR</option>
+                                <option>RRR</option><option>RR</option><option>R</option>
+                                <option>U</option><option>C</option><option>無印</option><option>OTHER</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
+                </div>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btn-red" id="go-btn" style="flex:1">🔍 カードを読み取る</button>
+                    <button class="btn btn-dark btn-sm" id="retake-btn">📷 撮り直す</button>
+                </div>
             </div>
-            <button class="btn btn-dark" style="margin-top:10px" onclick="document.getElementById('img').click()">
-                📷 カード左下を撮影する
+            <button class="btn btn-dark" style="margin-top:10px" id="cam-shoot-btn" onclick="document.getElementById('img').click()">
+                📷 カードを撮影する
             </button>
         </div>
 
-        <!-- STEP2: OCR結果確認・修正 -->
-        <div class="ocr-status" id="ocr-status">
-            <div style="font-size:13px;color:var(--muted);margin-bottom:4px">📍 読み取ったカード番号（違う場合は修正してください）</div>
-            <input class="ocr-number-input" id="ocr-number-input" placeholder="例: 229/193">
-            <div class="ocr-hint">修正したら「このカードを検索」を押してください</div>
-            <button class="btn btn-red" style="margin-top:10px" id="search-by-number-btn">🔍 このカードを検索</button>
-        </div>
-
-        <!-- STEP3: カード情報・価格表示 -->
+        <!-- カード情報・価格表示 -->
         <div class="card-found" id="card-found">
             <div class="card-found-inner">
                 <div id="card-img-wrap">
@@ -302,7 +295,7 @@
                         <option value="">不明</option>
                         <option>SAR</option><option>SR</option><option>AR</option>
                         <option>RRR</option><option>RR</option><option>R</option>
-                        <option>U</option><option>C</option><option>OTHER</option>
+                        <option>U</option><option>C</option><option>無印</option><option>OTHER</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0">
@@ -469,20 +462,19 @@ imgInp.onchange=e=>{
     const f=e.target.files[0];if(!f)return;
     const img=new Image(),url=URL.createObjectURL(f);
     img.onload=()=>{
-        // 元画像をそのままAPIに送る（トリミングしない）
-        // サイズだけ適度に圧縮してトークン節約
         const canvas=document.createElement('canvas');
         const maxW=900;
         const scale=Math.min(1,maxW/img.width);
         canvas.width=img.width*scale;canvas.height=img.height*scale;
         canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
         b64=canvas.toDataURL('image/jpeg',.88).split(',')[1];
-        pre.src=canvas.toDataURL('image/jpeg',.88);pre.style.display='block';
+        pre.src=canvas.toDataURL('image/jpeg',.88);
+        pre.style.display='block';
         document.getElementById('cam-guide-wrap').style.display='none';
+        document.getElementById('cam-shoot-btn').style.display='none';
         document.getElementById('preview-actions').style.display='flex';
-        document.getElementById('ocr-status').style.display='none';
+        document.getElementById('ocr-edit-form').style.display='none';
         document.getElementById('card-found').style.display='none';
-        setStep(1);
         URL.revokeObjectURL(url);
     };img.src=url;
 };
@@ -493,13 +485,21 @@ document.getElementById('scan-again-btn').onclick=resetScan;
 function resetScan(){
     pre.style.display='none';
     document.getElementById('cam-guide-wrap').style.display='block';
+    const shootBtn=document.getElementById('cam-shoot-btn');
+    if(shootBtn)shootBtn.style.display='block';
     document.getElementById('preview-actions').style.display='none';
-    document.getElementById('ocr-status').style.display='none';
+    const editForm=document.getElementById('ocr-edit-form');
+    if(editForm)editForm.style.display='none';
     document.getElementById('card-found').style.display='none';
     document.getElementById('dup-notice').style.display='none';
     b64=null;scanResult=null;imgInp.value='';addQty=1;
     document.getElementById('qty-display').textContent='1';
-    setStep(1);
+    const nameEl=document.getElementById('ocr-name-input');
+    const numEl=document.getElementById('ocr-number-input');
+    const rarEl=document.getElementById('ocr-rarity-input');
+    if(nameEl)nameEl.value='';
+    if(numEl)numEl.value='';
+    if(rarEl)rarEl.value='';
 }
 
 // Claude API共通
@@ -515,7 +515,7 @@ async function callClaude(messages,maxTokens=512){
     return data.content[0].text;
 }
 
-// STEP1: 番号読み取り
+// 撮影→OCR読み取り（名前・番号・レアリティを一度に）
 document.getElementById('go-btn').onclick=async()=>{
     if(!b64){showToast('先に撮影してください','var(--red)');return;}
     const key=getKey();if(!key){showToast('APIキーを設定してください','var(--red)');return;}
@@ -524,17 +524,33 @@ document.getElementById('go-btn').onclick=async()=>{
     try{
         const raw=await callClaude([{role:'user',content:[
             {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-            {type:'text',text:`このポケモンカード画像のカード番号を読み取ってください。カード番号は左下に「174/193」「081/193」「229/193」のように印刷された「数字/数字」形式の番号です。その番号だけ返してください。例: 174/193`}
+            {type:'text',text:`このポケモンカードから以下の情報を読み取ってください。
+JSON形式のみで返してください:
+{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"左下のレアリティ記号（SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字）"}
+カード名は左上、カード番号は左下の数字/数字の部分、レアリティは番号の隣の記号です。`}
         ]}]);
-        const match=raw.match(/\d{1,4}\/\d{1,4}/);
-        const num=match?match[0]:'';
-        document.getElementById('ocr-number-input').value=num;
-        document.getElementById('ocr-status').style.display='block';
-        setStep(2);
+        let ocr={name:'',number:'',rarity:''};
+        try{
+            let s=raw.replace(/\`\`\`json|\`\`\`/g,'').trim();
+            const a=s.indexOf('{'),b=s.lastIndexOf('}');
+            if(a>=0&&b>a)s=s.slice(a,b+1);
+            ocr=JSON.parse(s);
+        }catch(e){
+            // JSON失敗時は番号だけ正規表現で抽出
+            const m=raw.match(/\d{1,4}\/\d{1,4}/);
+            if(m)ocr.number=m[0];
+        }
+        document.getElementById('ocr-name-input').value=ocr.name||'';
+        document.getElementById('ocr-number-input').value=ocr.number||'';
+        const rarityEl=document.getElementById('ocr-rarity-input');
+        const rarityVal=ocr.rarity||'';
+        for(let opt of rarityEl.options){if(opt.value===rarityVal||opt.text===rarityVal){rarityEl.value=opt.value;break;}}
+        document.getElementById('ocr-edit-form').style.display='block';
+        showToast('✅ 読み取り完了！確認して検索してください');
     }catch(e){
         showToast('エラー: '+e.message,'var(--red)');
     }
-    document.getElementById('go-btn').textContent='🔍 番号を読み取る';
+    document.getElementById('go-btn').textContent='🔍 カードを読み取る';
     document.getElementById('go-btn').disabled=false;
 };
 
@@ -546,7 +562,7 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     document.getElementById('search-by-number-btn').disabled=true;
     await lookupAndDisplay(num,'','',(result,imgUrl)=>{
         showCardFound(result,imgUrl);
-        setStep(3);
+        // step3
     });
     document.getElementById('search-by-number-btn').textContent='🔍 このカードを検索';
     document.getElementById('search-by-number-btn').disabled=false;
@@ -558,7 +574,7 @@ async function lookupAndDisplay(number,name,rarity,callback){
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
 
         // STEP1: カード特定（web_searchで実際に検索）
-        const searchQuery=number?`ポケモンカード ${number} ${name||''} ${rarity||''}`:name;
+        const searchQuery=[number?`番号${number}`:'', name||'', rarity||''].filter(Boolean).join(' ') || number || name;
         const identResp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -567,8 +583,7 @@ async function lookupAndDisplay(number,name,rarity,callback){
                 max_tokens:1024,
                 system:'あなたはポケモンカードの専門家です。必ずJSON形式のみで回答してください。説明文・前置き・マークダウンは不要です。',
                 tools:[{type:'web_search_20250305',name:'web_search'}],
-                messages:[{role:'user',content:`ポケモンカード「${number||name}」${rarity?'('+rarity+')':''}を特定してください。
-カード番号${number||'不明'}、名前ヒント「${name||'不明'}」です。
+                messages:[{role:'user',content:`ポケモンカード カード番号「${number||'不明'}」カード名ヒント「${name||'不明'}」レアリティ「${rarity||'不明'}」を特定してください。番号だけでも特定可能です。
 以下のJSON形式のみで返してください:
 {"name":"正式なカード名（例:イーブイex）","card_number":"${number||'不明'}","rarity":"SAR","type":"colorless","set":"セット名","tcg_name":"eevee ex","note":"一言コメント"}`}]
             })
