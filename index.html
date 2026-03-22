@@ -187,7 +187,8 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX</h1></div>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v11</span></h1>
+    <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
         <div class="mode-card active" id="mode-cam-btn" onclick="setMode('camera')">
@@ -609,7 +610,8 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
 async function lookupAndDisplay(number,name,rarity,setcode,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
-        const fullId=[setcode,number].filter(Boolean).join('-');
+        const setcodeNorm=setcode.toUpperCase().replace(/^([A-Z]+)(\d+[A-Z]*)$/,(m,p1,p2)=>p1+p2.toLowerCase()) || setcode;
+        const fullId=[setcodeNorm||setcode,number].filter(Boolean).join('-');
         const cardQuery=[fullId||'',name||'',rarity||''].filter(Boolean).join(' ').trim();
 
         // web_searchなし・Claudeの知識で直接JSON返却（確実）
@@ -624,7 +626,7 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
 返答は必ず以下のJSON形式のみ。前置き・説明・改行・マークダウン一切不要:
 {"name":"","card_number":"","rarity":"","type":"","set":"","price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"","tcg_name":""}`,
                 messages:[{role:'user',content:`カード: ${cardQuery}
-このカードのJSON情報と価格（円）を返してください。`}]
+セットコードの大文字小文字は無視してください（m2a=M2a=M2A）。このカードのJSON情報と価格（円）を返してください。`}]
             })
         });
         const data=await resp.json();
@@ -671,7 +673,7 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
         // pokemon-card.com フォールバック
         if(!imgUrl&&setcode&&number){
             const n=number.split('/')[0].padStart(3,'0');
-            imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${setcode.toLowerCase()}/${n}.jpg`;
+            imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${(setcodeNorm||setcode).toLowerCase()}/${n}.jpg`;
         }
 
         callback(p,imgUrl);
