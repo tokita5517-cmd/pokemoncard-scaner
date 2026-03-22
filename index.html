@@ -228,25 +228,16 @@
                         <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">左下の英数字（例:sv8a, M2a）</span></label>
                         <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a, sv7a" style="font-family:Oswald,sans-serif;letter-spacing:1px">
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-                        <div>
-                            <label class="form-label">カード番号</label>
-                            <div style="display:flex;align-items:center;gap:6px">
-                                <input class="form-input" id="ocr-num-a" placeholder="063" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
-                                <span style="color:var(--muted);font-size:20px;font-weight:700">/</span>
-                                <input class="form-input" id="ocr-num-b" placeholder="193" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="form-label">レアリティ</label>
-                            <select class="form-select" id="ocr-rarity-input">
-                                <option value="">不明</option>
-                                <option>SAR</option><option>SR</option><option>AR</option>
-                                <option>RRR</option><option>RR</option><option>R</option>
-                                <option>U</option><option>C</option><option>無印</option><option>OTHER</option>
-                            </select>
+                    <div style="margin-bottom:8px">
+                        <label class="form-label">カード番号</label>
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <input class="form-input" id="ocr-num-a" placeholder="063" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px" maxlength="4" inputmode="numeric">
+                            <span style="color:var(--muted);font-size:22px;font-weight:700">/</span>
+                            <input class="form-input" id="ocr-num-b" placeholder="193" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px" maxlength="4" inputmode="numeric">
                         </div>
                     </div>
+                    <!-- レアリティは非表示（セットコード+番号で特定） -->
+                    <select id="ocr-rarity-input" style="display:none"></select>
                     <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
                 </div>
                 <div style="display:flex;gap:8px">
@@ -619,73 +610,60 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
         const fullId=[setcode,number].filter(Boolean).join('-');
-        const cardQuery=`${fullId||name} ${rarity||''}`.trim();
+        const cardQuery=`${fullId||name}`.trim();
 
-        const messages=[{role:'user',content:`ポケモンカード「${cardQuery}」について以下の3サイトで価格を調べてください：
-1. premium.gamepedia.jp（買取・販売価格）
-2. card-portal.jp（メルカリ相場）
-3. netoff.co.jp/moetaku/tcg/pokemon_card/（ネットオフ買取価格）
-
-各サイトの価格を比較して、最も高い買取価格を基準に以下のJSON形式のみで返してください（価格は整数）:
-{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"${rarity||'不明'}","type":"psychic","set":"セット名",
-"price_nm_min":300,"price_nm_max":400,"price_lp_min":200,"price_lp_max":300,"price_mp_min":100,"price_mp_max":200,
-"note":"各サイト価格比較コメント（例:gamepedia買取50円/netoff買取120円→最高はnetoff）",
-"tcg_name":"english name",
-"best_site":"最高価格のサイト名"}`}];
+        const messages=[{role:'user',content:`ポケモンカード「${cardQuery}」${name?`（${name}）`:''}の価格をpremium.gamepedia.jpとnetoff.co.jp/moetaku/tcg/pokemon_card/で調べてください。
+必ず以下のJSON形式のみで返してください。他のテキストは一切不要です:
+{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"RR","type":"psychic","set":"セット名","price_nm_min":300,"price_nm_max":400,"price_lp_min":200,"price_lp_max":300,"price_mp_min":100,"price_mp_max":200,"note":"最高価格サイトと金額","tcg_name":"english name","best_site":"最高価格のサイト名"}`}];
 
         let finalText='';
-        let loopCount=0;
-        while(loopCount<4){
-            loopCount++;
+        for(let i=0;i<4;i++){
             const resp=await fetch('https://api.anthropic.com/v1/messages',{
                 method:'POST',
                 headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
                 body:JSON.stringify({
-                    model:'claude-haiku-4-5-20251001',
-                    max_tokens:1000,
-                    system:'あなたはポケモンカードの価格調査専門家です。複数サイトを比較して最高価格を提示してください。最終回答は必ずJSON形式のみで返してください。',
+                    model:'claude-haiku-4-5-20251001',max_tokens:800,
+                    system:'あなたはポケモンカード専門家です。最終回答は必ず{"..."} 形式のJSONのみ。前置き・説明・マークダウン不要。',
                     tools:[{type:'web_search_20250305',name:'web_search'}],
                     messages
                 })
             });
             const data=await resp.json();
             if(data.error){
-                if(data.error.type==='rate_limit_error')throw new Error('レート制限中です。少し待ってから再試行してください');
+                if(data.error.type==='rate_limit_error')throw new Error('レート制限中。少し待ってから再試行してください');
                 throw new Error(data.error.message);
             }
             messages.push({role:'assistant',content:data.content});
-            if(data.stop_reason==='end_turn'){
-                const tb=data.content.filter(b=>b.type==='text');
-                finalText=tb.length>0?tb[tb.length-1].text:'';
-                break;
-            } else if(data.stop_reason==='tool_use'){
+            const textBlocks=data.content.filter(b=>b.type==='text');
+            if(textBlocks.length>0)finalText=textBlocks[textBlocks.length-1].text;
+            if(data.stop_reason==='end_turn') break;
+            if(data.stop_reason==='tool_use'){
                 const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
                 if(tr.length>0)messages.push({role:'user',content:tr});
-            } else {
-                const tb=data.content.filter(b=>b.type==='text');
-                finalText=tb.length>0?tb[tb.length-1].text:'';
-                break;
             }
         }
 
-        if(!finalText)throw new Error('応答を取得できませんでした');
-        let s=finalText.replace(/```json|```/g,'').trim();
-        const a=s.indexOf('{'),b2=s.lastIndexOf('}');
-        if(a>=0&&b2>a)s=s.slice(a,b2+1);
-        let p;
-        try{p=JSON.parse(s);}catch(e){
-            // JSON解析失敗時はカード名だけでも返す
-            console.error('JSON parse error:', s.slice(0,200));
-            throw new Error('価格データの解析に失敗しました。もう一度お試しください。');
+        // JSON抽出（複数パターン対応）
+        let p=null;
+        const attempts=[
+            finalText,
+            finalText.replace(/```json|```/g,'').trim(),
+            finalText.replace(/^[^{]*/,'').replace(/[^}]*$/,''),
+        ];
+        for(const attempt of attempts){
+            try{
+                const a=attempt.indexOf('{'), b=attempt.lastIndexOf('}');
+                if(a>=0&&b>a){p=JSON.parse(attempt.slice(a,b+1));break;}
+            }catch(e){}
         }
+        if(!p)throw new Error('価格データを取得できませんでした。番号・セットコードを確認してください。');
+
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;
         });
 
-        // 画像取得（3段階）
+        // 画像取得
         let imgUrl=null;
-
-        // 1) ポケモンTCG API（英語版）
         try{
             const numPart=number?number.split('/')[0]:null;
             let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=8';
@@ -703,8 +681,6 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
                 imgUrl=card.images?.large||card.images?.small||null;
             }
         }catch(e){}
-
-        // 2) pokemon-card.com URLパターン（日本公式）
         if(!imgUrl&&setcode&&number){
             const n=number.split('/')[0].padStart(3,'0');
             imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${setcode.toLowerCase()}/${n}.jpg`;
