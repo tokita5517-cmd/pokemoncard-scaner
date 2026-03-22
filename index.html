@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポケカ査定DX Premium FINAL</title>
+    <title>ポケカ査定DX Premium</title>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
         .box { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; max-width: 400px; margin: auto; }
         input { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
-        .btn { display: block; width: 100%; padding: 15px; background: #ff0000; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; }
+        .btn { display: block; width: 100%; padding: 15px; background: #ff0000; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         #preview { width: 100%; border-radius: 10px; display: none; margin-top: 15px; border: 2px solid #ff0000; }
         #res { margin-top: 20px; background: #111; padding: 15px; border-radius: 10px; text-align: left; white-space: pre-wrap; min-height: 100px; border: 1px solid #222; font-size: 14px; line-height: 1.6; }
     </style>
@@ -16,14 +16,13 @@
 <body>
     <h1 style="color:#ff0000">ポケカ査定DX Premium</h1>
     <div class="box">
-        <label style="font-size:10px; color:#888;">最新のAPIキーを貼ってね</label>
-        <input type="text" id="api-key" placeholder="AIza...のキーをここに貼る">
+        <input type="text" id="api-key" placeholder="最新のAPIキーを貼ってね">
         <label for="img" class="btn" style="background:#444">📷 カードを撮影</label>
         <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
         <img id="preview">
         <button id="go" class="btn" style="display:none; margin-top:15px">✨ プレミアム査定を開始</button>
     </div>
-    <div id="res">準備完了！</div>
+    <div id="res">カードを撮影してAPIキーを入れてね！</div>
 
 <script>
     const keyInp = document.getElementById('api-key'), imgInp = document.getElementById('img'), pre = document.getElementById('preview'), btn = document.getElementById('go'), res = document.getElementById('res');
@@ -42,25 +41,21 @@
 
     btn.onclick = async () => {
         const key = keyInp.value.trim();
-        if(!key) return alert('キーを入れてね！');
         res.innerText = "有料エンジンで鑑定中...";
         try {
-            // 【究極の修正】 v1 を使い、もっとも標準的な呼び出し方にしました
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
-            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [
-                        { text: "このポケモンカードの名前、レアリティ、メルカリの最新相場（最高値と最安値）を日本語で詳しく教えて。" },
+                        { text: "このポケモンカードの名前、レアリティ、最新のメルカリ相場を詳しく教えて。" },
                         { inlineData: { mimeType: "image/jpeg", data: b64 } }
                     ]}]
                 })
             });
-
             const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+            if(data.error) throw new Error(data.error.message);
             res.innerText = data.candidates[0].content.parts[0].text;
         } catch (e) {
             res.innerHTML = `<span style="color:#ff6b6b">エラー: ${e.message}</span>`;
