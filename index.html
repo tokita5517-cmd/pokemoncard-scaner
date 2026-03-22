@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v12</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v13</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -551,8 +551,24 @@ document.getElementById('go-btn').onclick=async()=>{
             {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
             {type:'text',text:`このポケモンカードから以下の情報を読み取ってください。
 JSON形式のみで返してください:
-{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分、不明なら空文字）"}
-カード名は左上、カード番号は左下の数字/数字の部分、レアリティは番号の隣の記号、セットコードは番号の左側の英数字です。`}
+{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分、不明なら空文字）","type":"下記の属性コードのいずれか"}
+
+【属性記号の対応表 - カード右上HPの右隣にある記号】
+炎(fire): 🔥 赤いほのおマーク
+水(water): 💧 青い水滴マーク
+草(grass): 🌿 緑の葉っぱマーク
+雷(lightning): ⚡ 黄色い稲妻マーク
+超(psychic): 🔮 ピンク/紫の星型マーク
+闘(fighting): 👊 オレンジの拳マーク
+悪(dark): 🌑 黒/紫の月型マーク
+鋼(metal): ⚙️ 銀色の星型マーク
+無色(colorless): ⭐ 白/無色の星マーク
+ドラゴン(dragon): 🐉 青と赤の複合マーク
+フェアリー(fairy): 🌸 ピンクのハートマーク
+トレーナーズ(unknown): マークなし
+
+typeはfire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknownのいずれか。
+カード名は左上、カード番号は左下の数字/数字、セットコードは番号の左の英数字。`}
         ]}]);
         let ocr={name:'',number:'',rarity:''};
         try{
@@ -622,6 +638,7 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
                 model:'claude-haiku-4-5-20251001',
                 max_tokens:600,
                 system:`あなたはポケモンカード専門家です。
+【属性記号の対応】HPの右のマーク: 🔥炎=fire 💧水=water 🌿草=grass ⚡雷=lightning 🔮超=psychic 👊闘=fighting 🌑悪=dark ⚙️鋼=metal ⭐無色=colorless 🐉ドラゴン=dragon 🌸フェアリー=fairy マークなし=unknown
 ユーザーが指定したカードの情報とメルカリ・カードショップ相場を返してください。
 返答は必ず以下のJSON形式のみ。前置き・説明・改行・マークダウン一切不要:
 {"name":"","card_number":"","rarity":"","type":"","set":"","price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"","tcg_name":""}`,
@@ -703,7 +720,7 @@ function priceGridHTML(p){
 function showCardFound(p,imgUrl){
     if(!p)return;
     scanResult={...p};
-    const {html,nm,lp,mp}=priceGridHTML(p);
+    const {html,nm,lp,mp,dateLabel}=priceGridHTML(p);
     scanResult.price_nm=nm;scanResult.price_lp=lp;scanResult.price_mp=mp;
     if(imgUrl){
         scanResult.thumb=imgUrl;
@@ -759,7 +776,7 @@ document.getElementById('manual-search-btn').onclick=async()=>{
     try{ await lookupAndDisplay(num,name,rarity,setcode,(p,imgUrl)=>{
         if(!p){document.getElementById('manual-search-btn').textContent='🔍 査定・画像検索';document.getElementById('manual-search-btn').disabled=false;return;}
         manualResult={...p};
-        const {html,nm,lp,mp}=priceGridHTML(p);
+        const {html,nm,lp,mp,dateLabel}=priceGridHTML(p);
         manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;manualResult.thumb=imgUrl;
         if(imgUrl){
             const mi=document.getElementById('m-img');
