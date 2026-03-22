@@ -223,17 +223,22 @@
                         <label class="form-label">カード名</label>
                         <input class="form-input" id="ocr-name-input" placeholder="例：イーブイex">
                     </div>
+                    <!-- セットコード + 番号を1行で: [M2a] - [063] / [193] -->
+                    <div style="margin-bottom:8px">
+                        <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">左下の英数字（例:sv8a, M2a）</span></label>
+                        <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a, sv7a" style="font-family:Oswald,sans-serif;letter-spacing:1px">
+                    </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                         <div>
                             <label class="form-label">カード番号</label>
                             <div style="display:flex;align-items:center;gap:6px">
-                                <input class="form-input" id="ocr-num-a" placeholder="223" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
+                                <input class="form-input" id="ocr-num-a" placeholder="063" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
                                 <span style="color:var(--muted);font-size:20px;font-weight:700">/</span>
-                                <input class="form-input" id="ocr-num-b" placeholder="187" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
+                                <input class="form-input" id="ocr-num-b" placeholder="193" style="text-align:center;font-family:Oswald,sans-serif;font-size:16px" maxlength="4" inputmode="numeric">
                             </div>
                         </div>
                         <div>
-                            <label class="form-label">レアリティ（任意）</label>
+                            <label class="form-label">レアリティ</label>
                             <select class="form-select" id="ocr-rarity-input">
                                 <option value="">不明</option>
                                 <option>SAR</option><option>SR</option><option>AR</option>
@@ -241,10 +246,6 @@
                                 <option>U</option><option>C</option><option>無印</option><option>OTHER</option>
                             </select>
                         </div>
-                    </div>
-                    <div style="margin-bottom:8px">
-                        <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">（左下の小さい文字 例:sv8a, M2a）</span></label>
-                        <input class="form-input" id="ocr-setcode-input" placeholder="例: sv8a, M2a, sv7a">
                     </div>
                     <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
                 </div>
@@ -291,10 +292,13 @@
             <div class="form-group">
                 <label class="form-label">🔢 カード番号</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                    <input class="form-input" id="m-num-a" placeholder="229" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px;letter-spacing:1px" maxlength="4" inputmode="numeric">
+                    <input class="form-input" id="m-setcode" placeholder="M2a" style="font-family:Oswald,sans-serif;letter-spacing:1px;width:80px;flex-shrink:0;text-align:center">
+                    <span style="color:var(--muted);font-size:18px;font-weight:700;flex-shrink:0">-</span>
+                    <input class="form-input" id="m-num-a" placeholder="063" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px;letter-spacing:1px" maxlength="4" inputmode="numeric">
                     <span style="color:var(--muted);font-size:24px;font-weight:700;flex-shrink:0">/</span>
                     <input class="form-input" id="m-num-b" placeholder="193" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px;letter-spacing:1px" maxlength="4" inputmode="numeric">
                 </div>
+                <div style="font-size:10px;color:var(--muted);margin-top:4px">セットコード（M2a等）- 番号前半 / 番号後半</div>
             </div>
             <div class="form-group">
                 <label class="form-label">📝 カード名（番号不明の場合）</label>
@@ -311,8 +315,8 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0">
-                    <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">例:sv8a, M2a</span></label>
-                    <input class="form-input" id="m-setcode" placeholder="例: M2a, sv8a">
+                    <label class="form-label">セット名（任意）</label>
+                    <input class="form-input" id="m-set-hint" placeholder="例：MEGAドリームex">
                 </div>
             </div>
             <button class="btn btn-red" id="manual-search-btn">🔍 査定・画像検索</button>
@@ -608,16 +612,22 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
 
-        // web_searchは複数ターン必要なのでmessages配列で対応
-        const messages=[{role:'user',content:`ポケモンカードを特定して価格を調べてください。
+        const fullId=[setcode,number].filter(Boolean).join('-');
+        const searchHint=[setcode,number,name,rarity].filter(Boolean).join(' ');
+
+        const messages=[{role:'user',content:`ポケモンカードを特定して価格と画像URLを調べてください。
 セットコード:${setcode||'不明'} カード番号:${number||'不明'} カード名:${name||'不明'} レアリティ:${rarity||'不明'}
-まずweb_searchで「ポケモンカード ${setcode?setcode+'-':''}${number||name} ${rarity||''} メルカリ 相場」を検索し、
-その結果をもとに以下のJSON形式のみで返してください（価格は整数）:
-{"name":"カード名","card_number":"${setcode?setcode+'-':''}${number||'不明'}","rarity":"${rarity||'RR'}","type":"fire","set":"セット名","price_nm_min":3000,"price_nm_max":5000,"price_lp_min":2000,"price_lp_max":3500,"price_mp_min":500,"price_mp_max":1500,"note":"調査した相場","tcg_name":"english name"}`}];
+
+web_searchで以下を検索してください:
+1.「ポケモンカード ${fullId||name} ${rarity||''} メルカリ 相場」で価格調査
+2.「pokemon card ${fullId||name} site:pokemon.com OR site:bulbapedia.bulbagarden.net OR site:serebii.net」で公式画像を探す
+
+以下のJSON形式のみで返してください（価格は整数）:
+{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"${rarity||'RR'}","type":"psychic","set":"セット名","price_nm_min":300,"price_nm_max":400,"price_lp_min":200,"price_lp_max":300,"price_mp_min":100,"price_mp_max":200,"note":"相場コメント","tcg_name":"english name","image_url":"カード画像の直リンクURL（見つかれば）"}`}];
 
         let finalText='';
         let loopCount=0;
-        while(loopCount<4){
+        while(loopCount<5){
             loopCount++;
             const resp=await fetch('https://api.anthropic.com/v1/messages',{
                 method:'POST',
@@ -625,7 +635,7 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
                 body:JSON.stringify({
                     model:'claude-haiku-4-5-20251001',
                     max_tokens:1024,
-                    system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。',
+                    system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。説明文・前置き・マークダウンは一切不要です。',
                     tools:[{type:'web_search_20250305',name:'web_search'}],
                     messages
                 })
@@ -635,30 +645,22 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
                 if(data.error.type==='rate_limit_error')throw new Error('レート制限中です。少し待ってから再試行してください');
                 throw new Error(data.error.message);
             }
-
-            // アシスタントの返答をmessagesに追加
             messages.push({role:'assistant',content:data.content});
-
             if(data.stop_reason==='end_turn'){
-                // 最後のテキストブロックを取得
-                const textBlocks=data.content.filter(b=>b.type==='text');
-                finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+                const tb=data.content.filter(b=>b.type==='text');
+                finalText=tb.length>0?tb[tb.length-1].text:'';
                 break;
             } else if(data.stop_reason==='tool_use'){
-                // ツール結果をmessagesに追加して続行
-                const toolResults=data.content
-                    .filter(b=>b.type==='tool_use')
-                    .map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
-                if(toolResults.length>0)messages.push({role:'user',content:toolResults});
+                const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
+                if(tr.length>0)messages.push({role:'user',content:tr});
             } else {
-                const textBlocks=data.content.filter(b=>b.type==='text');
-                finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+                const tb=data.content.filter(b=>b.type==='text');
+                finalText=tb.length>0?tb[tb.length-1].text:'';
                 break;
             }
         }
 
         if(!finalText)throw new Error('応答を取得できませんでした');
-
         let s=finalText.replace(/```json|```/g,'').trim();
         const a=s.indexOf('{'),b2=s.lastIndexOf('}');
         if(a>=0&&b2>a)s=s.slice(a,b2+1);
@@ -669,26 +671,50 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
             if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;
         });
 
-        // 画像取得
-        let imgUrl=null;
-        try{
-            const numPart=number?number.split('/')[0]:null;
-            let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=5';
-            if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
-            else if(numPart)apiUrl+=`&q=number:${numPart}`;
-            const ir=await fetch(apiUrl);
-            const id=await ir.json();
-            if(id.data&&id.data.length>0){
-                let card=id.data[0];
-                if(number){
-                    const n=number.split('/')[0];
-                    const match=id.data.find(c=>c.number===n||c.number===parseInt(n).toString());
-                    if(match)card=match;
-                }
-                imgUrl=card.images?.large||card.images?.small||null;
-            }
-        }catch(e){}
+        // 画像取得: 1)JSONのimage_url 2)ポケモンTCG API 3)www.pokemon-card.comスクレイプ
+        let imgUrl=p.image_url||null;
 
+        // image_urlが使えない形式なら無効化
+        if(imgUrl&&!imgUrl.startsWith('http'))imgUrl=null;
+
+        if(!imgUrl){
+            try{
+                // ポケモンTCG APIで検索
+                const numPart=number?number.split('/')[0]:null;
+                let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=8';
+                if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
+                else if(numPart)apiUrl+=`&q=number:${numPart}`;
+                const ir=await fetch(apiUrl);
+                const id=await ir.json();
+                if(id.data&&id.data.length>0){
+                    let card=id.data[0];
+                    if(number){
+                        const n=number.split('/')[0].replace(/^0+/,'');
+                        const match=id.data.find(c=>c.number===n||c.number===number.split('/')[0]);
+                        if(match)card=match;
+                    }
+                    imgUrl=card.images?.large||card.images?.small||null;
+                }
+            }catch(e){}
+        }
+
+        // TCG APIで見つからなければwww.pokemon-card.comを試みる
+        if(!imgUrl&&(number||p.card_number)){
+            try{
+                const cn=(p.card_number||number||'').replace(/^.*-/,''); // M2a-063/193 → 063/193
+                const encoded=encodeURIComponent((p.name||name||''));
+                const pcUrl=`https://www.pokemon-card.com/card-search/index.php/#!/card-search/search/suggestResult?keyword=${encoded}&category=all&regulation_sidebar_form=all&pg=1`;
+                // フェッチはCORS制限あるので断念、pokemon-card.comのCDN直URLを構築
+                // カード番号からURLパターン: https://www.pokemon-card.com/assets/images/card_images/large/{setcode}/{number}.jpg
+                if(setcode&&number){
+                    const n=number.split('/')[0];
+                    const sc=setcode.toLowerCase();
+                    imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${sc}/${n}.jpg`;
+                }
+            }catch(e){}
+        }
+
+        p._imgUrl=imgUrl;
         callback(p,imgUrl);
     }catch(e){
         showToast('検索エラー: '+e.message,'var(--red)');
@@ -715,8 +741,17 @@ function showCardFound(p,imgUrl){
     scanResult={...p};
     const {html,nm,lp,mp}=priceGridHTML(p);
     scanResult.price_nm=nm;scanResult.price_lp=lp;scanResult.price_mp=mp;
-    if(imgUrl){scanResult.thumb=imgUrl;document.getElementById('card-img').src=imgUrl;document.getElementById('card-img').style.display='block';document.getElementById('card-img-ph').style.display='none';}
-    else{document.getElementById('card-img').style.display='none';document.getElementById('card-img-ph').style.display='flex';document.getElementById('card-img-ph').textContent='🃏';}
+    if(imgUrl){
+        scanResult.thumb=imgUrl;
+        const ci=document.getElementById('card-img');
+        const ph=document.getElementById('card-img-ph');
+        ci.onerror=()=>{ci.style.display='none';ph.style.display='flex';ph.textContent='🃏';};
+        ci.src=imgUrl;ci.style.display='block';ph.style.display='none';
+    } else {
+        document.getElementById('card-img').style.display='none';
+        document.getElementById('card-img-ph').style.display='flex';
+        document.getElementById('card-img-ph').textContent='🃏';
+    }
     document.getElementById('card-found-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
     document.getElementById('card-found-name').textContent=p.name;
     document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
@@ -762,8 +797,16 @@ document.getElementById('manual-search-btn').onclick=async()=>{
         manualResult={...p};
         const {html,nm,lp,mp}=priceGridHTML(p);
         manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;manualResult.thumb=imgUrl;
-        if(imgUrl){document.getElementById('m-img').src=imgUrl;document.getElementById('m-img').style.display='block';document.getElementById('m-img-ph').style.display='none';}
-        else{document.getElementById('m-img').style.display='none';document.getElementById('m-img-ph').style.display='flex';document.getElementById('m-img-ph').textContent='🃏';}
+        if(imgUrl){
+            const mi=document.getElementById('m-img');
+            const mph=document.getElementById('m-img-ph');
+            mi.onerror=()=>{mi.style.display='none';mph.style.display='flex';mph.textContent='🃏';};
+            mi.src=imgUrl;mi.style.display='block';mph.style.display='none';
+        } else {
+            document.getElementById('m-img').style.display='none';
+            document.getElementById('m-img-ph').style.display='flex';
+            document.getElementById('m-img-ph').textContent='🃏';
+        }
         document.getElementById('m-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
         document.getElementById('m-name-result').textContent=p.name;
         document.getElementById('m-set-result').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
