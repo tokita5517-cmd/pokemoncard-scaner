@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v11</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v12</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -651,6 +651,7 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
         });
         if(!p.card_number&&fullId)p.card_number=fullId;
         if(!p.name&&name)p.name=name;
+        p.price_date='2025年8月'; // Claude学習データ基準
 
         // 画像取得
         let imgUrl=null;
@@ -690,11 +691,13 @@ function priceGridHTML(p){
     const nm_min=p.price_nm_min||nm;const nm_max=p.price_nm_max||nm;
     const lp_min=p.price_lp_min||lp;const lp_max=p.price_lp_max||lp;
     const mp_min=p.price_mp_min||mp;const mp_max=p.price_mp_max||mp;
+    const isWebDate=p.price_date&&p.price_date!=='2025年8月';
+    const dateLabel=p.price_date?`<div style="text-align:right;font-size:10px;color:${isWebDate?'var(--green)':'var(--muted)'};margin-bottom:4px">${isWebDate?'🌐 Web':'📚 Claude知識'} 価格参照日: ${p.price_date}</div>`:'';
     return {html:`<div class="price-grid">
         <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
         <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
         <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
-    </div>`,nm,lp,mp};
+    </div>`,nm,lp,mp,dateLabel};
 }
 
 function showCardFound(p,imgUrl){
@@ -717,7 +720,7 @@ function showCardFound(p,imgUrl){
     document.getElementById('card-found-name').textContent=p.name;
     document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
     document.getElementById('card-found-note').innerHTML=`${p.best_site?`<span style="color:var(--gold);font-weight:700">🏆 最高: ${p.best_site}</span><br>`:''}${p.note||''}`;
-    document.getElementById('card-found-prices').innerHTML=html;
+    document.getElementById('card-found-prices').innerHTML=dateLabel+html;
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     const dupEl=document.getElementById('dup-notice');
     if(dup){dupEl.style.display='block';dupEl.innerHTML=`✅ 登録済み（現在<b>${dup.qty||1}枚</b>）。追加で<b>${(dup.qty||1)+addQty}枚</b>になります`;document.getElementById('save-card-btn').textContent='💾 枚数を追加する';}
@@ -734,7 +737,7 @@ document.getElementById('save-card-btn').onclick=()=>{
 function addToCollection(p,qty){
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     if(dup){dup.qty=(dup.qty||1)+qty;dup.price_nm=p.price_nm;dup.price_lp=p.price_lp;dup.price_mp=p.price_mp;dup.date=new Date().toLocaleDateString('ja-JP');if(p.thumb&&!dup.thumb)dup.thumb=p.thumb;saveCards(cards);showToast(`✅ ${dup.name} → ${dup.qty}枚になりました`);}
-    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
+    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,price_date:p.price_date||'2025年8月',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
 }
 
 // ===== 手動モード =====
@@ -772,7 +775,7 @@ document.getElementById('manual-search-btn').onclick=async()=>{
         document.getElementById('m-name-result').textContent=p.name;
         document.getElementById('m-set-result').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
         document.getElementById('m-note-result').innerHTML=`${p.best_site?`<span style="color:var(--gold)">🏆 最高価格: ${p.best_site}</span><br>`:''}<span style="color:var(--muted)">💬 ${p.note||''}</span>`;
-        document.getElementById('m-prices').innerHTML=html;
+        document.getElementById('m-prices').innerHTML=dateLabel+html;
         document.getElementById('manual-result').style.display='block';
         manualQty=1;document.getElementById('m-qty-display').textContent='1';
     });
@@ -842,6 +845,7 @@ function renderCollection(){
                     <span class="card-price-sub">NM</span>
                     <span class="card-price-sub">美¥${c.price_lp.toLocaleString()}</span>
                     <span class="card-price-sub">並¥${c.price_mp.toLocaleString()}</span>
+                    ${c.price_date?`<span style="font-size:10px;color:var(--muted)">📅${c.price_date}</span>`:''}
                 </div>
                 <div class="card-meta">${rarityBadge(c.rarity)}${typeBadge(c.type)}${c.card_number?`<span style="font-size:10px;color:var(--muted)">${c.card_number}</span>`:''}<span class="card-date">${c.date}</span></div>
                 ${c.set?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${c.set}</div>`:''}
@@ -900,12 +904,23 @@ async function callUpdateAPI(name,rarity){
     let s=finalText.replace(/```json|```/g,'').trim();
     const a=s.indexOf('{'),b=s.lastIndexOf('}');
     if(a>=0&&b>a)s=s.slice(a,b+1);
-    return JSON.parse(s);
+    const _wr=JSON.parse(s);
+    const _hasPrice=(_wr.price_nm_min||0)+(_wr.price_nm_max||0)+(_wr.price_lp_min||0)+(_wr.price_lp_max||0)>0;
+    if(_hasPrice){
+        const _wn=new Date();
+        _wr.price_date=`${_wn.getMonth()+1}月${_wn.getDate()}日`;
+    }
+    return _wr;
 }
 window.updateSingle=async id=>{
     const cards=getCards(),card=cards.find(c=>c.id===id);if(!card)return;
     showToast('更新中...');
-    try{const p=await callUpdateAPI(card.name,card.rarity);card.price_nm=Math.round((p.price_nm_min+p.price_nm_max)/2);card.price_lp=Math.round((p.price_lp_min+p.price_lp_max)/2);card.price_mp=Math.round((p.price_mp_min+p.price_mp_max)/2);card.date=new Date().toLocaleDateString('ja-JP');saveCards(cards);renderCollection();showToast(`✅ ${card.name} を更新しました`);}
+    try{const p=await callUpdateAPI(card.name,card.rarity);const _nm=Math.round((p.price_nm_min+p.price_nm_max)/2);
+        const _lp=Math.round((p.price_lp_min+p.price_lp_max)/2);
+        const _mp=Math.round((p.price_mp_min+p.price_mp_max)/2);
+        card.price_nm=_nm;card.price_lp=_lp;card.price_mp=_mp;
+        // 価格が実際に取得できた場合のみ日付更新
+        if(_nm>0||_lp>0||_mp>0)card.price_date=p.price_date||(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();card.date=new Date().toLocaleDateString('ja-JP');saveCards(cards);renderCollection();showToast(`✅ ${card.name} を更新しました`);}
     catch(e){showToast('エラー: '+e.message,'var(--red)');}
 };
 document.getElementById('bulk-update-btn').onclick=async()=>{
