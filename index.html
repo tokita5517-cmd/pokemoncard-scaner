@@ -6,33 +6,39 @@
     <title>ポケカ査定DX</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Oswald:wght@600;700&display=swap');
-        :root {
-            --bg:#0a0a0f;--surface:#13131e;--surface2:#1c1c2e;--border:#2a2a40;
-            --red:#e63946;--red2:#ff6b6b;--gold:#ffd60a;--text:#e8e8f0;--muted:#7070a0;--green:#4caf50;
-        }
+        :root{--bg:#0a0a0f;--surface:#13131e;--surface2:#1c1c2e;--border:#2a2a40;--red:#e63946;--red2:#ff6b6b;--gold:#ffd60a;--text:#e8e8f0;--muted:#7070a0;--green:#4caf50;}
         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
         body{background:var(--bg);color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;min-height:100vh;padding-bottom:70px;}
         .nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;}
-        .nav-btn{flex:1;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;transition:color .2s;border:none;background:none;}
+        .nav-btn{flex:1;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;border:none;background:none;transition:color .2s;}
         .nav-btn.active{color:var(--red);}
         .nav-icon{font-size:22px;}
         .screen{display:none;padding:16px;max-width:480px;margin:auto;}
         .screen.active{display:block;}
-        .header{text-align:center;padding:16px 0 20px;}
+        .header{text-align:center;padding:12px 0 18px;}
         .header h1{font-family:'Oswald',sans-serif;font-size:26px;color:var(--red);letter-spacing:2px;}
         .header p{font-size:12px;color:var(--muted);margin-top:4px;}
-        .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;}
+        .card-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;}
         .btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;transition:transform .1s,opacity .2s;}
         .btn:active{transform:scale(.97);}
         .btn-red{background:var(--red);color:#fff;}
         .btn-gold{background:var(--gold);color:#000;}
         .btn-dark{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
-        .btn-green{background:var(--green);color:#fff;}
-        .btn-sm{padding:8px 14px;font-size:13px;width:auto;display:inline-block;}
-        #preview{width:100%;border-radius:12px;display:none;border:2px solid var(--red);margin-bottom:12px;}
-        .cam-placeholder{border:2px dashed var(--border);border-radius:12px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:8px;cursor:pointer;margin-bottom:12px;}
-        #res{background:var(--surface2);border-radius:12px;padding:14px;font-size:14px;line-height:1.8;min-height:60px;color:var(--text);border:1px solid var(--border);white-space:pre-wrap;}
-        .result-actions{display:flex;gap:10px;margin-top:12px;}
+        .btn-sm{padding:9px 14px;font-size:13px;width:auto;display:inline-block;}
+        .btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 14px;font-size:13px;width:auto;display:inline-block;}
+
+        /* モードセレクター */
+        .mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+        .mode-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s;}
+        .mode-card.active{border-color:var(--red);background:#1e1015;}
+        .mode-card-icon{font-size:32px;margin-bottom:8px;}
+        .mode-card-title{font-size:15px;font-weight:700;}
+        .mode-card-desc{font-size:11px;color:var(--muted);margin-top:4px;}
+
+        /* カメラエリア */
+        .cam-placeholder{border:2px dashed var(--border);border-radius:12px;height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:8px;cursor:pointer;}
+        #preview{width:100%;border-radius:12px;display:none;border:2px solid var(--red);margin-bottom:0;}
+        .preview-actions{display:flex;gap:8px;margin-top:10px;}
 
         /* 価格グリッド */
         .price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0;}
@@ -41,18 +47,43 @@
         .price-box-val{font-family:'Oswald',sans-serif;font-size:15px;color:var(--gold);}
         .price-box-val.low{color:#aaa;}
 
-        /* レアリティバッジ */
+        /* 査定結果の編集フォーム */
+        .result-edit-form{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+        .result-edit-form .form-title{font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700;}
+        .edit-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+        .edit-field{display:flex;flex-direction:column;gap:4px;}
+        .edit-label{font-size:11px;color:var(--muted);}
+        .edit-input{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%;}
+        .edit-input:focus{outline:none;border-color:var(--red);}
+        .re-search-btn{width:100%;padding:10px;background:var(--surface);border:1px solid var(--red);color:var(--red);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:4px;}
+
+        /* 手動検索フォーム */
+        .manual-search-form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;}
+        .form-group{margin-bottom:12px;}
+        .form-label{font-size:13px;color:var(--muted);margin-bottom:6px;display:block;}
+        .form-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:15px;font-family:inherit;}
+        .form-input:focus{outline:none;border-color:var(--red);}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+        .form-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;}
+
+        /* 手動検索結果 */
+        .manual-result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:14px;display:none;}
+        .manual-result-inner{display:flex;gap:14px;align-items:flex-start;}
+        .manual-result-img{width:100px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);}
+        .manual-result-img-placeholder{width:100px;height:140px;border-radius:10px;flex-shrink:0;border:1px dashed var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px;}
+        .manual-result-info{flex:1;min-width:0;}
+
+        /* バッジ */
         .rarity-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;}
         .r-SAR{background:#6a0dad;color:#fff;}.r-SR{background:#1565c0;color:#fff;}.r-AR{background:#00695c;color:#fff;}
         .r-RRR{background:#e65100;color:#fff;}.r-RR{background:#c62828;color:#fff;}.r-R{background:#4a4a6a;color:#fff;}
         .r-U{background:#333;color:#aaa;}.r-C{background:#222;color:#888;}.r-OTHER{background:#2a2a2a;color:#aaa;}
-
-        /* 属性バッジ */
         .type-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;}
         .t-fire{background:#c62828;color:#fff;}.t-water{background:#0277bd;color:#fff;}.t-grass{background:#2e7d32;color:#fff;}
         .t-lightning{background:#f9a825;color:#000;}.t-psychic{background:#6a1b9a;color:#fff;}.t-fighting{background:#bf360c;color:#fff;}
         .t-dark{background:#212121;color:#fff;}.t-metal{background:#546e7a;color:#fff;}.t-colorless{background:#555;color:#fff;}
         .t-dragon{background:#1565c0;color:#ffd600;}.t-fairy{background:#ad1457;color:#fff;}.t-unknown{background:#333;color:#aaa;}
+        .qty-badge{background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-size:12px;padding:2px 7px;border-radius:10px;font-weight:700;}
 
         /* コレクション */
         .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
@@ -66,6 +97,7 @@
         .filter-row::-webkit-scrollbar{display:none;}
         .filter-chip{flex-shrink:0;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
         .filter-chip.active{background:var(--red);border-color:var(--red);color:#fff;}
+        .section-title{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px;}
         .card-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;}
         .card-thumb{width:52px;height:72px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);background:var(--surface2);}
         .card-no-thumb{width:52px;height:72px;border-radius:8px;flex-shrink:0;border:1px dashed var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;}
@@ -76,60 +108,191 @@
         .card-price-sub{font-size:11px;color:var(--muted);}
         .card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px;}
         .card-date{font-size:11px;color:var(--muted);}
-        .card-actions{display:flex;gap:6px;margin-top:6px;}
+        .card-actions{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap;}
         .icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text);}
-        .dup-warn{background:#2a1a00;border:1px solid #ff8c00;border-radius:10px;padding:10px 14px;font-size:13px;color:#ffb347;margin-bottom:12px;}
+        .inline-qty{display:flex;align-items:center;gap:5px;margin-left:auto;}
+        .iq-btn{width:26px;height:26px;border-radius:50%;border:none;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+        .iq-minus{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+        .iq-plus{background:var(--red);color:#fff;}
+        .iq-num{font-family:'Oswald',sans-serif;font-size:15px;min-width:18px;text-align:center;}
+        .qty-ctrl{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0;}
+        .qty-btn{width:36px;height:36px;border-radius:50%;border:none;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+        .qty-btn-minus{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+        .qty-btn-plus{background:var(--red);color:#fff;}
+        .qty-num{font-family:'Oswald',sans-serif;font-size:28px;color:var(--text);min-width:40px;text-align:center;}
+        .fav-star{font-size:18px;cursor:pointer;line-height:1;}
+        .bulk-bar{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+
+        /* 設定 */
         .setting-label{font-size:13px;color:var(--muted);margin-bottom:6px;}
         .setting-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;margin-bottom:12px;}
         .setting-input:focus{outline:none;border-color:var(--red);}
+
+        /* モーダル */
         .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;}
         .modal-overlay.open{display:flex;}
-        .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;margin:auto;max-height:85vh;overflow-y:auto;}
+        .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;margin:auto;max-height:88vh;overflow-y:auto;}
         .modal h3{font-size:17px;font-weight:700;margin-bottom:16px;}
+        .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+        /* ローディング */
         .loading-dot{display:inline-block;animation:blink 1.2s infinite;}
         .loading-dot:nth-child(2){animation-delay:.2s;}.loading-dot:nth-child(3){animation-delay:.4s;}
         @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
         .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
         .empty-icon{font-size:48px;margin-bottom:12px;}
         select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-size:13px;font-family:inherit;}
-        .bulk-bar{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
         .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:700;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
         .toast.show{opacity:1;}
-        .fav-star{font-size:18px;cursor:pointer;line-height:1;}
-        .section-title{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;}
-
-        /* グラフ */
         .chart-bar-wrap{margin-bottom:6px;}
         .chart-bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
         .chart-bar-bg{background:var(--surface2);border-radius:4px;height:10px;overflow:hidden;}
         .chart-bar-fill{height:100%;border-radius:4px;background:var(--red);transition:width .5s;}
+        .dup-notice{background:#1a2a1a;border:1px solid #2a5a2a;border-radius:10px;padding:10px 14px;font-size:13px;color:#6dbf6d;margin-bottom:10px;display:none;}
     </style>
 </head>
 <body>
 
-<!-- 査定 -->
+<!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX</h1><p>撮影して査定・状態別価格を確認</p></div>
-    <div class="card">
-        <label for="img">
-            <div class="cam-placeholder" id="cam-ph"><span style="font-size:40px">📷</span><span>タップして撮影</span></div>
-        </label>
-        <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
-        <img id="preview">
-        <button id="go" class="btn btn-red" style="display:none">✨ 査定スタート</button>
+    <div class="header"><h1>📸 ポケカ査定DX</h1><p>モードを選んで査定しよう</p></div>
+
+    <!-- モード切替 -->
+    <div class="mode-selector">
+        <div class="mode-card active" id="mode-cam-btn" onclick="setMode('camera')">
+            <div class="mode-card-icon">📷</div>
+            <div class="mode-card-title">撮影して査定</div>
+            <div class="mode-card-desc">カメラで撮影→AI鑑定</div>
+        </div>
+        <div class="mode-card" id="mode-manual-btn" onclick="setMode('manual')">
+            <div class="mode-card-icon">✏️</div>
+            <div class="mode-card-title">手動で検索</div>
+            <div class="mode-card-desc">名前・番号・レアリティで特定</div>
+        </div>
     </div>
-    <div id="dup-warn" class="dup-warn" style="display:none"></div>
-    <div id="res-wrap" style="display:none">
-        <div id="res"></div>
-        <div id="price-grid-wrap"></div>
-        <div class="result-actions">
-            <button id="save-card-btn" class="btn btn-gold">💾 コレクションに追加</button>
-            <button id="rescan-btn" class="btn btn-dark btn-sm">撮り直す</button>
+
+    <!-- カメラモード -->
+    <div id="camera-mode">
+        <div class="card-box">
+            <label for="img" id="cam-label-wrap">
+                <div class="cam-placeholder" id="cam-ph">
+                    <span style="font-size:40px">📷</span>
+                    <span>タップして撮影</span>
+                </div>
+            </label>
+            <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
+            <img id="preview">
+            <!-- 撮影直後のアクション（査定前） -->
+            <div class="preview-actions" id="preview-actions" style="display:none">
+                <button class="btn btn-red" id="go" style="flex:1">✨ 査定スタート</button>
+                <button class="btn btn-dark btn-sm" id="retake-btn">📷 撮り直す</button>
+            </div>
+        </div>
+
+        <!-- 重複通知 -->
+        <div class="dup-notice" id="dup-notice"></div>
+
+        <!-- 査定結果 -->
+        <div id="res-wrap" style="display:none">
+            <!-- 編集可能フォーム -->
+            <div class="result-edit-form">
+                <div class="form-title">🔍 認識結果（修正して再検索できます）</div>
+                <div class="edit-row">
+                    <div class="edit-field" style="grid-column:1/-1">
+                        <div class="edit-label">カード名</div>
+                        <input class="edit-input" id="edit-result-name" placeholder="カード名">
+                    </div>
+                </div>
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <div class="edit-label">カード番号 (???/???)</div>
+                        <input class="edit-input" id="edit-result-number" placeholder="例: 081/193">
+                    </div>
+                    <div class="edit-field">
+                        <div class="edit-label">レアリティ</div>
+                        <select class="edit-input" id="edit-result-rarity">
+                            <option>SAR</option><option>SR</option><option>AR</option>
+                            <option>RRR</option><option>RR</option><option>R</option>
+                            <option>U</option><option>C</option><option>OTHER</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="re-search-btn" id="re-search-btn">🔄 この内容で再査定</button>
+            </div>
+
+            <!-- 価格結果 -->
+            <div id="price-result-wrap"></div>
+
+            <!-- 枚数 -->
+            <div id="qty-wrap" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px;text-align:center;display:none">
+                <div style="font-size:13px;color:var(--muted);margin-bottom:8px">追加する枚数</div>
+                <div class="qty-ctrl">
+                    <button class="qty-btn qty-btn-minus" id="qty-minus">−</button>
+                    <div class="qty-num" id="qty-display">1</div>
+                    <button class="qty-btn qty-btn-plus" id="qty-plus">＋</button>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:10px">
+                <button id="save-card-btn" class="btn btn-gold" style="flex:1">💾 コレクションに追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手動検索モード -->
+    <div id="manual-mode" style="display:none">
+        <div class="manual-search-form">
+            <div class="form-group">
+                <label class="form-label">カード名</label>
+                <input class="form-input" id="m-name" placeholder="例：メガルチャブルex">
+            </div>
+            <div class="form-row" style="gap:8px;margin-bottom:12px">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">カード番号 (???/???)</label>
+                    <input class="form-input" id="m-number" placeholder="例: 229/193">
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">レアリティ</label>
+                    <select class="form-select" id="m-rarity-search">
+                        <option value="">不明</option>
+                        <option>SAR</option><option>SR</option><option>AR</option>
+                        <option>RRR</option><option>RR</option><option>R</option>
+                        <option>U</option><option>C</option><option>OTHER</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-red" id="manual-search-btn">🔍 査定・画像検索</button>
+        </div>
+
+        <!-- 手動検索結果 -->
+        <div class="manual-result" id="manual-result">
+            <div class="manual-result-inner">
+                <div id="manual-img-wrap">
+                    <div class="manual-result-img-placeholder" id="manual-img-placeholder">🃏</div>
+                    <img id="manual-img" class="manual-result-img" style="display:none">
+                </div>
+                <div class="manual-result-info">
+                    <div id="manual-result-badges" style="margin-bottom:6px"></div>
+                    <div id="manual-result-name" style="font-size:17px;font-weight:700;margin-bottom:4px"></div>
+                    <div id="manual-result-set" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
+                    <div id="manual-result-note" style="font-size:12px;color:var(--muted)"></div>
+                </div>
+            </div>
+            <div id="manual-price-grid" style="margin-top:12px"></div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px;text-align:center">
+                <div style="font-size:13px;color:var(--muted);margin-bottom:8px">追加する枚数</div>
+                <div class="qty-ctrl">
+                    <button class="qty-btn qty-btn-minus" id="m-qty-minus">−</button>
+                    <div class="qty-num" id="m-qty-display">1</div>
+                    <button class="qty-btn qty-btn-plus" id="m-qty-plus">＋</button>
+                </div>
+            </div>
+            <button class="btn btn-gold" style="margin-top:10px" id="manual-save-btn">💾 コレクションに追加</button>
         </div>
     </div>
 </div>
 
-<!-- コレクション -->
+<!-- ===== コレクション ===== -->
 <div id="screen-collection" class="screen">
     <div class="header"><h1>🗂 コレクション</h1></div>
     <div class="stats-row" id="stats-row"></div>
@@ -145,6 +308,7 @@
             <option value="price-asc">安値順</option>
             <option value="rarity">レア順</option>
             <option value="name">名前順</option>
+            <option value="qty-desc">枚数多い順</option>
         </select>
     </div>
     <div class="section-title">レアリティ</div>
@@ -154,29 +318,28 @@
     <div id="card-list"></div>
 </div>
 
-<!-- 統計 -->
+<!-- ===== 統計 ===== -->
 <div id="screen-stats" class="screen">
     <div class="header"><h1>📊 統計</h1><p>コレクション分析</p></div>
     <div id="stats-content"></div>
 </div>
 
-<!-- 設定 -->
+<!-- ===== 設定 ===== -->
 <div id="screen-settings" class="screen">
     <div class="header"><h1>⚙️ 設定</h1></div>
-    <div class="card">
+    <div class="card-box">
         <div class="setting-label">🔑 Claude APIキー</div>
         <input type="password" class="setting-input" id="key-input" placeholder="sk-ant-api03-...">
         <button class="btn btn-red" id="save-key-btn">保存する</button>
         <p style="font-size:12px;color:var(--muted);margin-top:10px">一度保存すれば次回から入力不要。端末内のみに保存されます。</p>
     </div>
-    <div class="card">
+    <div class="card-box">
         <div class="setting-label">🗑 データ管理</div>
         <button class="btn btn-dark" id="export-btn">📤 CSVで書き出す</button>
         <button class="btn btn-dark" style="margin-top:8px;color:var(--red2)" id="clear-btn">全データを削除</button>
     </div>
 </div>
 
-<!-- ナビ -->
 <nav class="nav">
     <button class="nav-btn active" data-screen="scan"><span class="nav-icon">📷</span>査定</button>
     <button class="nav-btn" data-screen="collection"><span class="nav-icon">🗂</span>コレクション</button>
@@ -190,26 +353,40 @@
         <h3>✏️ カードを編集</h3>
         <div class="setting-label">カード名</div>
         <input class="setting-input" id="edit-name">
-        <div class="setting-label">レアリティ</div>
-        <select class="setting-input" id="edit-rarity" style="width:100%;margin-bottom:12px">
-            <option>SAR</option><option>SR</option><option>AR</option>
-            <option>RRR</option><option>RR</option><option>R</option>
-            <option>U</option><option>C</option><option>OTHER</option>
-        </select>
-        <div class="setting-label">属性</div>
-        <select class="setting-input" id="edit-type" style="width:100%;margin-bottom:12px">
-            <option value="fire">🔥 炎</option><option value="water">💧 水</option><option value="grass">🌿 草</option>
-            <option value="lightning">⚡ 雷</option><option value="psychic">🔮 超</option><option value="fighting">👊 闘</option>
-            <option value="dark">🌑 悪</option><option value="metal">⚙️ 鋼</option><option value="colorless">⬜ 無色</option>
-            <option value="dragon">🐉 ドラゴン</option><option value="fairy">🌸 フェアリー</option><option value="unknown">❓ 不明</option>
-        </select>
-        <div class="setting-label">超美品 価格（円）</div>
-        <input class="setting-input" id="edit-price-nm" type="number" placeholder="NM">
-        <div class="setting-label">美品 価格（円）</div>
-        <input class="setting-input" id="edit-price-lp" type="number" placeholder="LP">
-        <div class="setting-label">並品 価格（円）</div>
-        <input class="setting-input" id="edit-price-mp" type="number" placeholder="MP">
-        <div style="display:flex;gap:10px;margin-top:4px">
+        <div class="form-row2" style="gap:8px;margin-bottom:12px">
+            <div>
+                <div class="setting-label">レアリティ</div>
+                <select class="setting-input" id="edit-rarity" style="width:100%;margin-bottom:0">
+                    <option>SAR</option><option>SR</option><option>AR</option>
+                    <option>RRR</option><option>RR</option><option>R</option>
+                    <option>U</option><option>C</option><option>OTHER</option>
+                </select>
+            </div>
+            <div>
+                <div class="setting-label">属性</div>
+                <select class="setting-input" id="edit-type" style="width:100%;margin-bottom:0">
+                    <option value="fire">🔥炎</option><option value="water">💧水</option><option value="grass">🌿草</option>
+                    <option value="lightning">⚡雷</option><option value="psychic">🔮超</option><option value="fighting">👊闘</option>
+                    <option value="dark">🌑悪</option><option value="metal">⚙️鋼</option><option value="colorless">⬜無色</option>
+                    <option value="dragon">🐉龍</option><option value="fairy">🌸妖精</option><option value="unknown">❓不明</option>
+                </select>
+            </div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
+            <div class="setting-label" style="margin-bottom:8px">📦 所持枚数</div>
+            <div class="qty-ctrl" style="margin:0">
+                <button class="qty-btn qty-btn-minus" id="edit-qty-minus">−</button>
+                <div class="qty-num" id="edit-qty-display">1</div>
+                <button class="qty-btn qty-btn-plus" id="edit-qty-plus">＋</button>
+            </div>
+        </div>
+        <div class="form-row2" style="gap:8px;margin-bottom:12px">
+            <div><div class="setting-label">超美品 NM（円）</div><input class="setting-input" id="edit-price-nm" type="number" style="margin-bottom:0"></div>
+            <div><div class="setting-label">美品 LP（円）</div><input class="setting-input" id="edit-price-lp" type="number" style="margin-bottom:0"></div>
+        </div>
+        <div class="setting-label">並品 MP（円）</div>
+        <input class="setting-input" id="edit-price-mp" type="number">
+        <div style="display:flex;gap:10px">
             <button class="btn btn-red" id="edit-save-btn">保存</button>
             <button class="btn btn-dark" id="edit-cancel-btn">キャンセル</button>
         </div>
@@ -219,196 +396,341 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const TYPE_LABELS = {fire:'🔥炎',water:'💧水',grass:'🌿草',lightning:'⚡雷',psychic:'🔮超',fighting:'👊闘',dark:'🌑悪',metal:'⚙️鋼',colorless:'⬜無色',dragon:'🐉龍',fairy:'🌸妖精',unknown:'❓'};
-const TYPE_MAP = {炎:'fire',火:'fire',水:'water',草:'grass',雷:'lightning',超:'psychic',闘:'fighting',悪:'dark',鋼:'metal',無色:'colorless',ドラゴン:'dragon',フェアリー:'fairy'};
-const RARITY_ORDER = ['SAR','SR','AR','RRR','RR','R','U','C','OTHER'];
-const RARITY_CLASS = {SAR:'r-SAR',SR:'r-SR',AR:'r-AR',RRR:'r-RRR',RR:'r-RR',R:'r-R',U:'r-U',C:'r-C',OTHER:'r-OTHER'};
+const TYPE_LABELS={fire:'🔥炎',water:'💧水',grass:'🌿草',lightning:'⚡雷',psychic:'🔮超',fighting:'👊闘',dark:'🌑悪',metal:'⚙️鋼',colorless:'⬜無色',dragon:'🐉龍',fairy:'🌸妖精',unknown:'❓'};
+const RARITY_ORDER=['SAR','SR','AR','RRR','RR','R','U','C','OTHER'];
+const RARITY_CLASS={SAR:'r-SAR',SR:'r-SR',AR:'r-AR',RRR:'r-RRR',RR:'r-RR',R:'r-R',U:'r-U',C:'r-C',OTHER:'r-OTHER'};
+const getKey=()=>localStorage.getItem('claude_api_key')||'';
+const getCards=()=>JSON.parse(localStorage.getItem('pokeca_cards')||'[]');
+const saveCards=c=>localStorage.setItem('pokeca_cards',JSON.stringify(c));
+const rarityBadge=r=>`<span class="rarity-badge ${RARITY_CLASS[r]||'r-OTHER'}">${r||'?'}</span>`;
+const typeBadge=t=>`<span class="type-badge t-${t||'unknown'}">${TYPE_LABELS[t]||'❓'}</span>`;
 
-const getKey = () => localStorage.getItem('claude_api_key') || '';
-const getCards = () => JSON.parse(localStorage.getItem('pokeca_cards') || '[]');
-const saveCards = c => localStorage.setItem('pokeca_cards', JSON.stringify(c));
-
-function rarityBadge(r){ return `<span class="rarity-badge ${RARITY_CLASS[r]||'r-OTHER'}">${r||'?'}</span>`; }
-function typeBadge(t){ return `<span class="type-badge t-${t||'unknown'}">${TYPE_LABELS[t]||'❓'}</span>`; }
+function showToast(msg,color='var(--green)'){
+    const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;
+    t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
 
 // ナビ
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
         document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('screen-'+btn.dataset.screen).classList.add('active');
-        if(btn.dataset.screen==='collection') renderCollection();
-        if(btn.dataset.screen==='stats') renderStats();
-        if(btn.dataset.screen==='settings'){ const k=getKey(); document.getElementById('key-input').placeholder=k?'保存済み（変更する場合のみ）':'sk-ant-api03-...'; }
+        if(btn.dataset.screen==='collection')renderCollection();
+        if(btn.dataset.screen==='stats')renderStats();
+        if(btn.dataset.screen==='settings'){const k=getKey();document.getElementById('key-input').placeholder=k?'保存済み（変更する場合のみ）':'sk-ant-api03-...';}
     });
 });
 
-function showToast(msg, color='var(--green)'){
-    const t=document.getElementById('toast');
-    t.textContent=msg; t.style.background=color;
-    t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+// ===== モード切替 =====
+let currentMode='camera';
+function setMode(mode){
+    currentMode=mode;
+    document.getElementById('mode-cam-btn').classList.toggle('active',mode==='camera');
+    document.getElementById('mode-manual-btn').classList.toggle('active',mode==='manual');
+    document.getElementById('camera-mode').style.display=mode==='camera'?'block':'none';
+    document.getElementById('manual-mode').style.display=mode==='manual'?'block':'none';
 }
 
-// ===== 撮影 =====
-const imgInp=document.getElementById('img'), pre=document.getElementById('preview');
-const camPh=document.getElementById('cam-ph'), goBtn=document.getElementById('go');
-const resWrap=document.getElementById('res-wrap'), resDiv=document.getElementById('res');
-const dupWarn=document.getElementById('dup-warn');
-let b64=null, mimeType='image/jpeg', lastResult=null;
+// ===== カメラモード =====
+const imgInp=document.getElementById('img'),pre=document.getElementById('preview');
+const camPh=document.getElementById('cam-ph'),goBtn=document.getElementById('go');
+const previewActions=document.getElementById('preview-actions');
+const resWrap=document.getElementById('res-wrap'),dupNotice=document.getElementById('dup-notice');
+let b64=null,mimeType='image/jpeg',lastResult=null,addQty=1;
 
-imgInp.onchange = e => {
-    const f=e.target.files[0]; if(!f) return;
-    const img=new Image(), url=URL.createObjectURL(f);
+// 枚数
+document.getElementById('qty-minus').onclick=()=>{if(addQty>1){addQty--;document.getElementById('qty-display').textContent=addQty;}};
+document.getElementById('qty-plus').onclick=()=>{addQty++;document.getElementById('qty-display').textContent=addQty;};
+
+imgInp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const img=new Image(),url=URL.createObjectURL(f);
     img.onload=()=>{
         const c=document.createElement('canvas');
-        const sc=Math.min(1,512/img.width); c.width=img.width*sc; c.height=img.height*sc;
+        const sc=Math.min(1,512/img.width);c.width=img.width*sc;c.height=img.height*sc;
         c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-        b64=c.toDataURL('image/jpeg',.65).split(',')[1]; mimeType='image/jpeg';
-        pre.src=c.toDataURL('image/jpeg',.65); pre.style.display='block';
-        camPh.style.display='none'; goBtn.style.display='block';
-        resWrap.style.display='none'; dupWarn.style.display='none'; lastResult=null;
+        b64=c.toDataURL('image/jpeg',.65).split(',')[1];mimeType='image/jpeg';
+        pre.src=c.toDataURL('image/jpeg',.65);
+        pre.style.display='block';
+        camPh.style.display='none';
+        // 撮影直後：撮り直しボタンを出す
+        previewActions.style.display='flex';
+        resWrap.style.display='none';dupNotice.style.display='none';lastResult=null;
+        addQty=1;document.getElementById('qty-display').textContent='1';
         URL.revokeObjectURL(url);
-    }; img.src=url;
+    };img.src=url;
 };
 
-goBtn.onclick = async () => {
-    const key=getKey();
-    if(!key){ showToast('⚙️ 設定からAPIキーを登録してね','var(--red)'); return; }
-    resDiv.innerHTML='鑑定中<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>';
-    document.getElementById('price-grid-wrap').innerHTML='';
-    resWrap.style.display='block'; goBtn.disabled=true;
-    try {
-        const resp=await fetch('https://api.anthropic.com/v1/messages',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-            body:JSON.stringify({
-                model:'claude-haiku-4-5-20251001', max_tokens:1024,
-                messages:[{role:'user',content:[
-                    {type:'image',source:{type:'base64',media_type:mimeType,data:b64}},
-                    {type:'text',text:`このポケモンカードを査定してください。必ず以下のJSON形式のみで返してください（他テキスト不要）：
-{"name":"カード名","rarity":"SAR/SR/AR/RRR/RR/R/U/C/OTHERのいずれか","type":"fire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknownのいずれか","set":"収録セット名","price_nm_min":超美品最低値,"price_nm_max":超美品最高値,"price_lp_min":美品最低値,"price_lp_max":美品最高値,"price_mp_min":並品最低値,"price_mp_max":並品最高値,"note":"一言コメント"}
-レアリティはカード左下の記号、属性はポケモンのタイプ（トレーナーズは"unknown"）、価格はメルカリ相場（円）。`}
-                ]}]
-            })
-        });
+// 撮り直す（査定前）
+document.getElementById('retake-btn').onclick=resetCamera;
+
+function resetCamera(){
+    pre.style.display='none';camPh.style.display='flex';
+    previewActions.style.display='none';
+    resWrap.style.display='none';dupNotice.style.display='none';
+    lastResult=null;b64=null;imgInp.value='';
+    addQty=1;document.getElementById('qty-display').textContent='1';
+}
+
+// Claude APIを呼ぶ共通関数
+async function callClaude(messages, maxTokens=1024){
+    const key=getKey();if(!key)throw new Error('APIキーが未設定です');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:maxTokens,messages})
+    });
+    const data=await resp.json();
+    if(data.error)throw new Error(data.error.message);
+    return data.content[0].text;
+}
+
+// 価格グリッドHTML生成
+function priceGridHTML(nm_min,nm_max,lp_min,lp_max,mp_min,mp_max){
+    const nm=Math.round((nm_min+nm_max)/2);
+    const lp=Math.round((lp_min+lp_max)/2);
+    const mp=Math.round((mp_min+mp_max)/2);
+    return {html:`<div class="price-grid">
+        <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
+        <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
+        <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
+    </div>`,nm,lp,mp};
+}
+
+// 査定プロンプト（画像あり）
+async function assessWithImage(){
+    const txt=`このポケモンカードを査定してください。必ず以下のJSON形式のみで返してください（他テキスト不要）：
+{"name":"カード名","card_number":"カード番号(例:081/193)","rarity":"SAR/SR/AR/RRR/RR/R/U/C/OTHER","type":"fire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknown","set":"収録セット名","price_nm_min":超美品最低値,"price_nm_max":超美品最高値,"price_lp_min":美品最低値,"price_lp_max":美品最高値,"price_mp_min":並品最低値,"price_mp_max":並品最高値,"note":"一言コメント"}
+価格はメルカリ相場（円）。カード番号は左下の数字。`;
+    const raw=await callClaude([{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mimeType,data:b64}},
+        {type:'text',text:txt}
+    ]}]);
+    return JSON.parse(raw.replace(/```json|```/g,'').trim());
+}
+
+// 査定プロンプト（名前・番号・レアリティのみ）
+async function assessWithText(name,number,rarity){
+    const txt=`ポケモンカード「${name}」（カード番号:${number||'不明'}, レアリティ:${rarity||'不明'}）を査定してください。必ず以下のJSON形式のみで返してください（他テキスト不要）：
+{"name":"カード名","card_number":"カード番号","rarity":"SAR/SR/AR/RRR/RR/R/U/C/OTHER","type":"fire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknown","set":"収録セット名","price_nm_min":超美品最低値,"price_nm_max":超美品最高値,"price_lp_min":美品最低値,"price_lp_max":美品最高値,"price_mp_min":並品最低値,"price_mp_max":並品最高値,"note":"一言コメント","image_search_query":"このカードの画像をGoogle画像検索するための最適な英語キーワード（例:Megaruchable ex SAR 229/193 pokemon card japanese）"}
+価格はメルカリ相場（円）。`;
+    const raw=await callClaude([{role:'user',content:txt}]);
+    return JSON.parse(raw.replace(/```json|```/g,'').trim());
+}
+
+// カード画像をポケモンTCG APIで検索
+async function fetchCardImage(query){
+    try{
+        // ポケモンTCG APIで検索（英語名を使う）
+        const encoded=encodeURIComponent(query);
+        const resp=await fetch(`https://api.pokemontcg.io/v2/cards?q=name:"${encoded}"&pageSize=1`);
+        if(!resp.ok)return null;
         const data=await resp.json();
-        if(data.error) throw new Error(data.error.message);
-        const raw=data.content[0].text.replace(/```json|```/g,'').trim();
-        let p; try{ p=JSON.parse(raw); }catch(e){ throw new Error('解析エラー: '+raw.slice(0,80)); }
-        lastResult={...p, thumb:pre.src};
+        if(data.data&&data.data.length>0){
+            return data.data[0].images?.large||data.data[0].images?.small||null;
+        }
+        return null;
+    }catch(e){return null;}
+}
 
-        // テキスト表示
-        resDiv.innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)} <b style="font-size:17px">${p.name}</b>\n📦 ${p.set||'不明'}\n💬 ${p.note||''}`;
-
-        // 状態別価格グリッド
-        const nm=Math.round((p.price_nm_min+p.price_nm_max)/2);
-        const lp=Math.round((p.price_lp_min+p.price_lp_max)/2);
-        const mp=Math.round((p.price_mp_min+p.price_mp_max)/2);
-        document.getElementById('price-grid-wrap').innerHTML=`
-            <div class="price-grid" style="margin-top:12px">
-                <div class="price-box">
-                    <div class="price-box-label">⭐ 超美品 (NM)</div>
-                    <div class="price-box-val">¥${nm.toLocaleString()}</div>
-                    <div style="font-size:10px;color:var(--muted)">¥${p.price_nm_min.toLocaleString()}〜¥${p.price_nm_max.toLocaleString()}</div>
-                </div>
-                <div class="price-box">
-                    <div class="price-box-label">✨ 美品 (LP)</div>
-                    <div class="price-box-val">¥${lp.toLocaleString()}</div>
-                    <div style="font-size:10px;color:var(--muted)">¥${p.price_lp_min.toLocaleString()}〜¥${p.price_lp_max.toLocaleString()}</div>
-                </div>
-                <div class="price-box">
-                    <div class="price-box-label">📦 並品 (MP)</div>
-                    <div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div>
-                    <div style="font-size:10px;color:var(--muted)">¥${p.price_mp_min.toLocaleString()}〜¥${p.price_mp_max.toLocaleString()}</div>
-                </div>
-            </div>`;
-
+// 査定ボタン
+goBtn.onclick=async()=>{
+    const key=getKey();
+    if(!key){showToast('⚙️ 設定からAPIキーを登録してね','var(--red)');return;}
+    document.getElementById('price-result-wrap').innerHTML=`<div style="text-align:center;padding:14px;color:var(--muted)">鑑定中<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>`;
+    document.getElementById('qty-wrap').style.display='none';
+    resWrap.style.display='block';goBtn.disabled=true;
+    try{
+        const p=await assessWithImage();
+        lastResult={...p,thumb:pre.src};
+        // 編集フォームに反映
+        document.getElementById('edit-result-name').value=p.name||'';
+        document.getElementById('edit-result-number').value=p.card_number||'';
+        document.getElementById('edit-result-rarity').value=p.rarity||'OTHER';
+        // 価格表示
+        const {html,nm,lp,mp}=priceGridHTML(p.price_nm_min,p.price_nm_max,p.price_lp_min,p.price_lp_max,p.price_mp_min,p.price_mp_max);
+        document.getElementById('price-result-wrap').innerHTML=`
+            <div style="margin-bottom:8px">${rarityBadge(p.rarity)} ${typeBadge(p.type)} <b style="font-size:16px">${p.name}</b></div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">📦 ${p.set||'不明'} ${p.card_number?'/ '+p.card_number:''}</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px">💬 ${p.note||''}</div>
+            ${html}`;
+        lastResult.price_nm=nm;lastResult.price_lp=lp;lastResult.price_mp=mp;
+        document.getElementById('qty-wrap').style.display='block';
         // 重複チェック
-        const cards=getCards(), dup=cards.find(c=>c.name===p.name);
-        if(dup){ dupWarn.style.display='block'; dupWarn.textContent=`⚠️「${p.name}」はすでに登録済みです（¥${dup.price_nm.toLocaleString()}）`; }
-        else dupWarn.style.display='none';
-        document.getElementById('save-card-btn').textContent=dup?'💾 重複して追加':'💾 コレクションに追加';
-    } catch(e){
-        resDiv.innerHTML=`<span style="color:var(--red2)">エラー: ${e.message}</span>`;
+        const cards=getCards(),dup=cards.find(c=>c.name===p.name);
+        if(dup){dupNotice.style.display='block';dupNotice.innerHTML=`✅ 「${p.name}」は登録済み（現在<b>${dup.qty||1}枚</b>）。追加すると<b>${(dup.qty||1)+addQty}枚</b>になります`;document.getElementById('save-card-btn').textContent='💾 枚数を追加する';}
+        else{dupNotice.style.display='none';document.getElementById('save-card-btn').textContent='💾 コレクションに追加';}
+    }catch(e){
+        document.getElementById('price-result-wrap').innerHTML=`<span style="color:var(--red2)">エラー: ${e.message}</span>`;
     }
     goBtn.disabled=false;
 };
 
-document.getElementById('save-card-btn').onclick = () => {
-    if(!lastResult) return;
-    const p=lastResult, cards=getCards();
-    cards.unshift({
-        id:Date.now(), name:p.name, rarity:p.rarity||'OTHER', type:p.type||'unknown',
-        price_nm:Math.round((p.price_nm_min+p.price_nm_max)/2),
-        price_lp:Math.round((p.price_lp_min+p.price_lp_max)/2),
-        price_mp:Math.round((p.price_mp_min+p.price_mp_max)/2),
-        set:p.set||'', note:p.note||'', thumb:p.thumb,
-        fav:false, date:new Date().toLocaleDateString('ja-JP')
-    });
-    saveCards(cards);
-    showToast('✅ コレクションに追加しました！');
-    pre.style.display='none'; camPh.style.display='flex'; goBtn.style.display='none';
-    resWrap.style.display='none'; dupWarn.style.display='none';
-    lastResult=null; b64=null; imgInp.value='';
+// 再査定（修正後）
+document.getElementById('re-search-btn').onclick=async()=>{
+    const name=document.getElementById('edit-result-name').value.trim();
+    const number=document.getElementById('edit-result-number').value.trim();
+    const rarity=document.getElementById('edit-result-rarity').value;
+    if(!name){showToast('カード名を入力してください','var(--red)');return;}
+    document.getElementById('price-result-wrap').innerHTML=`<div style="text-align:center;padding:14px;color:var(--muted)">再査定中<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>`;
+    document.getElementById('qty-wrap').style.display='none';
+    try{
+        const p=await assessWithText(name,number,rarity);
+        lastResult={...p,thumb:pre.src};
+        const {html,nm,lp,mp}=priceGridHTML(p.price_nm_min,p.price_nm_max,p.price_lp_min,p.price_lp_max,p.price_mp_min,p.price_mp_max);
+        document.getElementById('price-result-wrap').innerHTML=`
+            <div style="margin-bottom:8px">${rarityBadge(p.rarity)} ${typeBadge(p.type)} <b style="font-size:16px">${p.name}</b></div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">📦 ${p.set||'不明'} ${p.card_number?'/ '+p.card_number:''}</div>
+            ${html}`;
+        lastResult.price_nm=nm;lastResult.price_lp=lp;lastResult.price_mp=mp;
+        document.getElementById('qty-wrap').style.display='block';
+        document.getElementById('edit-result-name').value=p.name||'';
+        document.getElementById('edit-result-number').value=p.card_number||'';
+        document.getElementById('edit-result-rarity').value=p.rarity||'OTHER';
+        const cards=getCards(),dup=cards.find(c=>c.name===p.name);
+        if(dup){dupNotice.style.display='block';dupNotice.innerHTML=`✅ 「${p.name}」は登録済み（現在<b>${dup.qty||1}枚</b>）`;document.getElementById('save-card-btn').textContent='💾 枚数を追加する';}
+        else{dupNotice.style.display='none';document.getElementById('save-card-btn').textContent='💾 コレクションに追加';}
+        showToast('✅ 再査定しました');
+    }catch(e){
+        document.getElementById('price-result-wrap').innerHTML=`<span style="color:var(--red2)">エラー: ${e.message}</span>`;
+    }
 };
 
-document.getElementById('rescan-btn').onclick = () => {
-    pre.style.display='none'; camPh.style.display='flex'; goBtn.style.display='none';
-    resWrap.style.display='none'; dupWarn.style.display='none';
-    lastResult=null; b64=null; imgInp.value='';
+// コレクションに追加（カメラモード）
+document.getElementById('save-card-btn').onclick=()=>{
+    if(!lastResult)return;
+    const p=lastResult,cards=getCards();
+    const dup=cards.find(c=>c.name===p.name);
+    if(dup){dup.qty=(dup.qty||1)+addQty;dup.price_nm=p.price_nm;dup.price_lp=p.price_lp;dup.price_mp=p.price_mp;dup.date=new Date().toLocaleDateString('ja-JP');saveCards(cards);showToast(`✅ ${dup.name} → ${dup.qty}枚になりました`);}
+    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,set:p.set||'',note:p.note||'',thumb:p.thumb,fav:false,qty:addQty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${addQty}枚追加しました！`);}
+    resetCamera();
+};
+
+// ===== 手動検索モード =====
+let manualResult=null,manualQty=1;
+document.getElementById('m-qty-minus').onclick=()=>{if(manualQty>1){manualQty--;document.getElementById('m-qty-display').textContent=manualQty;}};
+document.getElementById('m-qty-plus').onclick=()=>{manualQty++;document.getElementById('m-qty-display').textContent=manualQty;};
+
+document.getElementById('manual-search-btn').onclick=async()=>{
+    const key=getKey();
+    if(!key){showToast('⚙️ 設定からAPIキーを登録してね','var(--red)');return;}
+    const name=document.getElementById('m-name').value.trim();
+    if(!name){showToast('カード名を入力してください','var(--red)');return;}
+    const number=document.getElementById('m-number').value.trim();
+    const rarity=document.getElementById('m-rarity-search').value;
+
+    const resultEl=document.getElementById('manual-result');
+    resultEl.style.display='block';
+    document.getElementById('manual-result-badges').innerHTML='';
+    document.getElementById('manual-result-name').textContent='検索中...';
+    document.getElementById('manual-result-set').textContent='';
+    document.getElementById('manual-result-note').textContent='';
+    document.getElementById('manual-price-grid').innerHTML='';
+    document.getElementById('manual-img').style.display='none';
+    document.getElementById('manual-img-placeholder').style.display='flex';
+    document.getElementById('manual-img-placeholder').textContent='⏳';
+    manualResult=null;manualQty=1;document.getElementById('m-qty-display').textContent='1';
+
+    try{
+        // 1. Claude APIで査定+画像検索クエリ取得
+        const p=await assessWithText(name,number,rarity);
+        manualResult={...p,thumb:null};
+
+        // 2. 画像検索（ポケモンTCG API）
+        const imgQuery=p.image_search_query||name;
+        // まず英語名っぽいキーワードで検索
+        const words=imgQuery.split(' ').filter(w=>w.length>2&&!/[^\x00-\x7F]/.test(w));
+        let imgUrl=null;
+        if(words.length>0){
+            imgUrl=await fetchCardImage(words.slice(0,2).join(' '));
+        }
+        // 見つからなければカード番号で試みる
+        if(!imgUrl&&number){
+            const setNum=number.split('/')[1];
+            if(setNum)imgUrl=await fetchCardImage(`${words[0]||name} ${setNum}`);
+        }
+
+        // 画像表示
+        if(imgUrl){
+            const imgEl=document.getElementById('manual-img');
+            imgEl.src=imgUrl;imgEl.style.display='block';
+            document.getElementById('manual-img-placeholder').style.display='none';
+            manualResult.thumb=imgUrl;
+        } else {
+            document.getElementById('manual-img-placeholder').textContent='🃏';
+            document.getElementById('manual-img-placeholder').style.display='flex';
+        }
+
+        // 情報表示
+        document.getElementById('manual-result-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
+        document.getElementById('manual-result-name').textContent=p.name;
+        document.getElementById('manual-result-set').textContent=`📦 ${p.set||'不明'} ${p.card_number?'/ '+p.card_number:''}`;
+        document.getElementById('manual-result-note').textContent=`💬 ${p.note||''}`;
+
+        const {html,nm,lp,mp}=priceGridHTML(p.price_nm_min,p.price_nm_max,p.price_lp_min,p.price_lp_max,p.price_mp_min,p.price_mp_max);
+        document.getElementById('manual-price-grid').innerHTML=html;
+        manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;
+
+    }catch(e){
+        document.getElementById('manual-result-name').innerHTML=`<span style="color:var(--red2)">エラー: ${e.message}</span>`;
+        document.getElementById('manual-img-placeholder').textContent='🃏';
+    }
+};
+
+document.getElementById('manual-save-btn').onclick=()=>{
+    if(!manualResult)return;
+    const p=manualResult,cards=getCards();
+    const dup=cards.find(c=>c.name===p.name);
+    if(dup){dup.qty=(dup.qty||1)+manualQty;dup.price_nm=p.price_nm;dup.price_lp=p.price_lp;dup.price_mp=p.price_mp;saveCards(cards);showToast(`✅ ${dup.name} → ${dup.qty}枚になりました`);}
+    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,set:p.set||'',note:p.note||'',thumb:p.thumb,fav:false,qty:manualQty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${manualQty}枚追加しました！`);}
+    document.getElementById('manual-result').style.display='none';
+    document.getElementById('m-name').value='';document.getElementById('m-number').value='';
 };
 
 // ===== コレクション =====
-let activeRarity='ALL', activeType='ALL', searchQ='', sortMode='date';
+let activeRarity='ALL',activeType='ALL',searchQ='',sortMode='date';
 document.getElementById('search-input').addEventListener('input',e=>{searchQ=e.target.value;renderCollection();});
 document.getElementById('sort-select').addEventListener('change',e=>{sortMode=e.target.value;renderCollection();});
 
 function renderCollectionStats(all){
-    const total=all.reduce((s,c)=>s+c.price_nm,0);
+    const totalCards=all.reduce((s,c)=>s+(c.qty||1),0);
+    const totalNm=all.reduce((s,c)=>s+c.price_nm*(c.qty||1),0);
     const fav=all.filter(c=>c.fav).length;
     document.getElementById('stats-row').innerHTML=`
-        <div class="stat-box"><div class="stat-num">${all.length}</div><div class="stat-label">枚</div></div>
-        <div class="stat-box"><div class="stat-num">¥${total>=10000?(total/10000).toFixed(1)+'万':total.toLocaleString()}</div><div class="stat-label">NM合計</div></div>
+        <div class="stat-box"><div class="stat-num">${totalCards}</div><div class="stat-label">総枚数</div></div>
+        <div class="stat-box"><div class="stat-num">¥${totalNm>=10000?(totalNm/10000).toFixed(1)+'万':totalNm.toLocaleString()}</div><div class="stat-label">NM総額</div></div>
         <div class="stat-box"><div class="stat-num">⭐${fav}</div><div class="stat-label">お気に入り</div></div>`;
 }
-
 function renderFilters(all){
     const rarities=['ALL',...RARITY_ORDER.filter(r=>all.some(c=>c.rarity===r))];
-    document.getElementById('rarity-filters').innerHTML=rarities.map(r=>
-        `<div class="filter-chip ${activeRarity===r?'active':''}" onclick="setRarity('${r}')">${r==='ALL'?'すべて':r}</div>`
-    ).join('');
+    document.getElementById('rarity-filters').innerHTML=rarities.map(r=>`<div class="filter-chip ${activeRarity===r?'active':''}" onclick="setRarity('${r}')">${r==='ALL'?'すべて':r}</div>`).join('');
     const types=['ALL',...Object.keys(TYPE_LABELS).filter(t=>all.some(c=>c.type===t))];
-    document.getElementById('type-filters').innerHTML=types.map(t=>
-        `<div class="filter-chip ${activeType===t?'active':''}" onclick="setType('${t}')">${t==='ALL'?'すべて':TYPE_LABELS[t]}</div>`
-    ).join('');
+    document.getElementById('type-filters').innerHTML=types.map(t=>`<div class="filter-chip ${activeType===t?'active':''}" onclick="setType('${t}')">${t==='ALL'?'すべて':TYPE_LABELS[t]}</div>`).join('');
 }
-
 function getFiltered(){
     let cards=getCards();
-    if(activeRarity!=='ALL') cards=cards.filter(c=>c.rarity===activeRarity);
-    if(activeType!=='ALL') cards=cards.filter(c=>c.type===activeType);
-    if(searchQ) cards=cards.filter(c=>c.name.includes(searchQ)||(c.set||'').includes(searchQ));
+    if(activeRarity!=='ALL')cards=cards.filter(c=>c.rarity===activeRarity);
+    if(activeType!=='ALL')cards=cards.filter(c=>c.type===activeType);
+    if(searchQ)cards=cards.filter(c=>c.name.includes(searchQ)||(c.set||'').includes(searchQ)||(c.card_number||'').includes(searchQ));
     switch(sortMode){
-        case 'price-desc': cards.sort((a,b)=>b.price_nm-a.price_nm); break;
-        case 'price-asc': cards.sort((a,b)=>a.price_nm-b.price_nm); break;
-        case 'rarity': cards.sort((a,b)=>RARITY_ORDER.indexOf(a.rarity)-RARITY_ORDER.indexOf(b.rarity)); break;
-        case 'name': cards.sort((a,b)=>a.name.localeCompare(b.name,'ja')); break;
+        case 'price-desc':cards.sort((a,b)=>b.price_nm-a.price_nm);break;
+        case 'price-asc':cards.sort((a,b)=>a.price_nm-b.price_nm);break;
+        case 'rarity':cards.sort((a,b)=>RARITY_ORDER.indexOf(a.rarity)-RARITY_ORDER.indexOf(b.rarity));break;
+        case 'name':cards.sort((a,b)=>a.name.localeCompare(b.name,'ja'));break;
+        case 'qty-desc':cards.sort((a,b)=>(b.qty||1)-(a.qty||1));break;
     }
     return cards;
 }
-
 function renderCollection(){
-    const all=getCards();
-    renderCollectionStats(all); renderFilters(all);
-    const cards=getFiltered(), list=document.getElementById('card-list');
-    if(!cards.length){
-        list.innerHTML=`<div class="empty-state"><div class="empty-icon">🃏</div>${all.length?'条件に合うカードなし':'まだカードがありません<br>査定タブで撮影してね！'}</div>`;
-        return;
-    }
+    const all=getCards();renderCollectionStats(all);renderFilters(all);
+    const cards=getFiltered(),list=document.getElementById('card-list');
+    if(!cards.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">🃏</div>${all.length?'条件に合うカードなし':'まだカードがありません<br>査定タブで撮影してね！'}</div>`;return;}
     list.innerHTML=cards.map(c=>`
         <div class="card-item">
-            ${c.thumb?`<img class="card-thumb" src="${c.thumb}">`:`<div class="card-no-thumb">🃏</div>`}
+            ${c.thumb?`<img class="card-thumb" src="${c.thumb}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
+            <div class="card-no-thumb" style="${c.thumb?'display:none':''}">🃏</div>
             <div class="card-info">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
                     <div class="card-name" style="flex:1">${c.name}</div>
@@ -420,156 +742,104 @@ function renderCollection(){
                     <span class="card-price-sub">美¥${c.price_lp.toLocaleString()}</span>
                     <span class="card-price-sub">並¥${c.price_mp.toLocaleString()}</span>
                 </div>
-                <div class="card-meta">
-                    ${rarityBadge(c.rarity)}${typeBadge(c.type)}
-                    <span class="card-date">${c.date}</span>
-                </div>
+                <div class="card-meta">${rarityBadge(c.rarity)}${typeBadge(c.type)}${c.card_number?`<span style="font-size:10px;color:var(--muted)">${c.card_number}</span>`:''}<span class="card-date">${c.date}</span></div>
                 ${c.set?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${c.set}</div>`:''}
                 <div class="card-actions">
                     <button class="icon-btn" onclick="editCard(${c.id})">✏️</button>
                     <button class="icon-btn" onclick="updateSingle(${c.id})">🔄</button>
                     <button class="icon-btn" style="color:var(--red2)" onclick="deleteCard(${c.id})">🗑</button>
+                    <div class="inline-qty">
+                        <button class="iq-btn iq-minus" onclick="changeQty(${c.id},-1)">−</button>
+                        <span class="iq-num">${c.qty||1}</span>
+                        <button class="iq-btn iq-plus" onclick="changeQty(${c.id},1)">＋</button>
+                        <span style="font-size:10px;color:var(--muted)">枚</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        </div>`).join('');
 }
-
 window.setRarity=r=>{activeRarity=r;renderCollection();};
 window.setType=t=>{activeType=t;renderCollection();};
-window.toggleFav=id=>{
-    const cards=getCards(), c=cards.find(x=>x.id===id);
-    if(c){c.fav=!c.fav;saveCards(cards);renderCollection();}
-};
-window.deleteCard=id=>{
-    if(!confirm('削除しますか？'))return;
-    saveCards(getCards().filter(c=>c.id!==id));
-    renderCollection(); showToast('削除しました');
-};
+window.toggleFav=id=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(c){c.fav=!c.fav;saveCards(cards);renderCollection();}};
+window.deleteCard=id=>{if(!confirm('削除しますか？'))return;saveCards(getCards().filter(c=>c.id!==id));renderCollection();showToast('削除しました');};
+window.changeQty=(id,delta)=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(!c)return;c.qty=Math.max(1,(c.qty||1)+delta);saveCards(cards);renderCollection();};
 
-async function callUpdateAPI(name, rarity){
-    const key=getKey(); if(!key) throw new Error('APIキー未設定');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({
-            model:'claude-haiku-4-5-20251001', max_tokens:256,
-            messages:[{role:'user',content:`「${name}」（${rarity}）のポケモンカードのメルカリ最新相場をJSON形式のみ：{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値}`}]
-        })
-    });
-    const data=await resp.json();
-    if(data.error) throw new Error(data.error.message);
-    return JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+async function callUpdateAPI(name,rarity){
+    const raw=await callClaude([{role:'user',content:`「${name}」（${rarity}）のポケモンカードのメルカリ最新相場をJSON形式のみ：{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値}`}],256);
+    return JSON.parse(raw.replace(/```json|```/g,'').trim());
 }
-
 window.updateSingle=async id=>{
-    const cards=getCards(), card=cards.find(c=>c.id===id); if(!card) return;
+    const cards=getCards(),card=cards.find(c=>c.id===id);if(!card)return;
     showToast('更新中...');
-    try {
-        const p=await callUpdateAPI(card.name,card.rarity);
-        card.price_nm=Math.round((p.price_nm_min+p.price_nm_max)/2);
-        card.price_lp=Math.round((p.price_lp_min+p.price_lp_max)/2);
-        card.price_mp=Math.round((p.price_mp_min+p.price_mp_max)/2);
-        card.date=new Date().toLocaleDateString('ja-JP');
-        saveCards(cards); renderCollection(); showToast(`✅ ${card.name} を更新しました`);
-    } catch(e){ showToast('エラー: '+e.message,'var(--red)'); }
+    try{const p=await callUpdateAPI(card.name,card.rarity);card.price_nm=Math.round((p.price_nm_min+p.price_nm_max)/2);card.price_lp=Math.round((p.price_lp_min+p.price_lp_max)/2);card.price_mp=Math.round((p.price_mp_min+p.price_mp_max)/2);card.date=new Date().toLocaleDateString('ja-JP');saveCards(cards);renderCollection();showToast(`✅ ${card.name} を更新しました`);}
+    catch(e){showToast('エラー: '+e.message,'var(--red)');}
 };
-
 document.getElementById('bulk-update-btn').onclick=async()=>{
-    const cards=getCards(); if(!cards.length){showToast('カードがありません');return;}
-    if(!confirm(`${cards.length}枚を一括更新します。`))return;
+    const cards=getCards();if(!cards.length){showToast('カードがありません');return;}
+    if(!confirm(`${cards.length}種類を一括更新します。`))return;
     let updated=0;
-    for(const card of cards){
-        try{
-            const p=await callUpdateAPI(card.name,card.rarity);
-            card.price_nm=Math.round((p.price_nm_min+p.price_nm_max)/2);
-            card.price_lp=Math.round((p.price_lp_min+p.price_lp_max)/2);
-            card.price_mp=Math.round((p.price_mp_min+p.price_mp_max)/2);
-            card.date=new Date().toLocaleDateString('ja-JP');
-            updated++;
-        }catch(e){}
-        await new Promise(r=>setTimeout(r,700));
-    }
-    saveCards(cards); renderCollection(); showToast(`✅ ${updated}枚の価格を更新しました`);
+    for(const card of cards){try{const p=await callUpdateAPI(card.name,card.rarity);card.price_nm=Math.round((p.price_nm_min+p.price_nm_max)/2);card.price_lp=Math.round((p.price_lp_min+p.price_lp_max)/2);card.price_mp=Math.round((p.price_mp_min+p.price_mp_max)/2);card.date=new Date().toLocaleDateString('ja-JP');updated++;}catch(e){}await new Promise(r=>setTimeout(r,700));}
+    saveCards(cards);renderCollection();showToast(`✅ ${updated}種類の価格を更新しました`);
 };
 
-// ===== 統計画面 =====
+// ===== 統計 =====
 function renderStats(){
-    const all=getCards(), el=document.getElementById('stats-content');
+    const all=getCards(),el=document.getElementById('stats-content');
     if(!all.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div>データがありません</div>';return;}
-    const totalNm=all.reduce((s,c)=>s+c.price_nm,0);
+    const totalCards=all.reduce((s,c)=>s+(c.qty||1),0);
+    const totalNm=all.reduce((s,c)=>s+c.price_nm*(c.qty||1),0);
     const topCards=[...all].sort((a,b)=>b.price_nm-a.price_nm).slice(0,5);
-    // レアリティ分布
-    const rarityCount={};
-    RARITY_ORDER.forEach(r=>{const n=all.filter(c=>c.rarity===r).length;if(n)rarityCount[r]=n;});
-    // 属性分布
-    const typeCount={};
-    all.forEach(c=>{typeCount[c.type||'unknown']=(typeCount[c.type||'unknown']||0)+1;});
+    const rarityCount={};RARITY_ORDER.forEach(r=>{const n=all.filter(c=>c.rarity===r).reduce((s,c)=>s+(c.qty||1),0);if(n)rarityCount[r]=n;});
+    const typeCount={};all.forEach(c=>{const t=c.type||'unknown';typeCount[t]=(typeCount[t]||0)+(c.qty||1);});
     const maxR=Math.max(...Object.values(rarityCount));
     const maxT=Math.max(...Object.values(typeCount));
     el.innerHTML=`
-        <div class="card">
+        <div class="card-box">
             <div class="section-title">💰 資産サマリー</div>
             <div class="stats-row" style="margin-bottom:0">
-                <div class="stat-box"><div class="stat-num">${all.length}</div><div class="stat-label">総枚数</div></div>
+                <div class="stat-box"><div class="stat-num">${all.length}</div><div class="stat-label">種類</div></div>
+                <div class="stat-box"><div class="stat-num">${totalCards}</div><div class="stat-label">総枚数</div></div>
                 <div class="stat-box"><div class="stat-num">¥${totalNm>=10000?(totalNm/10000).toFixed(1)+'万':totalNm.toLocaleString()}</div><div class="stat-label">NM総額</div></div>
-                <div class="stat-box"><div class="stat-num">¥${Math.round(totalNm/all.length).toLocaleString()}</div><div class="stat-label">平均単価</div></div>
             </div>
         </div>
-        <div class="card">
+        <div class="card-box">
             <div class="section-title">🏆 高額TOP5</div>
-            ${topCards.map((c,i)=>`
-                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-                    <span style="font-family:Oswald;font-size:18px;color:var(--muted);width:24px">${i+1}</span>
-                    <div style="flex:1;min-width:0">
-                        <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
-                        <div style="font-size:11px">${rarityBadge(c.rarity)}${typeBadge(c.type)}</div>
-                    </div>
-                    <span style="font-family:Oswald;color:var(--gold);font-size:16px">¥${c.price_nm.toLocaleString()}</span>
-                </div>`).join('')}
+            ${topCards.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+                <span style="font-family:Oswald;font-size:18px;color:var(--muted);width:24px">${i+1}</span>
+                <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:11px">${rarityBadge(c.rarity)}${typeBadge(c.type)} <span style="color:var(--muted)">${c.qty||1}枚所持</span></div></div>
+                <span style="font-family:Oswald;color:var(--gold);font-size:16px">¥${c.price_nm.toLocaleString()}</span>
+            </div>`).join('')}
         </div>
-        <div class="card">
+        <div class="card-box">
             <div class="section-title">📊 レアリティ分布</div>
-            ${Object.entries(rarityCount).map(([r,n])=>`
-                <div class="chart-bar-wrap">
-                    <div class="chart-bar-label"><span>${rarityBadge(r)} ${r}</span><span style="color:var(--muted)">${n}枚</span></div>
-                    <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${(n/maxR*100).toFixed(0)}%"></div></div>
-                </div>`).join('')}
+            ${Object.entries(rarityCount).map(([r,n])=>`<div class="chart-bar-wrap"><div class="chart-bar-label"><span>${rarityBadge(r)}</span><span style="color:var(--muted)">${n}枚</span></div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${(n/maxR*100).toFixed(0)}%"></div></div></div>`).join('')}
         </div>
-        <div class="card">
+        <div class="card-box">
             <div class="section-title">🎨 属性分布</div>
-            ${Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`
-                <div class="chart-bar-wrap">
-                    <div class="chart-bar-label"><span>${typeBadge(t)}</span><span style="color:var(--muted)">${n}枚</span></div>
-                    <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${(n/maxT*100).toFixed(0)}%;background:var(--gold)"></div></div>
-                </div>`).join('')}
+            ${Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<div class="chart-bar-wrap"><div class="chart-bar-label"><span>${typeBadge(t)}</span><span style="color:var(--muted)">${n}枚</span></div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${(n/maxT*100).toFixed(0)}%;background:var(--gold)"></div></div></div>`).join('')}
         </div>`;
 }
 
-// ===== 編集 =====
-let editingId=null;
+// ===== 編集モーダル =====
+let editingId=null,editQty=1;
+const editQtyDisplay=document.getElementById('edit-qty-display');
+document.getElementById('edit-qty-minus').onclick=()=>{if(editQty>1){editQty--;editQtyDisplay.textContent=editQty;}};
+document.getElementById('edit-qty-plus').onclick=()=>{editQty++;editQtyDisplay.textContent=editQty;};
 window.editCard=id=>{
-    const card=getCards().find(c=>c.id===id); if(!card) return;
-    editingId=id;
+    const card=getCards().find(c=>c.id===id);if(!card)return;
+    editingId=id;editQty=card.qty||1;
     document.getElementById('edit-name').value=card.name;
     document.getElementById('edit-rarity').value=card.rarity;
     document.getElementById('edit-type').value=card.type||'unknown';
+    editQtyDisplay.textContent=editQty;
     document.getElementById('edit-price-nm').value=card.price_nm;
     document.getElementById('edit-price-lp').value=card.price_lp;
     document.getElementById('edit-price-mp').value=card.price_mp;
     document.getElementById('edit-modal').classList.add('open');
 };
 document.getElementById('edit-save-btn').onclick=()=>{
-    const cards=getCards(), c=cards.find(x=>x.id===editingId);
-    if(c){
-        c.name=document.getElementById('edit-name').value;
-        c.rarity=document.getElementById('edit-rarity').value;
-        c.type=document.getElementById('edit-type').value;
-        c.price_nm=parseInt(document.getElementById('edit-price-nm').value)||0;
-        c.price_lp=parseInt(document.getElementById('edit-price-lp').value)||0;
-        c.price_mp=parseInt(document.getElementById('edit-price-mp').value)||0;
-        saveCards(cards); renderCollection(); showToast('更新しました');
-    }
+    const cards=getCards(),c=cards.find(x=>x.id===editingId);
+    if(c){c.name=document.getElementById('edit-name').value;c.rarity=document.getElementById('edit-rarity').value;c.type=document.getElementById('edit-type').value;c.qty=editQty;c.price_nm=parseInt(document.getElementById('edit-price-nm').value)||0;c.price_lp=parseInt(document.getElementById('edit-price-lp').value)||0;c.price_mp=parseInt(document.getElementById('edit-price-mp').value)||0;saveCards(cards);renderCollection();showToast('更新しました');}
     document.getElementById('edit-modal').classList.remove('open');
 };
 document.getElementById('edit-cancel-btn').onclick=()=>document.getElementById('edit-modal').classList.remove('open');
@@ -578,24 +848,16 @@ document.getElementById('edit-cancel-btn').onclick=()=>document.getElementById('
 document.getElementById('save-key-btn').onclick=()=>{
     const k=document.getElementById('key-input').value.trim();
     if(!k||k.includes('...')){showToast('キーを入力してください','var(--red)');return;}
-    localStorage.setItem('claude_api_key',k);
-    showToast('✅ APIキーを保存しました');
-    document.getElementById('key-input').value='';
-    document.getElementById('key-input').placeholder='保存済み（変更する場合のみ）';
+    localStorage.setItem('claude_api_key',k);showToast('✅ APIキーを保存しました');
+    document.getElementById('key-input').value='';document.getElementById('key-input').placeholder='保存済み（変更する場合のみ）';
 };
 document.getElementById('export-btn').onclick=()=>{
     const cards=getCards();
-    const csv='カード名,レアリティ,属性,超美品NM,美品LP,並品MP,セット,登録日\n'+
-        cards.map(c=>`"${c.name}","${c.rarity}","${TYPE_LABELS[c.type]||'?'}",${c.price_nm},${c.price_lp},${c.price_mp},"${c.set||''}","${c.date}"`).join('\n');
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv'}));
-    a.download='pokeca_collection.csv'; a.click();
+    const csv='カード名,レアリティ,属性,カード番号,枚数,超美品NM,美品LP,並品MP,セット,登録日\n'+
+        cards.map(c=>`"${c.name}","${c.rarity}","${TYPE_LABELS[c.type]||'?'}","${c.card_number||''}",${c.qty||1},${c.price_nm},${c.price_lp},${c.price_mp},"${c.set||''}","${c.date}"`).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv'}));a.download='pokeca_collection.csv';a.click();
 };
-document.getElementById('clear-btn').onclick=()=>{
-    if(!confirm('全データを削除しますか？'))return;
-    localStorage.removeItem('pokeca_cards');
-    renderCollection(); showToast('削除しました');
-};
+document.getElementById('clear-btn').onclick=()=>{if(!confirm('全データを削除しますか？'))return;localStorage.removeItem('pokeca_cards');renderCollection();showToast('削除しました');};
 </script>
 </body>
 </html>
