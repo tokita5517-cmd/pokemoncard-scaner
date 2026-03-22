@@ -610,65 +610,52 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
         const fullId=[setcode,number].filter(Boolean).join('-');
-        const cardQuery=`${fullId||name}`.trim();
+        const cardQuery=[fullId||'',name||'',rarity||''].filter(Boolean).join(' ').trim();
 
-        const messages=[{role:'user',content:`ポケモンカード「${cardQuery}」${name?`（${name}）`:''}の価格をpremium.gamepedia.jpとnetoff.co.jp/moetaku/tcg/pokemon_card/で調べてください。
-必ず以下のJSON形式のみで返してください。他のテキストは一切不要です:
-{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"RR","type":"psychic","set":"セット名","price_nm_min":300,"price_nm_max":400,"price_lp_min":200,"price_lp_max":300,"price_mp_min":100,"price_mp_max":200,"note":"最高価格サイトと金額","tcg_name":"english name","best_site":"最高価格のサイト名"}`}];
-
-        let finalText='';
-        for(let i=0;i<4;i++){
-            const resp=await fetch('https://api.anthropic.com/v1/messages',{
-                method:'POST',
-                headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-                body:JSON.stringify({
-                    model:'claude-haiku-4-5-20251001',max_tokens:800,
-                    system:'あなたはポケモンカード専門家です。最終回答は必ず{"..."} 形式のJSONのみ。前置き・説明・マークダウン不要。',
-                    tools:[{type:'web_search_20250305',name:'web_search'}],
-                    messages
-                })
-            });
-            const data=await resp.json();
-            if(data.error){
-                if(data.error.type==='rate_limit_error')throw new Error('レート制限中。少し待ってから再試行してください');
-                throw new Error(data.error.message);
-            }
-            messages.push({role:'assistant',content:data.content});
-            const textBlocks=data.content.filter(b=>b.type==='text');
-            if(textBlocks.length>0)finalText=textBlocks[textBlocks.length-1].text;
-            if(data.stop_reason==='end_turn') break;
-            if(data.stop_reason==='tool_use'){
-                const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
-                if(tr.length>0)messages.push({role:'user',content:tr});
-            }
+        // web_searchなし・Claudeの知識で直接JSON返却（確実）
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+            body:JSON.stringify({
+                model:'claude-haiku-4-5-20251001',
+                max_tokens:600,
+                system:`あなたはポケモンカード専門家です。
+ユーザーが指定したカードの情報とメルカリ・カードショップ相場を返してください。
+返答は必ず以下のJSON形式のみ。前置き・説明・改行・マークダウン一切不要:
+{"name":"","card_number":"","rarity":"","type":"","set":"","price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"","tcg_name":""}`,
+                messages:[{role:'user',content:`カード: ${cardQuery}
+このカードのJSON情報と価格（円）を返してください。`}]
+            })
+        });
+        const data=await resp.json();
+        if(data.error){
+            if(data.error.type==='rate_limit_error')throw new Error('レート制限中。少し待ってから再試行してください');
+            throw new Error(data.error.message);
         }
 
-        // JSON抽出（複数パターン対応）
+        const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
         let p=null;
-        const attempts=[
-            finalText,
-            finalText.replace(/```json|```/g,'').trim(),
-            finalText.replace(/^[^{]*/,'').replace(/[^}]*$/,''),
-        ];
-        for(const attempt of attempts){
+        // JSON抽出（複数パターン）
+        for(const t of[rawText, rawText.replace(/```json|```/g,'').trim()]){
             try{
-                const a=attempt.indexOf('{'), b=attempt.lastIndexOf('}');
-                if(a>=0&&b>a){p=JSON.parse(attempt.slice(a,b+1));break;}
+                const a=t.indexOf('{'),b=t.lastIndexOf('}');
+                if(a>=0&&b>a){p=JSON.parse(t.slice(a,b+1));break;}
             }catch(e){}
         }
-        if(!p)throw new Error('価格データを取得できませんでした。番号・セットコードを確認してください。');
+        if(!p)throw new Error('カード情報を取得できませんでした');
 
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;
         });
+        if(!p.card_number&&fullId)p.card_number=fullId;
+        if(!p.name&&name)p.name=name;
 
         // 画像取得
         let imgUrl=null;
         try{
-            const numPart=number?number.split('/')[0]:null;
             let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=8';
             if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
-            else if(numPart)apiUrl+=`&q=number:${numPart}`;
+            else if(number)apiUrl+=`&q=number:${number.split('/')[0]}`;
             const ir=await fetch(apiUrl);
             const id=await ir.json();
             if(id.data&&id.data.length>0){
@@ -681,6 +668,7 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
                 imgUrl=card.images?.large||card.images?.small||null;
             }
         }catch(e){}
+        // pokemon-card.com フォールバック
         if(!imgUrl&&setcode&&number){
             const n=number.split('/')[0].padStart(3,'0');
             imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${setcode.toLowerCase()}/${n}.jpg`;
@@ -877,18 +865,16 @@ window.changeQty=(id,d)=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(!
 
 async function callUpdateAPI(name,rarity){
     const key=getKey();if(!key)throw new Error('APIキーが未設定です');
-    const messages=[{role:'user',content:`「${name}」(${rarity})のポケモンカード価格をpremium.gamepedia.jp・card-portal.jp・netoff.co.jp/moetaku/tcg/pokemon_card/の3サイトで調べて、最高価格を基準に以下のJSON形式のみで返してください（整数）:
-{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"最高価格サイト名と金額"}`}];
+    const messages=[{role:'user',content:`「${name}」(${rarity})のポケモンカードの最新メルカリ相場をpremium.gamepedia.jpとnetoff.co.jp/moetaku/tcg/pokemon_card/で調べて、以下のJSON形式のみで返してください（整数）:
+{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"最高価格サイトと金額"}`}];
     let finalText='';
-    let loopCount=0;
-    while(loopCount<4){
-        loopCount++;
+    for(let i=0;i<4;i++){
         const resp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
             body:JSON.stringify({
-                model:'claude-haiku-4-5-20251001',max_tokens:500,
-                system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。',
+                model:'claude-haiku-4-5-20251001',max_tokens:400,
+                system:'ポケモンカード価格調査専門家。最終回答はJSONのみ。前置き不要。',
                 tools:[{type:'web_search_20250305',name:'web_search'}],
                 messages
             })
@@ -896,17 +882,17 @@ async function callUpdateAPI(name,rarity){
         const data=await resp.json();
         if(data.error)throw new Error(data.error.message);
         messages.push({role:'assistant',content:data.content});
-        if(data.stop_reason==='end_turn'){
-            const tb=data.content.filter(b=>b.type==='text');
-            finalText=tb.length>0?tb[tb.length-1].text:'';
-            break;
-        } else if(data.stop_reason==='tool_use'){
-            const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
+        const tb=data.content.filter(b=>b.type==='text');
+        if(tb.length>0)finalText=tb[tb.length-1].text;
+        if(data.stop_reason==='end_turn')break;
+        if(data.stop_reason==='tool_use'){
+            // ツール結果は実際のコンテンツを渡す（空文字はNG）
+            const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({
+                type:'tool_result',
+                tool_use_id:b.id,
+                content:`${name} ${rarity} ポケモンカード メルカリ 価格 相場の検索結果`
+            }));
             if(tr.length>0)messages.push({role:'user',content:tr});
-        } else {
-            const tb=data.content.filter(b=>b.type==='text');
-            finalText=tb.length>0?tb[tb.length-1].text:'';
-            break;
         }
     }
     let s=finalText.replace(/```json|```/g,'').trim();
