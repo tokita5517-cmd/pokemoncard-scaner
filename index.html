@@ -611,31 +611,32 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
 async function lookupAndDisplay(number,name,rarity,setcode,callback){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
-
         const fullId=[setcode,number].filter(Boolean).join('-');
-        const searchHint=[setcode,number,name,rarity].filter(Boolean).join(' ');
+        const cardQuery=`${fullId||name} ${rarity||''}`.trim();
 
-        const messages=[{role:'user',content:`ポケモンカードを特定して価格と画像URLを調べてください。
-セットコード:${setcode||'不明'} カード番号:${number||'不明'} カード名:${name||'不明'} レアリティ:${rarity||'不明'}
+        const messages=[{role:'user',content:`ポケモンカード「${cardQuery}」について以下の3サイトで価格を調べてください：
+1. premium.gamepedia.jp（買取・販売価格）
+2. card-portal.jp（メルカリ相場）
+3. netoff.co.jp/moetaku/tcg/pokemon_card/（ネットオフ買取価格）
 
-web_searchで以下を検索してください:
-1.「ポケモンカード ${fullId||name} ${rarity||''} メルカリ 相場」で価格調査
-2.「pokemon card ${fullId||name} site:pokemon.com OR site:bulbapedia.bulbagarden.net OR site:serebii.net」で公式画像を探す
-
-以下のJSON形式のみで返してください（価格は整数）:
-{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"${rarity||'RR'}","type":"psychic","set":"セット名","price_nm_min":300,"price_nm_max":400,"price_lp_min":200,"price_lp_max":300,"price_mp_min":100,"price_mp_max":200,"note":"相場コメント","tcg_name":"english name","image_url":"カード画像の直リンクURL（見つかれば）"}`}];
+各サイトの価格を比較して、最も高い買取価格を基準に以下のJSON形式のみで返してください（価格は整数）:
+{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"${rarity||'不明'}","type":"psychic","set":"セット名",
+"price_nm_min":300,"price_nm_max":400,"price_lp_min":200,"price_lp_max":300,"price_mp_min":100,"price_mp_max":200,
+"note":"各サイト価格比較コメント（例:gamepedia買取50円/netoff買取120円→最高はnetoff）",
+"tcg_name":"english name",
+"best_site":"最高価格のサイト名"}`}];
 
         let finalText='';
         let loopCount=0;
-        while(loopCount<5){
+        while(loopCount<4){
             loopCount++;
             const resp=await fetch('https://api.anthropic.com/v1/messages',{
                 method:'POST',
                 headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
                 body:JSON.stringify({
                     model:'claude-haiku-4-5-20251001',
-                    max_tokens:1024,
-                    system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。説明文・前置き・マークダウンは一切不要です。',
+                    max_tokens:1000,
+                    system:'あなたはポケモンカードの価格調査専門家です。複数サイトを比較して最高価格を提示してください。最終回答は必ずJSON形式のみで返してください。',
                     tools:[{type:'web_search_20250305',name:'web_search'}],
                     messages
                 })
@@ -665,56 +666,39 @@ web_searchで以下を検索してください:
         const a=s.indexOf('{'),b2=s.lastIndexOf('}');
         if(a>=0&&b2>a)s=s.slice(a,b2+1);
         let p;
-        try{p=JSON.parse(s);}
-        catch(e){throw new Error('解析失敗。再度試してください。');}
+        try{p=JSON.parse(s);}catch(e){throw new Error('解析失敗。再度試してください。');}
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k]))p[k]=0;
         });
 
-        // 画像取得: 1)JSONのimage_url 2)ポケモンTCG API 3)www.pokemon-card.comスクレイプ
-        let imgUrl=p.image_url||null;
+        // 画像取得（3段階）
+        let imgUrl=null;
 
-        // image_urlが使えない形式なら無効化
-        if(imgUrl&&!imgUrl.startsWith('http'))imgUrl=null;
-
-        if(!imgUrl){
-            try{
-                // ポケモンTCG APIで検索
-                const numPart=number?number.split('/')[0]:null;
-                let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=8';
-                if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
-                else if(numPart)apiUrl+=`&q=number:${numPart}`;
-                const ir=await fetch(apiUrl);
-                const id=await ir.json();
-                if(id.data&&id.data.length>0){
-                    let card=id.data[0];
-                    if(number){
-                        const n=number.split('/')[0].replace(/^0+/,'');
-                        const match=id.data.find(c=>c.number===n||c.number===number.split('/')[0]);
-                        if(match)card=match;
-                    }
-                    imgUrl=card.images?.large||card.images?.small||null;
+        // 1) ポケモンTCG API（英語版）
+        try{
+            const numPart=number?number.split('/')[0]:null;
+            let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=8';
+            if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
+            else if(numPart)apiUrl+=`&q=number:${numPart}`;
+            const ir=await fetch(apiUrl);
+            const id=await ir.json();
+            if(id.data&&id.data.length>0){
+                let card=id.data[0];
+                if(number){
+                    const n=number.split('/')[0].replace(/^0+/,'');
+                    const match=id.data.find(c=>c.number===n||c.number===number.split('/')[0]);
+                    if(match)card=match;
                 }
-            }catch(e){}
+                imgUrl=card.images?.large||card.images?.small||null;
+            }
+        }catch(e){}
+
+        // 2) pokemon-card.com URLパターン（日本公式）
+        if(!imgUrl&&setcode&&number){
+            const n=number.split('/')[0].padStart(3,'0');
+            imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${setcode.toLowerCase()}/${n}.jpg`;
         }
 
-        // TCG APIで見つからなければwww.pokemon-card.comを試みる
-        if(!imgUrl&&(number||p.card_number)){
-            try{
-                const cn=(p.card_number||number||'').replace(/^.*-/,''); // M2a-063/193 → 063/193
-                const encoded=encodeURIComponent((p.name||name||''));
-                const pcUrl=`https://www.pokemon-card.com/card-search/index.php/#!/card-search/search/suggestResult?keyword=${encoded}&category=all&regulation_sidebar_form=all&pg=1`;
-                // フェッチはCORS制限あるので断念、pokemon-card.comのCDN直URLを構築
-                // カード番号からURLパターン: https://www.pokemon-card.com/assets/images/card_images/large/{setcode}/{number}.jpg
-                if(setcode&&number){
-                    const n=number.split('/')[0];
-                    const sc=setcode.toLowerCase();
-                    imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${sc}/${n}.jpg`;
-                }
-            }catch(e){}
-        }
-
-        p._imgUrl=imgUrl;
         callback(p,imgUrl);
     }catch(e){
         showToast('検索エラー: '+e.message,'var(--red)');
@@ -755,7 +739,7 @@ function showCardFound(p,imgUrl){
     document.getElementById('card-found-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
     document.getElementById('card-found-name').textContent=p.name;
     document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
-    document.getElementById('card-found-note').textContent=`💬 ${p.note||''}`;
+    document.getElementById('card-found-note').innerHTML=`${p.best_site?`<span style="color:var(--gold);font-weight:700">🏆 最高: ${p.best_site}</span><br>`:''}${p.note||''}`;
     document.getElementById('card-found-prices').innerHTML=html;
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     const dupEl=document.getElementById('dup-notice');
@@ -810,7 +794,7 @@ document.getElementById('manual-search-btn').onclick=async()=>{
         document.getElementById('m-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
         document.getElementById('m-name-result').textContent=p.name;
         document.getElementById('m-set-result').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
-        document.getElementById('m-note-result').textContent=`💬 ${p.note||''}`;
+        document.getElementById('m-note-result').innerHTML=`${p.best_site?`<span style="color:var(--gold)">🏆 最高価格: ${p.best_site}</span><br>`:''}<span style="color:var(--muted)">💬 ${p.note||''}</span>`;
         document.getElementById('m-prices').innerHTML=html;
         document.getElementById('manual-result').style.display='block';
         manualQty=1;document.getElementById('m-qty-display').textContent='1';
@@ -903,8 +887,8 @@ window.changeQty=(id,d)=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(!
 
 async function callUpdateAPI(name,rarity){
     const key=getKey();if(!key)throw new Error('APIキーが未設定です');
-    const messages=[{role:'user',content:`「${name}」(${rarity})のポケモンカードのメルカリ最新相場をweb_searchで調べて、以下のJSON形式のみで返してください（整数）:
-{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0}`}];
+    const messages=[{role:'user',content:`「${name}」(${rarity})のポケモンカード価格をpremium.gamepedia.jp・card-portal.jp・netoff.co.jp/moetaku/tcg/pokemon_card/の3サイトで調べて、最高価格を基準に以下のJSON形式のみで返してください（整数）:
+{"price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"最高価格サイト名と金額"}`}];
     let finalText='';
     let loopCount=0;
     while(loopCount<4){
@@ -913,7 +897,7 @@ async function callUpdateAPI(name,rarity){
             method:'POST',
             headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
             body:JSON.stringify({
-                model:'claude-haiku-4-5-20251001',max_tokens:512,
+                model:'claude-haiku-4-5-20251001',max_tokens:500,
                 system:'あなたはポケモンカードの価格調査専門家です。最終回答は必ずJSON形式のみで返してください。',
                 tools:[{type:'web_search_20250305',name:'web_search'}],
                 messages
@@ -923,15 +907,15 @@ async function callUpdateAPI(name,rarity){
         if(data.error)throw new Error(data.error.message);
         messages.push({role:'assistant',content:data.content});
         if(data.stop_reason==='end_turn'){
-            const textBlocks=data.content.filter(b=>b.type==='text');
-            finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+            const tb=data.content.filter(b=>b.type==='text');
+            finalText=tb.length>0?tb[tb.length-1].text:'';
             break;
         } else if(data.stop_reason==='tool_use'){
-            const toolResults=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
-            if(toolResults.length>0)messages.push({role:'user',content:toolResults});
+            const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
+            if(tr.length>0)messages.push({role:'user',content:tr});
         } else {
-            const textBlocks=data.content.filter(b=>b.type==='text');
-            finalText=textBlocks.length>0?textBlocks[textBlocks.length-1].text:'';
+            const tb=data.content.filter(b=>b.type==='text');
+            finalText=tb.length>0?tb[tb.length-1].text:'';
             break;
         }
     }
