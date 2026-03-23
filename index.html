@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v15</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v16</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -239,6 +239,18 @@
                     </div>
                     <!-- レアリティは非表示（セットコード+番号で特定） -->
                     <select id="ocr-rarity-input" style="display:none"></select>
+                    <div style="margin-bottom:8px">
+                        <label class="form-label">レアリティ（手動入力）</label>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <input class="form-input" id="ocr-rarity-text" placeholder="例: SAR, RR, 無印" style="flex:1">
+                            <select class="form-select" id="ocr-rarity-input" style="flex:1">
+                                <option value="">不明</option>
+                                <option>SAR</option><option>SR</option><option>AR</option>
+                                <option>RRR</option><option>RR</option><option>R</option>
+                                <option>U</option><option>C</option><option>無印</option><option>OTHER</option>
+                            </select>
+                        </div>
+                    </div>
                     <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
                 </div>
                 <div style="display:flex;gap:8px">
@@ -356,7 +368,7 @@
         <select id="sort-select">
             <option value="date">新着順</option><option value="price-desc">高額順</option>
             <option value="price-asc">安値順</option><option value="rarity">レア順</option>
-            <option value="name">名前順</option><option value="qty-desc">枚数多い順</option>
+            <option value="name">名前順</option><option value="qty-desc">枚数多い順</option><option value="sell-desc">販売高額順</option><option value="buy-desc">買取高額順</option>
         </select>
     </div>
     <div class="section-title">レアリティ</div>
@@ -402,7 +414,7 @@
         <div class="setting-label">カード名</div><input class="setting-input" id="edit-name">
         <div class="form-row2" style="gap:8px;margin-bottom:12px">
             <div><div class="setting-label">レアリティ</div><select class="setting-input" id="edit-rarity" style="width:100%;margin-bottom:0"><option>SAR</option><option>SR</option><option>AR</option><option>RRR</option><option>RR</option><option>R</option><option>U</option><option>C</option><option>OTHER</option></select></div>
-            <div><div class="setting-label">属性</div><select class="setting-input" id="edit-type" style="width:100%;margin-bottom:0"><option value="fire">🔥炎</option><option value="water">💧水</option><option value="grass">🌿草</option><option value="lightning">⚡雷</option><option value="psychic">🔮超</option><option value="fighting">👊闘</option><option value="dark">🌑悪</option><option value="metal">⚙️鋼</option><option value="colorless">⬜無色</option><option value="dragon">🐉龍</option><option value="fairy">🌸妖精</option><option value="unknown">❓不明</option></select></div>
+            <div><div class="setting-label">属性</div><select class="setting-input" id="edit-type" style="width:100%;margin-bottom:0"><option value="fire">🔥炎</option><option value="water">💧水</option><option value="grass">🌿草</option><option value="lightning">⚡雷</option><option value="psychic">🔮超</option><option value="fighting">👊闘</option><option value="dark">🌑悪</option><option value="metal">⚙️鋼</option><option value="colorless">⬜無色</option><option value="dragon">🐉龍</option><option value="fairy">🌸妖精</option><option value="goods">🎒グッズ</option><option value="supporter">🤝サポート</option><option value="unknown">❓不明</option></select></div>
         </div>
         <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;text-align:center">
             <div class="setting-label" style="margin-bottom:6px">📦 所持枚数</div>
@@ -413,13 +425,17 @@
             <div><div class="setting-label">美品 LP（円）</div><input class="setting-input" id="edit-price-lp" type="number" style="margin-bottom:0"></div>
         </div>
         <div class="setting-label">並品 MP（円）</div><input class="setting-input" id="edit-price-mp" type="number">
+        <div class="form-row2" style="gap:8px;margin-bottom:12px">
+            <div><div class="setting-label">販売NM（円）</div><input class="setting-input" id="edit-sell-nm" type="number" style="margin-bottom:0" placeholder="販売価格"></div>
+            <div><div class="setting-label">販売LP（円）</div><input class="setting-input" id="edit-sell-lp" type="number" style="margin-bottom:0" placeholder="販売価格"></div>
+        </div>
         <div style="display:flex;gap:10px"><button class="btn btn-red" id="edit-save-btn">保存</button><button class="btn btn-dark" id="edit-cancel-btn">キャンセル</button></div>
     </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-const TYPE_LABELS={fire:'🔥炎',water:'💧水',grass:'🌿草',lightning:'⚡雷',psychic:'🔮超',fighting:'👊闘',dark:'🌑悪',metal:'⚙️鋼',colorless:'⬜無色',dragon:'🐉龍',fairy:'🌸妖精',unknown:'❓'};
+const TYPE_LABELS={fire:'🔥炎',water:'💧水',grass:'🌿草',lightning:'⚡雷',psychic:'🔮超',fighting:'👊闘',dark:'🌑悪',metal:'⚙️鋼',colorless:'⬜無色',dragon:'🐉龍',fairy:'🌸妖精',goods:'🎒グッズ',supporter:'🤝サポート',unknown:'❓'};
 const RARITY_ORDER=['SAR','SR','AR','RRR','RR','R','U','C','OTHER'];
 const RARITY_CLASS={SAR:'r-SAR',SR:'r-SR',AR:'r-AR',RRR:'r-RRR',RR:'r-RR',R:'r-R',U:'r-U',C:'r-C',OTHER:'r-OTHER'};
 const getKey=()=>localStorage.getItem('claude_api_key')||'';
@@ -518,6 +534,7 @@ function resetScan(){
     if(_naEl)_naEl.value='';
     if(_nbEl)_nbEl.value='';
     if(rarEl)rarEl.value='';
+    const _rtEl=document.getElementById('ocr-rarity-text');if(_rtEl)_rtEl.value='';
     const _scClear=document.getElementById('ocr-setcode-input');
     if(_scClear)_scClear.value='';
 }
@@ -585,7 +602,7 @@ document.getElementById('go-btn').onclick=async()=>{
             {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
             {type:'text',text:`このポケモンカードから以下の情報を読み取ってください。
 JSON形式のみで返してください:
-{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分、不明なら空文字）","type":"下記の属性コードのいずれか"}
+{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分、不明なら空文字）","type":"下記の属性コードのいずれか（ポケモンカードでなくトレーナーズカードの場合はgoods/supporterを使う）"}
 
 【属性記号の対応表 - カード右上HPの右隣にある記号】
 炎(fire): 🔥 赤いほのおマーク
@@ -599,7 +616,9 @@ JSON形式のみで返してください:
 無色(colorless): ⭐ 白/無色の星マーク
 ドラゴン(dragon): 🐉 青と赤の複合マーク
 フェアリー(fairy): 🌸 ピンクのハートマーク
-トレーナーズ(unknown): マークなし
+グッズ(goods): 「グッズ」と書かれたトレーナーズカード（道具・アイテム系）
+サポート(supporter): 「サポート」と書かれたトレーナーズカード（人物系）
+トレーナーズその他(unknown): その他のトレーナーズカード
 
 typeはfire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknownのいずれか。
 カード名は左上、カード番号は左下の数字/数字、セットコードは番号の左の英数字。`}
@@ -639,7 +658,8 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     const _nb=document.getElementById('ocr-num-b').value.trim();
     const num=(_na&&_nb)?`${_na}/${_nb}`:(_na||_nb||'');
     const name=document.getElementById('ocr-name-input')?.value.trim()||'';
-    const rarity=document.getElementById('ocr-rarity-input')?.value||'';
+    const _rarText=document.getElementById('ocr-rarity-text')?.value.trim()||'';
+    const rarity=_rarText||document.getElementById('ocr-rarity-input')?.value||'';
     const setcode=document.getElementById('ocr-setcode-input')?.value.trim()||'';
     if(!num&&!name){showToast('番号またはカード名を入力してください','var(--red)');return;}
     document.getElementById('search-by-number-btn').textContent='検索中...';
@@ -676,10 +696,10 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback){
                 model:'claude-haiku-4-5-20251001',
                 max_tokens:600,
                 system:`あなたはポケモンカード専門家です。
-【属性記号の対応】HPの右のマーク: 🔥炎=fire 💧水=water 🌿草=grass ⚡雷=lightning 🔮超=psychic 👊闘=fighting 🌑悪=dark ⚙️鋼=metal ⭐無色=colorless 🐉ドラゴン=dragon 🌸フェアリー=fairy マークなし=unknown
+【属性記号の対応】HPの右のマーク: 🔥炎=fire 💧水=water 🌿草=grass ⚡雷=lightning 🔮超=psychic 👊闘=fighting 🌑悪=dark ⚙️鋼=metal ⭐無色=colorless 🐉ドラゴン=dragon 🌸フェアリー=fairy 🎒グッズカード=goods 🤝サポートカード=supporter その他トレーナーズ=unknown
 ユーザーが指定したカードの情報とメルカリ・カードショップ相場を返してください。
 返答は必ず以下のJSON形式のみ。前置き・説明・改行・マークダウン一切不要:
-{"name":"","card_number":"","rarity":"","type":"","set":"","price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"note":"","tcg_name":""}`,
+{"name":"","card_number":"","rarity":"","type":"","set":"","price_nm_min":0,"price_nm_max":0,"price_lp_min":0,"price_lp_max":0,"price_mp_min":0,"price_mp_max":0,"sell_nm_min":0,"sell_nm_max":0,"sell_lp_min":0,"sell_lp_max":0,"note":"","tcg_name":""}`,
                 messages:[{role:'user',content:`カード: ${cardQuery}
 セットコードの大文字小文字は無視してください（m2a=M2a=M2A）。
 store.clove.jp・premium.gamepedia.jpの買取価格を参考に、このカードのJSON情報と価格（円）を返してください。`}]
@@ -790,23 +810,36 @@ function priceGridHTML(p){
     const nm=Math.round(((p.price_nm_min||0)+(p.price_nm_max||0))/2);
     const lp=Math.round(((p.price_lp_min||0)+(p.price_lp_max||0))/2);
     const mp=Math.round(((p.price_mp_min||0)+(p.price_mp_max||0))/2);
+    const snm=Math.round(((p.sell_nm_min||0)+(p.sell_nm_max||0))/2);
+    const slp=Math.round(((p.sell_lp_min||0)+(p.sell_lp_max||0))/2);
     const nm_min=p.price_nm_min||nm;const nm_max=p.price_nm_max||nm;
     const lp_min=p.price_lp_min||lp;const lp_max=p.price_lp_max||lp;
     const mp_min=p.price_mp_min||mp;const mp_max=p.price_mp_max||mp;
     const isWebDate=p.price_date&&p.price_date!=='2025年8月';
     const dateLabel=p.price_date?`<div style="text-align:right;font-size:10px;color:${isWebDate?'var(--green)':'var(--muted)'};margin-bottom:4px">${isWebDate?'🌐 Web':'📚 Claude知識'} 価格参照日: ${p.price_date}</div>`:'';
-    return {html:`<div class="price-grid">
-        <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
-        <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
-        <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
-    </div>`,nm,lp,mp,dateLabel};
+    const sellSection=snm>0?`
+        <div style="margin-top:8px">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">💰 販売相場</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val" style="color:#4fc3f7">¥${snm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${(p.sell_nm_min||0).toLocaleString()}〜¥${(p.sell_nm_max||0).toLocaleString()}</div></div>
+                <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val" style="color:#4fc3f7">¥${slp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${(p.sell_lp_min||0).toLocaleString()}〜¥${(p.sell_lp_max||0).toLocaleString()}</div></div>
+            </div>
+        </div>`:'';
+    return {html:`<div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">🏷️ 買取相場</div>
+        <div class="price-grid">
+            <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
+            <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
+            <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
+        </div>${sellSection}
+    </div>`,nm,lp,mp,snm,slp,dateLabel};
 }
 
 function showCardFound(p,imgUrl){
     if(!p)return;
     scanResult={...p};
-    const {html,nm,lp,mp,dateLabel}=priceGridHTML(p);
-    scanResult.price_nm=nm;scanResult.price_lp=lp;scanResult.price_mp=mp;
+    const {html,nm,lp,mp,snm,slp,dateLabel}=priceGridHTML(p);
+    scanResult.price_nm=nm;scanResult.price_lp=lp;scanResult.price_mp=mp;scanResult.snm=snm;scanResult.slp=slp;
     if(imgUrl){
         scanResult.thumb=imgUrl;
         const ci=document.getElementById('card-img');
@@ -832,6 +865,8 @@ function showCardFound(p,imgUrl){
 
 document.getElementById('save-card-btn').onclick=()=>{
     if(!scanResult)return;
+    // thumbが未設定の場合はcard-imgから取得
+    if(!scanResult.thumb){const ci=document.getElementById('card-img');if(ci&&ci.src&&ci.src.startsWith('http'))scanResult.thumb=ci.src;}
     addToCollection(scanResult,addQty);
     resetScan();
 };
@@ -839,7 +874,7 @@ document.getElementById('save-card-btn').onclick=()=>{
 function addToCollection(p,qty){
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     if(dup){dup.qty=(dup.qty||1)+qty;dup.price_nm=p.price_nm;dup.price_lp=p.price_lp;dup.price_mp=p.price_mp;dup.date=new Date().toLocaleDateString('ja-JP');if(p.thumb&&!dup.thumb)dup.thumb=p.thumb;saveCards(cards);showToast(`✅ ${dup.name} → ${dup.qty}枚になりました`);}
-    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,price_date:p.price_date||'2025年8月',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
+    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,sell_nm:p.snm||p.sell_nm||0,sell_lp:p.slp||p.sell_lp||0,price_date:p.price_date||'2025年8月',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
 }
 
 // ===== 手動モード =====
@@ -861,8 +896,8 @@ document.getElementById('manual-search-btn').onclick=async()=>{
     try{ await lookupAndDisplay(num,name,rarity,setcode,(p,imgUrl)=>{
         if(!p){document.getElementById('manual-search-btn').textContent='🔍 査定・画像検索';document.getElementById('manual-search-btn').disabled=false;return;}
         manualResult={...p};
-        const {html,nm,lp,mp,dateLabel}=priceGridHTML(p);
-        manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;manualResult.thumb=imgUrl;
+        const {html,nm,lp,mp,snm,slp,dateLabel}=priceGridHTML(p);
+        manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;manualResult.snm=snm;manualResult.slp=slp;manualResult.thumb=imgUrl;
         if(imgUrl){
             const mi=document.getElementById('m-img');
             const mph=document.getElementById('m-img-ph');
@@ -903,11 +938,12 @@ document.getElementById('sort-select').addEventListener('change',e=>{sortMode=e.
 function renderCollectionStats(all){
     const totalCards=all.reduce((s,c)=>s+(c.qty||1),0);
     const totalNm=all.reduce((s,c)=>s+c.price_nm*(c.qty||1),0);
+    const totalSell=all.reduce((s,c)=>s+(c.sell_nm||0)*(c.qty||1),0);
     const fav=all.filter(c=>c.fav).length;
     document.getElementById('stats-row').innerHTML=`
         <div class="stat-box"><div class="stat-num">${totalCards}</div><div class="stat-label">総枚数</div></div>
-        <div class="stat-box"><div class="stat-num">¥${totalNm>=10000?(totalNm/10000).toFixed(1)+'万':totalNm.toLocaleString()}</div><div class="stat-label">NM総額</div></div>
-        <div class="stat-box"><div class="stat-num">⭐${fav}</div><div class="stat-label">お気に入り</div></div>`;
+        <div class="stat-box"><div class="stat-num" style="font-size:16px">🏷️¥${totalNm>=10000?(totalNm/10000).toFixed(1)+'万':totalNm.toLocaleString()}</div><div class="stat-label">買取合計</div></div>
+        <div class="stat-box"><div class="stat-num" style="font-size:16px;color:#4fc3f7">💰${totalSell>0?'¥'+(totalSell>=10000?(totalSell/10000).toFixed(1)+'万':totalSell.toLocaleString()):'-'}</div><div class="stat-label">販売合計</div></div>`;
 }
 function renderFilters(all){
     const rarities=['ALL',...RARITY_ORDER.filter(r=>all.some(c=>c.rarity===r))];
@@ -926,6 +962,8 @@ function getFiltered(){
         case 'rarity':cards.sort((a,b)=>RARITY_ORDER.indexOf(a.rarity)-RARITY_ORDER.indexOf(b.rarity));break;
         case 'name':cards.sort((a,b)=>a.name.localeCompare(b.name,'ja'));break;
         case 'qty-desc':cards.sort((a,b)=>(b.qty||1)-(a.qty||1));break;
+        case 'sell-desc':cards.sort((a,b)=>(b.sell_nm||0)-(a.sell_nm||0));break;
+        case 'buy-desc':cards.sort((a,b)=>b.price_nm-a.price_nm);break;
     }
     return cards;
 }
@@ -943,10 +981,10 @@ function renderCollection(){
                     <span class="fav-star" onclick="toggleFav(${c.id})">${c.fav?'⭐':'☆'}</span>
                 </div>
                 <div class="card-prices">
+                    <span style="font-size:10px;color:var(--muted)">買取</span>
                     <span class="card-price-main">¥${c.price_nm.toLocaleString()}</span>
                     <span class="card-price-sub">NM</span>
-                    <span class="card-price-sub">美¥${c.price_lp.toLocaleString()}</span>
-                    <span class="card-price-sub">並¥${c.price_mp.toLocaleString()}</span>
+                    ${c.sell_nm>0?`<span style="font-size:10px;color:var(--muted)">販売</span><span class="card-price-sub" style="color:#4fc3f7">¥${c.sell_nm.toLocaleString()}</span>`:''}
                     ${c.price_date?`<span style="font-size:10px;color:var(--muted)">📅${c.price_date}</span>`:''}
                 </div>
                 <div class="card-meta">${rarityBadge(c.rarity)}${typeBadge(c.type)}${c.card_number?`<span style="font-size:10px;color:var(--muted)">${c.card_number}</span>`:''}<span class="card-date">${c.date}</span></div>
@@ -1039,6 +1077,7 @@ function renderStatScreen(){
     if(!all.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div>データがありません</div>';return;}
     const totalCards=all.reduce((s,c)=>s+(c.qty||1),0);
     const totalNm=all.reduce((s,c)=>s+c.price_nm*(c.qty||1),0);
+    const totalSell=all.reduce((s,c)=>s+(c.sell_nm||0)*(c.qty||1),0);
     const topCards=[...all].sort((a,b)=>b.price_nm-a.price_nm).slice(0,5);
     const rarityCount={};RARITY_ORDER.forEach(r=>{const n=all.filter(c=>c.rarity===r).reduce((s,c)=>s+(c.qty||1),0);if(n)rarityCount[r]=n;});
     const typeCount={};all.forEach(c=>{const t=c.type||'unknown';typeCount[t]=(typeCount[t]||0)+(c.qty||1);});
@@ -1069,7 +1108,7 @@ window.editCard=id=>{
 };
 document.getElementById('edit-save-btn').onclick=()=>{
     const cards=getCards(),c=cards.find(x=>x.id===editingId);
-    if(c){c.name=document.getElementById('edit-name').value;c.rarity=document.getElementById('edit-rarity').value;c.type=document.getElementById('edit-type').value;c.qty=editQty;c.price_nm=parseInt(document.getElementById('edit-price-nm').value)||0;c.price_lp=parseInt(document.getElementById('edit-price-lp').value)||0;c.price_mp=parseInt(document.getElementById('edit-price-mp').value)||0;saveCards(cards);renderCollection();showToast('更新しました');}
+    if(c){c.name=document.getElementById('edit-name').value;c.rarity=document.getElementById('edit-rarity').value;c.type=document.getElementById('edit-type').value;c.qty=editQty;c.price_nm=parseInt(document.getElementById('edit-price-nm').value)||0;c.price_lp=parseInt(document.getElementById('edit-price-lp').value)||0;c.price_mp=parseInt(document.getElementById('edit-price-mp').value)||0;c.sell_nm=parseInt(document.getElementById('edit-sell-nm').value)||0;c.sell_lp=parseInt(document.getElementById('edit-sell-lp').value)||0;saveCards(cards);renderCollection();showToast('更新しました');}
     document.getElementById('edit-modal').classList.remove('open');
 };
 document.getElementById('edit-cancel-btn').onclick=()=>document.getElementById('edit-modal').classList.remove('open');
