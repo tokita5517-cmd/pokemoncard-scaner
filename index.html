@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v22</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v23</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -616,47 +616,31 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
     el.style.display='block';
     document.getElementById('card-found').style.display='none';
 
-    // clove.jpから各ホロバリアントの画像を取得
-    let cloveImgMap={};
-    if(name&&num){
-        try{
-            const cloveUrl=`https://store.clove.jp/jp/buying/pokemon/results?title=${encodeURIComponent(name)}&number=${encodeURIComponent(num)}`;
-            const cr=await fetch(cloveUrl);
-            const ch=await cr.text();
-            const parser=new DOMParser();
-            const doc=parser.parseFromString(ch,'text/html');
-            const links=doc.querySelectorAll('a[href*="/pokemon/"]');
-            links.forEach(a=>{
-                const img=a.querySelector('img');
-                const nameEl=a.querySelector('[class*="title"],[class*="name"],p,h3,h4');
-                const vname=(nameEl?.textContent||a.textContent||'').trim();
-                const vsrc=img?.src||img?.getAttribute('data-src')||'';
-                if(vsrc.startsWith('http')&&vname.length>2){
-                    if(vname.includes('ボール')||vname.includes('ball'))cloveImgMap.ball_mirror=vsrc;
-                    else if(vname.includes('エネルギー')||vname.includes('energy'))cloveImgMap.energy_mirror=vsrc;
-                    else if(vname.includes('マスター')||vname.includes('master'))cloveImgMap.master_ball=vsrc;
-                    else if(vname.includes('テラスタル')||vname.includes('tera'))cloveImgMap.tera_mirror=vsrc;
-                    else if(vname.includes('ミラー')||vname.includes('mirror'))cloveImgMap.mirror=vsrc;
-                    else if(!cloveImgMap[''])cloveImgMap['']=vsrc; // 通常版
-                }
-            });
-        }catch(e){}
-    }
-    // pokemon-card.comフォールバック
+    // pokemon-card.comのURLパターンで画像を生成（CORS不要）
     let baseCardImg='';
     if(setcode&&num){
-        const n=num.split('/')[0].padStart(3,'0');
-        baseCardImg=`https://www.pokemon-card.com/assets/images/card_images/large/${setcode.toLowerCase()}/${n}.jpg`;
+        const _n=num.split('/')[0].padStart(3,'0');
+        baseCardImg=`https://www.pokemon-card.com/assets/images/card_images/large/${setcode.toLowerCase()}/${_n}.jpg`;
     }
+    // 全バリアント同じカード画像（ホロはカード自体は同じ、加工違い）
+    const cloveImgMap={};
 
     // ホログラム選択リストを生成
     var holoHtml = '<div style="font-size:12px;color:#7070a0;margin-bottom:10px">ホログラム種別を選んでください</div>';
     for(var _i=0;_i<HOLO_OPTIONS.length;_i++){
         var _h = HOLO_OPTIONS[_i];
         var _img = cloveImgMap[_h.value] || baseCardImg || '';
-        var _row = '<div class="holo-opt" data-idx="' + _i + '" style="display:flex;align-items:center;gap:10px;background:#1c1c2e;border:1px solid #2a2a40;border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px">';
+        var _overlayColors = {'mirror':'rgba(255,215,0,0.35)','ball_mirror':'rgba(180,220,255,0.35)','energy_mirror':'rgba(255,180,0,0.35)','master_ball':'rgba(180,0,255,0.35)','tera_mirror':'rgba(0,220,255,0.35)'};
+        var _oc = _overlayColors[_h.value] || 'transparent';
+        var _row = '<div class="holo-opt" data-idx="' + _i + '" data-img="' + _img + '" style="display:flex;align-items:center;gap:10px;background:#1c1c2e;border:1px solid #2a2a40;border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px">';
         if(_img){
-            _row += '<img src="' + _img + '" style="width:52px;height:72px;object-fit:cover;border-radius:6px;flex-shrink:0">';
+            _row += '<div style="position:relative;flex-shrink:0;width:52px;height:72px">';
+            _row += '<img class="holo-img" src="' + _img + '" style="width:52px;height:72px;object-fit:cover;border-radius:6px;display:block">';
+            if(_h.value){
+                _row += '<div style="position:absolute;inset:0;border-radius:6px;background:' + _oc + ';pointer-events:none"></div>';
+                _row += '<div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,1)">' + _h.emoji + '</div>';
+            }
+            _row += '</div>';
         } else {
             _row += '<span style="font-size:28px;flex-shrink:0">' + _h.emoji + '</span>';
         }
@@ -669,6 +653,8 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
         el.addEventListener('click',function(){selectHoloVariantByIndex(parseInt(this.dataset.idx));});
         el.addEventListener('mouseenter',function(){this.style.borderColor='#e63946';});
         el.addEventListener('mouseleave',function(){this.style.borderColor='#2a2a40';});
+        var img=el.querySelector('.holo-img');
+        if(img)img.addEventListener('error',function(){this.style.display='none';});
     });
 
     window._holoOptions=HOLO_OPTIONS;
@@ -1215,7 +1201,15 @@ async function callUpdateAPI(name,rarity){
     const a=s.indexOf('{'),b=s.lastIndexOf('}');
     if(a>=0&&b>a)s=s.slice(a,b+1);
     const _wr=JSON.parse(s);
-    const _hasPrice=(_wr.price_nm_min||0)+(_wr.price_nm_max||0)+(_wr.price_lp_min||0)+(_wr.price_lp_max||0)>0;
+    // 価格0の場合はレアリティフロアを適用
+    if((_wr.price_nm_min||0)+(_wr.price_nm_max||0)===0){
+        const _FLOOR={SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
+        const _f=_FLOOR[_wr.rarity||'']||10;
+        _wr.price_nm_min=Math.round(_f*0.8);_wr.price_nm_max=Math.round(_f*1.2);
+        _wr.price_lp_min=Math.round(_f*0.5);_wr.price_lp_max=Math.round(_f*0.9);
+        _wr.price_mp_min=Math.round(_f*0.3);_wr.price_mp_max=Math.round(_f*0.6);
+    }
+    const _hasPrice=(_wr.price_nm_min||0)+(_wr.price_nm_max||0)>0;
     if(_hasPrice){
         const _wn=new Date();
         _wr.price_date=`${_wn.getMonth()+1}月${_wn.getDate()}日`;
