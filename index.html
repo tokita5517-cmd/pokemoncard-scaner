@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v19</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v20</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -597,6 +597,47 @@ async function callClaude(messages,maxTokens=512){
     });
 });
 
+
+// キラ不明時：全ホロ種別を候補として表示
+async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
+    const HOLO_OPTIONS=[
+        {value:'',label:'通常版（非キラ）',emoji:'📋'},
+        {value:'mirror',label:'ミラー・ホロ',emoji:'✨'},
+        {value:'ball_mirror',label:'ボールミラー',emoji:'⚪'},
+        {value:'energy_mirror',label:'エネルギーミラー',emoji:'⚡'},
+        {value:'master_ball',label:'マスターボールミラー',emoji:'🟣'},
+        {value:'tera_mirror',label:'テラスタルミラー',emoji:'💎'},
+    ];
+    const el=document.getElementById('variant-select');
+    const list=document.getElementById('variant-list');
+    el.style.display='block';
+    document.getElementById('card-found').style.display='none';
+    list.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">このカードのホログラム種別を選んでください</div>`+
+    HOLO_OPTIONS.map((h,i)=>`
+        <div onclick="selectHoloVariant('${h.value}','${num}','${name}','${rarity}','${setcode}','${typeHint||''}')" 
+             style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;margin-bottom:6px;transition:border-color .2s"
+             onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
+            <span style="font-size:24px">${h.emoji}</span>
+            <div style="flex:1">
+                <div style="font-size:15px;font-weight:700">${h.label}</div>
+                ${h.value?`<div style="font-size:11px;color:var(--muted)">キラあり仕様</div>`:`<div style="font-size:11px;color:var(--muted)">通常印刷</div>`}
+            </div>
+            <span style="color:var(--muted);font-size:18px">›</span>
+        </div>
+    `).join('');
+}
+
+window.selectHoloVariant=async function(holoVal,num,name,rarity,setcode,typeHint){
+    document.getElementById('variant-select').style.display='none';
+    currentHoloType=holoVal;
+    const holoEl=document.getElementById('ocr-holo-input');
+    if(holoEl)holoEl.value=holoVal;
+    await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl,variants)=>{
+        if(variants&&variants.length>1){showVariantSelect(variants,result);}
+        else if(result){showCardFound(result,imgUrl);}
+    },typeHint,holoVal);
+};
+
 // バリアント選択表示
 function showVariantSelect(variants,cardData){
     const el=document.getElementById('variant-select');
@@ -702,13 +743,18 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     document.getElementById('search-by-number-btn').textContent='検索中...';
     document.getElementById('search-by-number-btn').disabled=true;
     try{
-        await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl,variants)=>{
-            if(variants&&variants.length>1){
-                showVariantSelect(variants,result);
-            } else if(result){
-                showCardFound(result,imgUrl);
-            }
-        },typeHint,holoType);
+        if(holoType==='unknown_holo'){
+            // キラ不明→全ホロ種別の候補を表示
+            showHoloVariantSelect(num,name,rarity,setcode,typeHint);
+        } else {
+            await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl,variants)=>{
+                if(variants&&variants.length>1){
+                    showVariantSelect(variants,result);
+                } else if(result){
+                    showCardFound(result,imgUrl);
+                }
+            },typeHint,holoType);
+        }
     }catch(e){
         showToast('エラー: '+e.message,'var(--red)');
     }finally{
@@ -989,10 +1035,11 @@ document.getElementById('manual-search-btn').onclick=async()=>{
 document.getElementById('manual-save-btn').onclick=()=>{
     if(!manualResult){showToast('カードデータがありません','var(--red)');return;}
     try{
-    if(typeof manualResult.price_nm!=='number')manualResult.price_nm=0;
-    addToCollection(manualResult,manualQty);
-    document.getElementById('manual-result').style.display='none';
-    document.getElementById('m-name').value='';document.getElementById('m-num-a').value='';document.getElementById('m-num-b').value='';
+        if(typeof manualResult.price_nm!=='number')manualResult.price_nm=0;
+        addToCollection(manualResult,manualQty);
+        document.getElementById('manual-result').style.display='none';
+        document.getElementById('m-name').value='';document.getElementById('m-num-a').value='';document.getElementById('m-num-b').value='';
+    }catch(e){showToast('追加エラー: '+e.message,'var(--red)');}
 };
 
 // ===== コレクション =====
