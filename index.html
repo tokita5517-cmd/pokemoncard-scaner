@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v18</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v19</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -269,6 +269,18 @@
                                 <option>U</option><option>C</option><option>無印</option><option>OTHER</option>
                             </select>
                         </div>
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <label class="form-label">✨ ホログラム種別 <span style="color:var(--muted);font-size:10px">（キラあり/なしで価格が変わります）</span></label>
+                        <select class="form-select" id="ocr-holo-input" style="width:100%">
+                            <option value="">通常版（非キラ）</option>
+                            <option value="mirror">ミラー・ホロ</option>
+                            <option value="ball_mirror">ボールミラー</option>
+                            <option value="energy_mirror">エネルギーミラー</option>
+                            <option value="master_ball">マスターボールミラー</option>
+                            <option value="tera_mirror">テラスタルミラー</option>
+                            <option value="unknown_holo">キラあり（種別不明）</option>
+                        </select>
                     </div>
                     <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
                 </div>
@@ -554,6 +566,7 @@ function resetScan(){
     if(_nbEl)_nbEl.value='';
     if(rarEl)rarEl.value='';
     const _typeEl=document.getElementById('ocr-type-input');if(_typeEl)_typeEl.value='';
+    const _holoEl=document.getElementById('ocr-holo-input');if(_holoEl)_holoEl.value='';
     const _scClear=document.getElementById('ocr-setcode-input');
     if(_scClear)_scClear.value='';
 }
@@ -681,6 +694,7 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     const name=document.getElementById('ocr-name-input')?.value.trim()||'';
     const rarity=document.getElementById('ocr-rarity-input')?.value||'';
     const typeHint=document.getElementById('ocr-type-input')?.value||'';
+    const holoType=document.getElementById('ocr-holo-input')?.value||'';
     const setcode=document.getElementById('ocr-setcode-input')?.value.trim()||'';
     if(!num&&!name){showToast('番号またはカード名を入力してください','var(--red)');return;}
     document.getElementById('search-by-number-btn').textContent='検索中...';
@@ -692,7 +706,7 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
             } else if(result){
                 showCardFound(result,imgUrl);
             }
-        },typeHint);
+        },typeHint,holoType);
     }catch(e){
         showToast('エラー: '+e.message,'var(--red)');
     }finally{
@@ -702,12 +716,14 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
 };
 
 // カード検索（番号 or 名前）
-async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint){
+async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,holoType){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
         const setcodeNorm=setcode.toUpperCase().replace(/^([A-Z]+)(\d+[A-Z]*)$/,(m,p1,p2)=>p1+p2.toLowerCase()) || setcode;
         const fullId=[setcodeNorm||setcode,number].filter(Boolean).join('-');
-        const cardQuery=[fullId||'',name||'',rarity||''].filter(Boolean).join(' ').trim();
+        const HOLO_LABELS={'mirror':'ミラー・ホロ','ball_mirror':'ボールミラー','energy_mirror':'エネルギーミラー','master_ball':'マスターボールミラー','tera_mirror':'テラスタルミラー','unknown_holo':'キラあり'};
+        const holoLabel=holoType?HOLO_LABELS[holoType]||holoType:'通常版';
+        const cardQuery=[fullId||'',name||'',rarity||'',typeHint?TYPE_LABELS[typeHint]||'':'',holoType?holoLabel:''].filter(Boolean).join(' ').trim();
 
         // web_searchなし・Claudeの知識で直接JSON返却（確実）
         const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -722,9 +738,10 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint){
 pokecazilla.com・store.clove.jp・premium.gamepedia.jpの買取・販売価格を参考にすること。
 返答はJSONのみ。他テキスト一切不要:
 {"name":"実際のカード名","card_number":"実際の番号","rarity":"実際のレアリティ","type":"実際の属性","set":"実際のセット名","price_nm_min":実数値,"price_nm_max":実数値,"price_lp_min":実数値,"price_lp_max":実数値,"price_mp_min":実数値,"price_mp_max":実数値,"sell_nm_min":実数値,"sell_nm_max":実数値,"sell_lp_min":実数値,"sell_lp_max":実数値,"note":"価格コメント","tcg_name":"英語名"}`,
-                messages:[{role:'user',content:`カード特定・価格照会: ${cardQuery}${typeHint?' 属性:'+typeHint:''}
+                messages:[{role:'user',content:`カード特定・価格照会: ${cardQuery}
+ホログラム種別: ${holoLabel}（これが価格に影響します。ミラー版は通常版より高値）
 セットコード大文字小文字無視（m2a=M2a）。
-必ず実際の市場価格を調べて返すこと。price/sell項目は0を入れず実際の金額を入れること。このカードが実在する場合、必ず価格データがある。`}]
+必ず実際の市場価格を調べて返すこと。price/sell項目は0を入れず実際の金額を入れること。`}]
             })
         });
         const data=await resp.json();
@@ -877,7 +894,7 @@ function showCardFound(p,imgUrl){
     }
     document.getElementById('card-found-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
     document.getElementById('card-found-name').textContent=p.name;
-    document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}`;
+    document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}${holoLabel&&holoLabel!=='通常版'?' ✨'+holoLabel:''}`;
     document.getElementById('card-found-note').innerHTML=`${p.best_site?`<span style="color:var(--gold);font-weight:700">🏆 最高: ${p.best_site}</span><br>`:''}${p.note||''}`;
     document.getElementById('card-found-prices').innerHTML=dateLabel+html;
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
@@ -891,6 +908,7 @@ document.getElementById('save-card-btn').onclick=()=>{
     if(!scanResult)return;
     // thumbが未設定の場合はcard-imgから取得
     if(!scanResult.thumb){const ci=document.getElementById('card-img');if(ci&&ci.src&&ci.src.startsWith('http'))scanResult.thumb=ci.src;}
+    scanResult.holo=holoType||'';
     addToCollection(scanResult,addQty);
     resetScan();
 };
@@ -898,7 +916,7 @@ document.getElementById('save-card-btn').onclick=()=>{
 function addToCollection(p,qty){
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     if(dup){dup.qty=(dup.qty||1)+qty;dup.price_nm=p.price_nm;dup.price_lp=p.price_lp;dup.price_mp=p.price_mp;dup.date=new Date().toLocaleDateString('ja-JP');if(p.thumb&&!dup.thumb)dup.thumb=p.thumb;saveCards(cards);showToast(`✅ ${dup.name} → ${dup.qty}枚になりました`);}
-    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,sell_nm:p.snm||p.sell_nm||0,sell_lp:p.slp||p.sell_lp||0,price_date:p.price_date||'2025年8月',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
+    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',holo:p.holo||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,sell_nm:p.snm||p.sell_nm||0,sell_lp:p.slp||p.sell_lp||0,price_date:p.price_date||'2025年8月',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
 }
 
 // ===== 手動モード =====
@@ -1011,7 +1029,7 @@ function renderCollection(){
                     ${c.sell_nm>0?`<span style="font-size:10px;color:var(--muted)">販売</span><span class="card-price-sub" style="color:#4fc3f7">¥${c.sell_nm.toLocaleString()}</span>`:''}
                     ${c.price_date?`<span style="font-size:10px;color:var(--muted)">📅${c.price_date}</span>`:''}
                 </div>
-                <div class="card-meta">${rarityBadge(c.rarity)}${typeBadge(c.type)}${c.card_number?`<span style="font-size:10px;color:var(--muted)">${c.card_number}</span>`:''}<span class="card-date">${c.date}</span></div>
+                <div class="card-meta">${rarityBadge(c.rarity)}${typeBadge(c.type)}${c.holo?`<span style="background:#2a1a3a;color:#c084fc;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700">✨${{'mirror':'ミラー','ball_mirror':'ボールM','energy_mirror':'エネルギーM','master_ball':'マスターボールM','tera_mirror':'テラスタルM','unknown_holo':'キラ'}[c.holo]||c.holo}</span>`:''} ${c.card_number?`<span style="font-size:10px;color:var(--muted)">${c.card_number}</span>`:''}<span class="card-date">${c.date}</span></div>
                 ${c.set?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${c.set}</div>`:''}
                 <div class="card-actions">
                     <button class="icon-btn" onclick="editCard(${c.id})">✏️</button>
