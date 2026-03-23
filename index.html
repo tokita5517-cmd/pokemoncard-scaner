@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v20</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v21</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -598,44 +598,76 @@ async function callClaude(messages,maxTokens=512){
 });
 
 
-// キラ不明時：全ホロ種別を候補として表示
+// キラ不明時：全ホロ種別を候補として表示（グローバルに引数を保持してonclickの/問題を回避）
+let _holoSelectParams={};
+
 async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
     const HOLO_OPTIONS=[
-        {value:'',label:'通常版（非キラ）',emoji:'📋'},
-        {value:'mirror',label:'ミラー・ホロ',emoji:'✨'},
-        {value:'ball_mirror',label:'ボールミラー',emoji:'⚪'},
-        {value:'energy_mirror',label:'エネルギーミラー',emoji:'⚡'},
-        {value:'master_ball',label:'マスターボールミラー',emoji:'🟣'},
-        {value:'tera_mirror',label:'テラスタルミラー',emoji:'💎'},
+        {value:'',label:'通常版（非キラ）',emoji:'📋',desc:'通常印刷'},
+        {value:'mirror',label:'ミラー・ホロ',emoji:'✨',desc:'全面キラ仕様'},
+        {value:'ball_mirror',label:'ボールミラー',emoji:'⚪',desc:'モンスターボール柄キラ'},
+        {value:'energy_mirror',label:'エネルギーミラー',emoji:'⚡',desc:'エネルギーマーク柄キラ'},
+        {value:'master_ball',label:'マスターボールミラー',emoji:'🟣',desc:'マスターボール柄キラ'},
+        {value:'tera_mirror',label:'テラスタルミラー',emoji:'💎',desc:'テラスタル柄キラ'},
     ];
+    _holoSelectParams={num,name,rarity,setcode,typeHint};
     const el=document.getElementById('variant-select');
     const list=document.getElementById('variant-list');
     el.style.display='block';
     document.getElementById('card-found').style.display='none';
-    list.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">このカードのホログラム種別を選んでください</div>`+
+
+    // カード画像を先に取得
+    let cardImg='';
+    if(setcode&&num){
+        const n=num.split('/')[0].padStart(3,'0');
+        const sc=setcode.toLowerCase();
+        const testUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${sc}/${n}.jpg`;
+        try{
+            const r=await fetch(testUrl,{method:'HEAD'});
+            if(r.ok)cardImg=testUrl;
+        }catch(e){}
+    }
+
+    list.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">ホログラム種別を選んでください</div>`+
     HOLO_OPTIONS.map((h,i)=>`
-        <div onclick="selectHoloVariant('${h.value}','${num}','${name}','${rarity}','${setcode}','${typeHint||''}')" 
-             style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;margin-bottom:6px;transition:border-color .2s"
+        <div onclick="selectHoloVariantByIndex(${i})"
+             style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px;transition:border-color .2s"
              onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
-            <span style="font-size:24px">${h.emoji}</span>
-            <div style="flex:1">
-                <div style="font-size:15px;font-weight:700">${h.label}</div>
-                ${h.value?`<div style="font-size:11px;color:var(--muted)">キラあり仕様</div>`:`<div style="font-size:11px;color:var(--muted)">通常印刷</div>`}
+            ${cardImg
+                ? `<div style="position:relative;flex-shrink:0">
+                    <img src="${cardImg}" style="width:52px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+                    ${h.value?`<div style="position:absolute;inset:0;border-radius:6px;background:${
+                        h.value==='mirror'?'linear-gradient(135deg,rgba(255,255,255,0.3),rgba(255,215,0,0.2))':
+                        h.value==='ball_mirror'?'linear-gradient(135deg,rgba(255,255,255,0.4),rgba(200,200,255,0.3))':
+                        h.value==='energy_mirror'?'linear-gradient(135deg,rgba(255,200,0,0.3),rgba(255,100,0,0.2))':
+                        h.value==='master_ball'?'linear-gradient(135deg,rgba(180,0,255,0.3),rgba(100,0,200,0.2))':
+                        'linear-gradient(135deg,rgba(0,200,255,0.3),rgba(0,100,200,0.2))'
+                    };pointer-events:none"></div>`:''}
+                   </div>`
+                : `<span style="font-size:28px;flex-shrink:0">${h.emoji}</span>`
+            }
+            <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:700">${h.label}</div>
+                <div style="font-size:11px;color:var(--muted)">${h.desc}</div>
             </div>
             <span style="color:var(--muted);font-size:18px">›</span>
         </div>
     `).join('');
+
+    window._holoOptions=HOLO_OPTIONS;
 }
 
-window.selectHoloVariant=async function(holoVal,num,name,rarity,setcode,typeHint){
+window.selectHoloVariantByIndex=async function(i){
+    const h=window._holoOptions[i];
+    const {num,name,rarity,setcode,typeHint}=_holoSelectParams;
     document.getElementById('variant-select').style.display='none';
-    currentHoloType=holoVal;
+    currentHoloType=h.value;
     const holoEl=document.getElementById('ocr-holo-input');
-    if(holoEl)holoEl.value=holoVal;
+    if(holoEl)holoEl.value=h.value;
     await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl,variants)=>{
         if(variants&&variants.length>1){showVariantSelect(variants,result);}
         else if(result){showCardFound(result,imgUrl);}
-    },typeHint,holoVal);
+    },typeHint,h.value);
 };
 
 // バリアント選択表示
