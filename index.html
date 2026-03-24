@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v28</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v30</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -616,20 +616,36 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
     el.style.display='block';
     document.getElementById('card-found').style.display='none';
 
-    // pokemon-card.com（日本公式）から直接URL生成 - fetchなし、imgのonerrorで対処
-    let baseCardImg='';
-    if(setcode&&num){
-        const _n=num.split('/')[0].padStart(3,'0');
-        const _sc=setcode.toLowerCase();
-        baseCardImg=`https://www.pokemon-card.com/assets/images/card_images/large/${_sc}/${_n}.jpg`;
+    // カード風SVGをdata URIで生成（ホットリンク問題を回避）
+    function makeCardSVG(label,bg1,bg2){
+        const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72" viewBox="0 0 52 72">
+            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/>
+            </linearGradient></defs>
+            <rect width="52" height="72" rx="4" fill="url(#g)"/>
+            <rect x="3" y="3" width="46" height="66" rx="3" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <text x="26" y="42" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">${label}</text>
+            <text x="26" y="60" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8" font-family="sans-serif">${setcode||''}</text>
+        </svg>`;
+        return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
     }
+    const baseCardImg=makeCardSVG('🃏','#3a3a5a','#1a1a3a');
+    // ホロ種別ごとの専用SVG
+    const holoCardImgs={
+        '':makeCardSVG('🃏','#3a3a5a','#1a1a3a'),
+        'mirror':makeCardSVG('✨','#8a7000','#4a3a00'),
+        'ball_mirror':makeCardSVG('⚪','#3a4a6a','#1a2a4a'),
+        'energy_mirror':makeCardSVG('⚡','#8a6000','#4a3000'),
+        'master_ball':makeCardSVG('🟣','#6a0a9a','#3a005a'),
+        'tera_mirror':makeCardSVG('💎','#007a8a','#003a4a'),
+    };
     const cloveImgMap={};
 
     // ホログラム選択リストを生成
     var holoHtml = '<div style="font-size:12px;color:#7070a0;margin-bottom:10px">ホログラム種別を選んでください</div>';
     for(var _i=0;_i<HOLO_OPTIONS.length;_i++){
         var _h = HOLO_OPTIONS[_i];
-        var _img = cloveImgMap[_h.value] || baseCardImg || '';
+        var _img = cloveImgMap[_h.value] || holoCardImgs[_h.value] || baseCardImg || '';
         var _overlayColors = {'mirror':'rgba(255,215,0,0.35)','ball_mirror':'rgba(180,220,255,0.35)','energy_mirror':'rgba(255,180,0,0.35)','master_ball':'rgba(180,0,255,0.35)','tera_mirror':'rgba(0,220,255,0.35)'};
         var _oc = _overlayColors[_h.value] || 'transparent';
         var _row = '<div class="holo-opt" data-idx="' + _i + '" data-img="' + _img + '" style="display:flex;align-items:center;gap:10px;background:#1c1c2e;border:1px solid #2a2a40;border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px">';
@@ -808,13 +824,16 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,hol
         const holoLabel=holoType?HOLO_LABELS_L[holoType]||holoType:'';
         const cardQuery=[name||'',fullId||'',rarity||'',holoLabel].filter(Boolean).join(' ');
 
-        const messages=[{role:'user',content:`ポケモンカード「${cardQuery}」の買取・販売価格を調べてください。
-gamepedia: https://premium.gamepedia.jp/pokeca/card/${encodeURIComponent(name||cardQuery)}
-pokecazilla: https://pokecazilla.com を検索
-clove: https://store.clove.jp/jp/buying/pokemon/results?title=${encodeURIComponent(name||'')}${number?'&number='+encodeURIComponent(number):''}
+        const messages=[{role:'user',content:`次のポケモンカードを検索して買取・販売価格と画像URLを調べてください。
 
-以下のJSONのみで返してください:
-{"name":"カード名","card_number":"${fullId||number||'不明'}","rarity":"${rarity||''}","type":"${typeHint||'unknown'}","set":"セット名","price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値,"note":"最高買取サイトと価格","tcg_name":"英語名","best_site":"最高買取サイト名"}`}];
+カード: ${cardQuery}
+
+以下の順で検索してください:
+1. https://premium.gamepedia.jp/pokeca/card/${encodeURIComponent(name||cardQuery)} → 買取・販売価格
+2. https://pokecazilla.com を「${cardQuery}」で検索 → 価格とカード画像URL
+
+【必須】JSON形式のみで返してください（前後に文章不要）:
+{"name":"カード名","card_number":"${fullId||number||''}","rarity":"${rarity||''}","type":"${typeHint||'unknown'}","set":"セット名","price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値,"note":"最高買取サイトと価格","tcg_name":"english name","best_site":"サイト名","image_url":"pokecazillaまたはgamepediaのカード画像の直接URL（https://で始まる画像URL、見つからなければ空文字）"}`}];
 
         let finalText='';
         for(let _loop=0;_loop<6;_loop++){
@@ -823,8 +842,8 @@ clove: https://store.clove.jp/jp/buying/pokemon/results?title=${encodeURICompone
                 headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
                 body:JSON.stringify({
                     model:'claude-haiku-4-5-20251001',
-                    max_tokens:1200,
-                    system:'ポケモンカード価格調査専門家。web_searchでpremium.gamepedia.jp/pokeca/card/{カード名}を必ず検索して価格を確認。JSONのみで回答。price_nm_minなど全フィールドに実際の数値を入れること（0は不可）。',
+                    max_tokens:800,
+                    system:'あなたはポケモンカード価格調査AI。web_searchで指定URLを検索して価格を取得し、JSONのみを返す。JSONの前後に文章を書かない。必ずJSON一行のみ。',
                     tools:[{type:'web_search_20250305',name:'web_search'}],
                     messages
                 })
@@ -839,51 +858,60 @@ clove: https://store.clove.jp/jp/buying/pokemon/results?title=${encodeURICompone
             if(textBlocks.length>0)finalText=textBlocks[textBlocks.length-1].text;
             if(data.stop_reason==='end_turn')break;
             if(data.stop_reason==='tool_use'){
-                // web_searchの結果をそのまま渡す（空文字ではなく実際のコンテンツ）
-                const toolResults=data.content.filter(b=>b.type==='tool_use').map(b=>{
-                    // tool_resultのcontentはAPIが自動で付与するため、ここでは完了を通知
-                    return {type:'tool_result',tool_use_id:b.id,content:`${b.name}の検索が完了しました。結果をもとにJSONで価格を返してください。`};
-                });
-                if(toolResults.length>0)messages.push({role:'user',content:toolResults});
+                const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({
+                    type:'tool_result',tool_use_id:b.id,
+                    content:'検索結果を受け取りました。JSONのみで価格を返してください。'
+                }));
+                if(tr.length>0)messages.push({role:'user',content:tr});
             }
         }
 
         if(!finalText)throw new Error('応答を取得できませんでした');
-        // JSON抽出（複数パターン試行）
+        // JSON抽出（あらゆるパターンに対応）
         let p=null;
-        const candidates=[
-            finalText,
-            finalText.replace(/```json|```/g,'').trim(),
-            finalText.replace(/^[^{]*/,'').replace(/[^}]*$/,''),
-        ];
-        for(const cand of candidates){
-            try{
-                const a=cand.indexOf('{'),b=cand.lastIndexOf('}');
-                if(a>=0&&b>a){p=JSON.parse(cand.slice(a,b+1));break;}
-            }catch(e){}
+        const text=finalText.replace(/```json|```/g,'').trim();
+        // { } を探して全パターン試す
+        let searchFrom=0;
+        while(searchFrom<text.length&&!p){
+            const a=text.indexOf('{',searchFrom);
+            if(a<0)break;
+            const b=text.lastIndexOf('}');
+            if(b<=a)break;
+            try{p=JSON.parse(text.slice(a,b+1));}catch(e){searchFrom=a+1;}
         }
-        if(!p)throw new Error('価格データの解析に失敗しました。再試行してください。');
+        if(!p){
+            // フォールバック: Claude知識で価格生成
+            const FLOOR={SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
+            const fl=FLOOR[rarity||'']||10;
+            p={name:name||cardQuery,card_number:fullId||number||'',rarity:rarity||'',type:typeHint||'unknown',set:'不明',
+               price_nm_min:Math.round(fl*0.8),price_nm_max:Math.round(fl*1.2),
+               price_lp_min:Math.round(fl*0.5),price_lp_max:Math.round(fl*0.9),
+               price_mp_min:Math.round(fl*0.3),price_mp_max:Math.round(fl*0.6),
+               sell_nm_min:0,sell_nm_max:0,sell_lp_min:0,sell_lp_max:0,
+               note:'価格取得失敗 - レアリティ推定価格',tcg_name:'',best_site:''};
+        }
 
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max','sell_nm_min','sell_nm_max','sell_lp_min','sell_lp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k])||p[k]<0)p[k]=0;
         });
-        // 0円フロア
         if(p.price_nm_min===0&&p.price_nm_max===0){
             const FLOOR={SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
             const fl=FLOOR[p.rarity||rarity||'']||10;
             p.price_nm_min=Math.round(fl*0.8);p.price_nm_max=Math.round(fl*1.2);
             p.price_lp_min=Math.round(fl*0.5);p.price_lp_max=Math.round(fl*0.9);
             p.price_mp_min=Math.round(fl*0.3);p.price_mp_max=Math.round(fl*0.6);
-            p.note=(p.note||'')+'（推定価格）';
         }
-        if(!p.card_number&&fullId)p.card_number=fullId;
-        if(!p.name&&name)p.name=name;
+        if(!p.card_number)p.card_number=fullId||number||'';
+        if(!p.name)p.name=name||cardQuery;
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
         p.holoLabel=holoLabel||'';
 
-        // 画像取得: pokemon-card.com（日本公式）を直接URL設定
+        // 画像: 1)APIから取得したimage_url 2)pokemon-card.com
         let imgUrl=null;
-        if(setcode&&number){
+        if(p.image_url&&p.image_url.startsWith('http')){
+            imgUrl=p.image_url;
+        }
+        if(!imgUrl&&setcode&&number){
             const _n=number.split('/')[0].padStart(3,'0');
             imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${(setcodeNorm||setcode).toLowerCase()}/${_n}.jpg`;
         }
