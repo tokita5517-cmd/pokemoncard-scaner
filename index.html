@@ -187,7 +187,7 @@
 
 <!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v26</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v28</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -616,11 +616,11 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
     el.style.display='block';
     document.getElementById('card-found').style.display='none';
 
-    // pokemon-card.comのURLを直接設定（HEADチェック不要）
+    // pokemon-card.com（日本公式）から直接URL生成 - fetchなし、imgのonerrorで対処
     let baseCardImg='';
     if(setcode&&num){
         const _n=num.split('/')[0].padStart(3,'0');
-        const _sc=setcode.toLowerCase().replace(/^([a-z]+)(\d.*)$/,'$1$2');
+        const _sc=setcode.toLowerCase();
         baseCardImg=`https://www.pokemon-card.com/assets/images/card_images/large/${_sc}/${_n}.jpg`;
     }
     const cloveImgMap={};
@@ -881,24 +881,11 @@ clove: https://store.clove.jp/jp/buying/pokemon/results?title=${encodeURICompone
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
         p.holoLabel=holoLabel||'';
 
-        // 画像取得
+        // 画像取得: pokemon-card.com（日本公式）を直接URL設定
         let imgUrl=null;
         if(setcode&&number){
             const _n=number.split('/')[0].padStart(3,'0');
             imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${(setcodeNorm||setcode).toLowerCase()}/${_n}.jpg`;
-        }
-        if(!imgUrl){
-            try{
-                let apiUrl='https://api.pokemontcg.io/v2/cards?pageSize=8';
-                if(p.tcg_name)apiUrl+=`&q=name:"${encodeURIComponent(p.tcg_name)}"`;
-                else if(number)apiUrl+=`&q=number:${number.split('/')[0]}`;
-                const ir=await fetch(apiUrl);const id=await ir.json();
-                if(id.data&&id.data.length>0){
-                    let card=id.data[0];
-                    if(number){const n=number.split('/')[0].replace(/^0+/,'');const m=id.data.find(c=>c.number===n);if(m)card=m;}
-                    imgUrl=card.images?.large||card.images?.small||null;
-                }
-            }catch(e){}
         }
 
         callback(p,imgUrl);
