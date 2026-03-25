@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -25,77 +26,41 @@
         .btn-gold{background:var(--gold);color:#000;}
         .btn-dark{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
         .btn-sm{padding:9px 14px;font-size:13px;width:auto;display:inline-block;}
-
-        /* モード切替 */
         .mode-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
         .mode-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;}
         .mode-card.active{border-color:var(--red);background:#1e1015;}
         .mode-card-icon{font-size:30px;margin-bottom:6px;}
         .mode-card-title{font-size:14px;font-weight:700;}
         .mode-card-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;}
-
-        /* カメラ撮影エリア */
         .cam-area{position:relative;border-radius:12px;overflow:hidden;background:#000;margin-bottom:12px;}
         .cam-placeholder{height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:10px;cursor:pointer;border:2px dashed var(--border);border-radius:12px;}
         #preview{width:100%;display:none;border-radius:12px;}
-
-        /* 撮影ガイドオーバーレイ */
         .cam-guide{position:absolute;inset:0;pointer-events:none;}
         .guide-dim{position:absolute;inset:0;background:rgba(0,0,0,0.55);}
-        /* 左下1/3エリアをハイライト */
-        .guide-highlight{
-            position:absolute;
-            left:2%;bottom:2%;
-            width:45%;height:35%;
-            border:2px solid var(--gold);
-            border-radius:6px;
-            background:transparent;
-            box-shadow:0 0 0 9999px rgba(0,0,0,0.55);
-        }
-        .guide-label{
-            position:absolute;
-            left:2%;bottom:40%;
-            background:var(--gold);color:#000;
-            font-size:11px;font-weight:700;
-            padding:3px 8px;border-radius:6px;
-            white-space:nowrap;
-        }
-        .guide-arrow{
-            position:absolute;
-            left:22%;bottom:38%;
-            font-size:18px;
-        }
-
-        /* 認識中ステータス */
+        .guide-highlight{position:absolute;left:2%;bottom:2%;width:45%;height:35%;border:2px solid var(--gold);border-radius:6px;background:transparent;box-shadow:0 0 0 9999px rgba(0,0,0,0.55);}
+        .guide-label{position:absolute;left:2%;bottom:40%;background:var(--gold);color:#000;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;}
+        .guide-arrow{position:absolute;left:22%;bottom:38%;font-size:18px;}
         .ocr-status{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;display:none;}
         .ocr-number-display{font-family:'Oswald',sans-serif;font-size:32px;color:var(--gold);text-align:center;letter-spacing:3px;margin:8px 0;}
         .ocr-number-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:18px;font-family:'Oswald',sans-serif;text-align:center;letter-spacing:2px;margin-top:6px;}
         .ocr-number-input:focus{outline:none;border-color:var(--gold);}
         .ocr-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:4px;}
-
-        /* カード情報表示 */
         .card-found{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;display:none;}
         .card-found-inner{display:flex;gap:14px;align-items:flex-start;}
         .card-found-img{width:90px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);}
         .card-found-img-ph{width:90px;height:126px;border-radius:10px;flex-shrink:0;border:1px dashed var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px;}
         .card-found-info{flex:1;min-width:0;}
         .card-found-name{font-size:18px;font-weight:700;margin-bottom:6px;}
-
-        /* 価格グリッド */
         .price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0;}
         .price-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center;}
         .price-box-label{font-size:10px;color:var(--muted);margin-bottom:3px;}
         .price-box-val{font-family:'Oswald',sans-serif;font-size:15px;color:var(--gold);}
         .price-box-val.low{color:#aaa;}
-
-        /* 枚数コントロール */
         .qty-ctrl{display:flex;align-items:center;gap:10px;justify-content:center;margin:8px 0;}
         .qty-btn{width:34px;height:34px;border-radius:50%;border:none;font-size:19px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
         .qty-btn-minus{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
         .qty-btn-plus{background:var(--red);color:#fff;}
         .qty-num{font-family:'Oswald',sans-serif;font-size:26px;color:var(--text);min-width:36px;text-align:center;}
-
-        /* バッジ */
         .rarity-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;}
         .r-SAR{background:#6a0dad;color:#fff;}.r-SR{background:#1565c0;color:#fff;}.r-AR{background:#00695c;color:#fff;}
         .r-RRR{background:#e65100;color:#fff;}.r-RR{background:#c62828;color:#fff;}.r-R{background:#4a4a6a;color:#fff;}
@@ -105,16 +70,12 @@
         .t-lightning{background:#f9a825;color:#000;}.t-psychic{background:#6a1b9a;color:#fff;}.t-fighting{background:#bf360c;color:#fff;}
         .t-dark{background:#212121;color:#fff;}.t-metal{background:#546e7a;color:#fff;}.t-colorless{background:#555;color:#fff;}
         .t-dragon{background:#1565c0;color:#ffd600;}.t-fairy{background:#ad1457;color:#fff;}.t-unknown{background:#333;color:#aaa;}
-
-        /* 手動検索 */
         .form-group{margin-bottom:12px;}
         .form-label{font-size:13px;color:var(--muted);margin-bottom:6px;display:block;}
         .form-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:15px;font-family:inherit;}
         .form-input:focus{outline:none;border-color:var(--red);}
         .form-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;}
         .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-
-        /* コレクション */
         .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
         .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
         .stat-num{font-family:'Oswald',sans-serif;font-size:20px;color:var(--gold);}
@@ -147,19 +108,14 @@
         .fav-star{font-size:18px;cursor:pointer;}
         .bulk-bar{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
         .dup-notice{background:#1a2a1a;border:1px solid #2a5a2a;border-radius:10px;padding:10px 14px;font-size:13px;color:#6dbf6d;margin-bottom:10px;display:none;}
-
-        /* 設定 */
         .setting-label{font-size:13px;color:var(--muted);margin-bottom:6px;}
         .setting-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;margin-bottom:12px;}
         .setting-input:focus{outline:none;border-color:var(--red);}
-
-        /* モーダル */
         .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end;}
         .modal-overlay.open{display:flex;}
         .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;margin:auto;max-height:88vh;overflow-y:auto;}
         .modal h3{font-size:17px;font-weight:700;margin-bottom:16px;}
         .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-
         .loading-dot{display:inline-block;animation:blink 1.2s infinite;}
         .loading-dot:nth-child(2){animation-delay:.2s;}.loading-dot:nth-child(3){animation-delay:.4s;}
         @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
@@ -172,8 +128,6 @@
         .chart-bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
         .chart-bar-bg{background:var(--surface2);border-radius:4px;height:10px;overflow:hidden;}
         .chart-bar-fill{height:100%;border-radius:4px;background:var(--red);transition:width .5s;}
-
-        /* ステップ表示 */
         .step-indicator{display:flex;align-items:center;gap:6px;margin-bottom:14px;}
         .step{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:700;flex-shrink:0;}
         .step.done{background:var(--green);color:#fff;}
@@ -185,9 +139,8 @@
 </head>
 <body>
 
-<!-- ===== 査定タブ ===== -->
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v31</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v32</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -203,9 +156,7 @@
         </div>
     </div>
 
-    <!-- ===== 撮影スキャンモード ===== -->
     <div id="camera-mode">
-        <!-- 撮影エリア -->
         <div id="shoot-area" class="card-box">
             <div id="cam-guide-wrap" style="cursor:pointer;" onclick="document.getElementById('img').click()">
                 <div class="cam-placeholder" id="cam-ph">
@@ -217,14 +168,12 @@
             <input type="file" id="img" accept="image/*" capture="environment" style="display:none">
             <img id="preview" style="width:100%;border-radius:12px;display:none;margin-bottom:10px">
             <div id="preview-actions" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
-                <!-- OCR読み取り後に表示される編集フォーム -->
                 <div id="ocr-edit-form" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;">
                     <div style="font-size:12px;color:var(--muted);margin-bottom:10px">📝 読み取り結果（修正できます）</div>
                     <div class="form-group" style="margin-bottom:8px">
                         <label class="form-label">カード名</label>
                         <input class="form-input" id="ocr-name-input" placeholder="例：イーブイex">
                     </div>
-                    <!-- セットコード + 番号を1行で: [M2a] - [063] / [193] -->
                     <div style="margin-bottom:8px">
                         <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">左下の英数字（例:sv8a, M2a）</span></label>
                         <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a, sv7a" style="font-family:Oswald,sans-serif;letter-spacing:1px">
@@ -237,32 +186,24 @@
                             <input class="form-input" id="ocr-num-b" placeholder="193" style="text-align:center;font-family:Oswald,sans-serif;font-size:18px" maxlength="4" inputmode="numeric">
                         </div>
                     </div>
-                    <!-- レアリティは非表示（セットコード+番号で特定） -->
                     <select id="ocr-rarity-input" style="display:none"></select>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                         <div>
                             <label class="form-label">属性</label>
                             <select class="form-select" id="ocr-type-input" style="width:100%">
                                 <option value="">自動判定</option>
-                                <option value="fire">🔥 炎</option>
-                                <option value="water">💧 水</option>
-                                <option value="grass">🌿 草</option>
-                                <option value="lightning">⚡ 雷</option>
-                                <option value="psychic">🔮 超</option>
-                                <option value="fighting">👊 闘</option>
-                                <option value="dark">🌑 悪</option>
-                                <option value="metal">⚙️ 鋼</option>
-                                <option value="colorless">⬜ 無色</option>
-                                <option value="dragon">🐉 龍</option>
-                                <option value="fairy">🌸 妖精</option>
-                                <option value="goods">🎒 グッズ</option>
-                                <option value="supporter">🤝 サポート</option>
-                                <option value="unknown">❓ 不明</option>
+                                <option value="fire">🔥 炎</option><option value="water">💧 水</option>
+                                <option value="grass">🌿 草</option><option value="lightning">⚡ 雷</option>
+                                <option value="psychic">🔮 超</option><option value="fighting">👊 闘</option>
+                                <option value="dark">🌑 悪</option><option value="metal">⚙️ 鋼</option>
+                                <option value="colorless">⬜ 無色</option><option value="dragon">🐉 龍</option>
+                                <option value="fairy">🌸 妖精</option><option value="goods">🎒 グッズ</option>
+                                <option value="supporter">🤝 サポート</option><option value="unknown">❓ 不明</option>
                             </select>
                         </div>
                         <div>
                             <label class="form-label">レアリティ</label>
-                            <select class="form-select" id="ocr-rarity-input" style="width:100%">
+                            <select class="form-select" id="ocr-rarity-sel" style="width:100%">
                                 <option value="">不明</option>
                                 <option>MUR</option><option>MA</option><option>SAR</option><option>SR</option><option>AR</option>
                                 <option>RRR</option><option>RR</option><option>R</option>
@@ -294,13 +235,11 @@
             </button>
         </div>
 
-        <!-- バリアント選択モーダル -->
         <div id="variant-select" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
             <div style="font-size:14px;font-weight:700;margin-bottom:12px;">🎴 バリアントを選択してください</div>
             <div id="variant-list" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
 
-        <!-- カード情報・価格表示 -->
         <div class="card-found" id="card-found">
             <div class="card-found-inner">
                 <div id="card-img-wrap">
@@ -327,7 +266,6 @@
         </div>
     </div>
 
-    <!-- ===== 手動入力モード ===== -->
     <div id="manual-mode" style="display:none">
         <div class="card-box">
             <div class="form-group">
@@ -386,7 +324,6 @@
     </div>
 </div>
 
-<!-- ===== コレクション ===== -->
 <div id="screen-collection" class="screen">
     <div class="header"><h1>🗂 コレクション</h1></div>
     <div class="stats-row" id="stats-row"></div>
@@ -399,7 +336,8 @@
         <select id="sort-select">
             <option value="date">新着順</option><option value="price-desc">高額順</option>
             <option value="price-asc">安値順</option><option value="rarity">レア順</option>
-            <option value="name">名前順</option><option value="qty-desc">枚数多い順</option><option value="sell-desc">販売高額順</option><option value="buy-desc">買取高額順</option>
+            <option value="name">名前順</option><option value="qty-desc">枚数多い順</option>
+            <option value="sell-desc">販売高額順</option><option value="buy-desc">買取高額順</option>
         </select>
     </div>
     <div class="section-title">レアリティ</div>
@@ -409,13 +347,11 @@
     <div id="card-list"></div>
 </div>
 
-<!-- ===== 統計 ===== -->
 <div id="screen-stats" class="screen">
     <div class="header"><h1>📊 統計</h1></div>
     <div id="stats-content"></div>
 </div>
 
-<!-- ===== 設定 ===== -->
 <div id="screen-settings" class="screen">
     <div class="header"><h1>⚙️ 設定</h1></div>
     <div class="card-box">
@@ -438,7 +374,6 @@
     <button class="nav-btn" data-screen="settings"><span class="nav-icon">⚙️</span>設定</button>
 </nav>
 
-<!-- 編集モーダル -->
 <div class="modal-overlay" id="edit-modal">
     <div class="modal">
         <h3>✏️ カードを編集</h3>
@@ -477,7 +412,6 @@ const typeBadge=t=>`<span class="type-badge t-${t||'unknown'}">${TYPE_LABELS[t]|
 
 function showToast(msg,color='var(--green)'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-// ナビ
 document.querySelectorAll('.nav-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -490,7 +424,6 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     });
 });
 
-// モード
 function setMode(m){
     document.getElementById('mode-cam-btn').classList.toggle('active',m==='camera');
     document.getElementById('mode-manual-btn').classList.toggle('active',m==='manual');
@@ -498,21 +431,6 @@ function setMode(m){
     document.getElementById('manual-mode').style.display=m==='manual'?'block':'none';
 }
 
-// ステップ更新
-function setStep(n){
-    for(let i=1;i<=3;i++){
-        const s=document.getElementById('s'+i);
-        s.className='step '+(i<n?'done':i===n?'active':'waiting');
-    }
-    for(let i=1;i<=2;i++){
-        const l=document.getElementById('sl'+i);
-        l.className='step-line'+(i<n?' done':'');
-    }
-    const labels=['','① カード左下の番号（例：229/193）をアップで撮影してください','② 読み取った番号を確認・修正してください','③ カード情報と価格を確認して追加してください'];
-    document.getElementById('step-label').textContent=labels[n];
-}
-
-// ===== カメラ =====
 const imgInp=document.getElementById('img'),pre=document.getElementById('preview');
 let b64=null,scanResult=null,addQty=1,currentHoloType='';
 
@@ -535,13 +453,12 @@ imgInp.onchange=e=>{
         document.getElementById('cam-shoot-btn').style.display='none';
         document.getElementById('preview-actions').style.display='flex';
         document.getElementById('ocr-edit-form').style.display='none';
-    const _vs=document.getElementById('variant-select');if(_vs)_vs.style.display='none';
+        const _vs=document.getElementById('variant-select');if(_vs)_vs.style.display='none';
         document.getElementById('card-found').style.display='none';
         URL.revokeObjectURL(url);
     };img.src=url;
 };
 
-// 撮り直す
 document.getElementById('retake-btn').onclick=resetScan;
 document.getElementById('scan-again-btn').onclick=resetScan;
 function resetScan(){
@@ -557,13 +474,12 @@ function resetScan(){
     b64=null;scanResult=null;imgInp.value='';addQty=1;
     document.getElementById('qty-display').textContent='1';
     const nameEl=document.getElementById('ocr-name-input');
-    const numEl=null; // replaced by ocr-num-a/b
-    const rarEl=document.getElementById('ocr-rarity-input');
     if(nameEl)nameEl.value='';
     const _naEl=document.getElementById('ocr-num-a');
     const _nbEl=document.getElementById('ocr-num-b');
     if(_naEl)_naEl.value='';
     if(_nbEl)_nbEl.value='';
+    const rarEl=document.getElementById('ocr-rarity-sel');
     if(rarEl)rarEl.value='';
     const _typeEl=document.getElementById('ocr-type-input');if(_typeEl)_typeEl.value='';
     const _holoEl=document.getElementById('ocr-holo-input');if(_holoEl)_holoEl.value='';
@@ -572,7 +488,6 @@ function resetScan(){
     if(_scClear)_scClear.value='';
 }
 
-// Claude API共通
 async function callClaude(messages,maxTokens=512){
     const key=getKey();if(!key)throw new Error('APIキーが未設定です');
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -585,7 +500,6 @@ async function callClaude(messages,maxTokens=512){
     return data.content[0].text;
 }
 
-// 番号入力：前フィールドが埋まったら自動で次へ
 ['ocr-num-a','m-num-a'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.addEventListener('input',function(){
@@ -597,8 +511,6 @@ async function callClaude(messages,maxTokens=512){
     });
 });
 
-
-// キラ不明時：全ホロ種別を候補として表示（グローバルに引数を保持してonclickの/問題を回避）
 let _holoSelectParams={};
 
 async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
@@ -616,7 +528,6 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
     el.style.display='block';
     document.getElementById('card-found').style.display='none';
 
-    // カード風SVGをdata URIで生成（ホットリンク問題を回避）
     function makeCardSVG(label,bg1,bg2){
         const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72" viewBox="0 0 52 72">
             <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
@@ -629,8 +540,6 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
         </svg>`;
         return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
     }
-    const baseCardImg=makeCardSVG('🃏','#3a3a5a','#1a1a3a');
-    // ホロ種別ごとの専用SVG
     const holoCardImgs={
         '':makeCardSVG('🃏','#3a3a5a','#1a1a3a'),
         'mirror':makeCardSVG('✨','#8a7000','#4a3a00'),
@@ -639,40 +548,28 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
         'master_ball':makeCardSVG('🟣','#6a0a9a','#3a005a'),
         'tera_mirror':makeCardSVG('💎','#007a8a','#003a4a'),
     };
-    const cloveImgMap={};
 
-    // ホログラム選択リストを生成
-    var holoHtml = '<div style="font-size:12px;color:#7070a0;margin-bottom:10px">ホログラム種別を選んでください</div>';
+    var holoHtml='<div style="font-size:12px;color:#7070a0;margin-bottom:10px">ホログラム種別を選んでください</div>';
     for(var _i=0;_i<HOLO_OPTIONS.length;_i++){
-        var _h = HOLO_OPTIONS[_i];
-        var _img = cloveImgMap[_h.value] || holoCardImgs[_h.value] || baseCardImg || '';
-        var _overlayColors = {'mirror':'rgba(255,215,0,0.35)','ball_mirror':'rgba(180,220,255,0.35)','energy_mirror':'rgba(255,180,0,0.35)','master_ball':'rgba(180,0,255,0.35)','tera_mirror':'rgba(0,220,255,0.35)'};
-        var _oc = _overlayColors[_h.value] || 'transparent';
-        var _row = '<div class="holo-opt" data-idx="' + _i + '" data-img="' + _img + '" style="display:flex;align-items:center;gap:10px;background:#1c1c2e;border:1px solid #2a2a40;border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px">';
-        if(_img){
-            _row += '<div style="position:relative;flex-shrink:0;width:52px;height:72px">';
-            _row += '<img class="holo-img" src="' + _img + '" style="width:52px;height:72px;object-fit:cover;border-radius:6px;display:block">';
-            if(_h.value){
-                _row += '<div style="position:absolute;inset:0;border-radius:6px;background:' + _oc + ';pointer-events:none"></div>';
-                _row += '<div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,1)">' + _h.emoji + '</div>';
-            }
-            _row += '</div>';
-        } else {
-            _row += '<span style="font-size:28px;flex-shrink:0">' + _h.emoji + '</span>';
-        }
-        _row += '<div style="flex:1"><div style="font-size:14px;font-weight:700">' + _h.label + '</div><div style="font-size:11px;color:#7070a0">' + _h.desc + '</div></div>';
-        _row += '<span style="color:#7070a0;font-size:18px">›</span></div>';
-        holoHtml += _row;
+        var _h=HOLO_OPTIONS[_i];
+        var _img=holoCardImgs[_h.value]||holoCardImgs[''];
+        var _overlayColors={'mirror':'rgba(255,215,0,0.35)','ball_mirror':'rgba(180,220,255,0.35)','energy_mirror':'rgba(255,180,0,0.35)','master_ball':'rgba(180,0,255,0.35)','tera_mirror':'rgba(0,220,255,0.35)'};
+        var _oc=_overlayColors[_h.value]||'transparent';
+        var _row='<div class="holo-opt" data-idx="'+_i+'" style="display:flex;align-items:center;gap:10px;background:#1c1c2e;border:1px solid #2a2a40;border-radius:12px;padding:10px;cursor:pointer;margin-bottom:6px">';
+        _row+='<div style="position:relative;flex-shrink:0;width:52px;height:72px">';
+        _row+='<img src="'+_img+'" style="width:52px;height:72px;object-fit:cover;border-radius:6px;display:block">';
+        if(_h.value)_row+='<div style="position:absolute;inset:0;border-radius:6px;background:'+_oc+';pointer-events:none"></div><div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:12px">'+_h.emoji+'</div>';
+        _row+='</div>';
+        _row+='<div style="flex:1"><div style="font-size:14px;font-weight:700">'+_h.label+'</div><div style="font-size:11px;color:#7070a0">'+_h.desc+'</div></div>';
+        _row+='<span style="color:#7070a0;font-size:18px">›</span></div>';
+        holoHtml+=_row;
     }
-    list.innerHTML = holoHtml;
+    list.innerHTML=holoHtml;
     list.querySelectorAll('.holo-opt').forEach(function(el){
         el.addEventListener('click',function(){selectHoloVariantByIndex(parseInt(this.dataset.idx));});
         el.addEventListener('mouseenter',function(){this.style.borderColor='#e63946';});
         el.addEventListener('mouseleave',function(){this.style.borderColor='#2a2a40';});
-        var img=el.querySelector('.holo-img');
-        if(img)img.addEventListener('error',function(){this.style.display='none';});
     });
-
     window._holoOptions=HOLO_OPTIONS;
 }
 
@@ -683,13 +580,11 @@ window.selectHoloVariantByIndex=async function(i){
     currentHoloType=h.value;
     const holoEl=document.getElementById('ocr-holo-input');
     if(holoEl)holoEl.value=h.value;
-    await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl,variants)=>{
-        if(variants&&variants.length>1){showVariantSelect(variants,result);}
-        else if(result){showCardFound(result,imgUrl);}
+    await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl)=>{
+        if(result)showCardFound(result,imgUrl);
     },typeHint,h.value);
 };
 
-// バリアント選択表示
 function showVariantSelect(variants,cardData){
     const el=document.getElementById('variant-select');
     const list=document.getElementById('variant-list');
@@ -710,13 +605,11 @@ function showVariantSelect(variants,cardData){
 window.selectVariant=function(i){
     const {variants,cardData}=window._variantData;
     const v=variants[i];
-    // バリアント名をカード名に反映
     const merged={...cardData,name:v.name,thumb:v.img||null};
     document.getElementById('variant-select').style.display='none';
     showCardFound(merged,v.img||null);
 };
 
-// 撮影→OCR読み取り（名前・番号・レアリティを一度に）
 document.getElementById('go-btn').onclick=async()=>{
     if(!b64){showToast('先に撮影してください','var(--red)');return;}
     const key=getKey();if(!key){showToast('APIキーを設定してください','var(--red)');return;}
@@ -727,35 +620,18 @@ document.getElementById('go-btn').onclick=async()=>{
             {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
             {type:'text',text:`このポケモンカードから以下の情報を読み取ってください。
 JSON形式のみで返してください:
-{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"MUR/MA/SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字（MAはメガアート、MURはメガウルトラレア）","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分、不明なら空文字）","type":"下記の属性コードのいずれか（ポケモンカードでなくトレーナーズカードの場合はgoods/supporterを使う）"}
+{"name":"カード名（例:イーブイex）","number":"カード番号（例:223/187）","rarity":"MUR/MA/SAR/SR/AR/RRR/RR/R/U/C/無印のいずれか、不明なら空文字","setcode":"左下に印刷されたセットコード（例:sv8a, M2a, sv7a など英数字の部分）","type":"属性コード"}
 
-【属性記号の対応表 - カード右上HPの右隣にある記号】
-炎(fire): 🔥 赤いほのおマーク
-水(water): 💧 青い水滴マーク
-草(grass): 🌿 緑の葉っぱマーク
-雷(lightning): ⚡ 黄色い稲妻マーク
-超(psychic): 🔮 ピンク/紫の星型マーク
-闘(fighting): 👊 オレンジの拳マーク
-悪(dark): 🌑 黒/紫の月型マーク
-鋼(metal): ⚙️ 銀色の星型マーク
-無色(colorless): ⭐ 白/無色の星マーク
-ドラゴン(dragon): 🐉 青と赤の複合マーク
-フェアリー(fairy): 🌸 ピンクのハートマーク
-グッズ(goods): 「グッズ」と書かれたトレーナーズカード（道具・アイテム系）
-サポート(supporter): 「サポート」と書かれたトレーナーズカード（人物系）
-トレーナーズその他(unknown): その他のトレーナーズカード
-
-typeはfire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/unknownのいずれか。
+属性: fire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/fairy/goods/supporter/unknown
 カード名は左上、カード番号は左下の数字/数字、セットコードは番号の左の英数字。`}
-        ]}]);
+        ]}],400);
         let ocr={name:'',number:'',rarity:''};
         try{
-            let s=raw.replace(/\`\`\`json|\`\`\`/g,'').trim();
+            let s=raw.replace(/```json|```/g,'').trim();
             const a=s.indexOf('{'),b=s.lastIndexOf('}');
             if(a>=0&&b>a)s=s.slice(a,b+1);
             ocr=JSON.parse(s);
         }catch(e){
-            // JSON失敗時は番号だけ正規表現で抽出
             const m=raw.match(/\d{1,4}\/\d{1,4}/);
             if(m)ocr.number=m[0];
         }
@@ -767,9 +643,9 @@ typeはfire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/f
         const _parts=(ocr.number||'').split('/');
         document.getElementById('ocr-num-a').value=_parts[0]||'';
         document.getElementById('ocr-num-b').value=_parts[1]||'';
-        const rarityEl=document.getElementById('ocr-rarity-input');
+        const rarityEl=document.getElementById('ocr-rarity-sel');
         const rarityVal=ocr.rarity||'';
-        for(let opt of rarityEl.options){if(opt.value===rarityVal||opt.text===rarityVal){rarityEl.value=opt.value;break;}}
+        if(rarityEl){for(let opt of rarityEl.options){if(opt.value===rarityVal||opt.text===rarityVal){rarityEl.value=opt.value;break;}}}
         document.getElementById('ocr-edit-form').style.display='block';
         showToast('✅ 読み取り完了！確認して検索してください');
     }catch(e){
@@ -779,13 +655,12 @@ typeはfire/water/grass/lightning/psychic/fighting/dark/metal/colorless/dragon/f
     document.getElementById('go-btn').disabled=false;
 };
 
-// STEP2: 番号でカード特定
 document.getElementById('search-by-number-btn').onclick=async()=>{
     const _na=document.getElementById('ocr-num-a').value.trim();
     const _nb=document.getElementById('ocr-num-b').value.trim();
     const num=(_na&&_nb)?`${_na}/${_nb}`:(_na||_nb||'');
     const name=document.getElementById('ocr-name-input')?.value.trim()||'';
-    const rarity=document.getElementById('ocr-rarity-input')?.value||'';
+    const rarity=document.getElementById('ocr-rarity-sel')?.value||'';
     const typeHint=document.getElementById('ocr-type-input')?.value||'';
     currentHoloType=document.getElementById('ocr-holo-input')?.value||'';
     const holoType=currentHoloType;
@@ -795,15 +670,10 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     document.getElementById('search-by-number-btn').disabled=true;
     try{
         if(holoType==='unknown_holo'){
-            // キラ不明→全ホロ種別の候補を表示
             showHoloVariantSelect(num,name,rarity,setcode,typeHint);
         } else {
-            await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl,variants)=>{
-                if(variants&&variants.length>1){
-                    showVariantSelect(variants,result);
-                } else if(result){
-                    showCardFound(result,imgUrl);
-                }
+            await lookupAndDisplay(num,name,rarity,setcode,(result,imgUrl)=>{
+                if(result)showCardFound(result,imgUrl);
             },typeHint,holoType);
         }
     }catch(e){
@@ -814,7 +684,7 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     }
 };
 
-// カード検索（番号 or 名前）
+// ===== カード検索メイン =====
 async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,holoType){
     try{
         const key=getKey();if(!key)throw new Error('APIキーが未設定です');
@@ -824,26 +694,30 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,hol
         const holoLabel=holoType?HOLO_LABELS_L[holoType]||holoType:'';
         const cardQuery=[name||'',fullId||'',rarity||'',holoLabel].filter(Boolean).join(' ');
 
-        const messages=[{role:'user',content:`次のポケモンカードを検索して買取・販売価格と画像URLを調べてください。
+        const jsonSchema=`{"name":"カード名","card_number":"${fullId||number||''}","rarity":"${rarity||''}","type":"${typeHint||'unknown'}","set":"セット名","price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値,"note":"買取情報の説明","best_site":"参照サイト","image_url":"カード画像のURL（見つかれば）"}`;
+
+        const messages=[{role:'user',content:`次のポケモンカードを検索して買取・販売価格を調べてください。
 
 カード: ${cardQuery}
 
-以下の順で検索してください:
-1. https://premium.gamepedia.jp/pokeca/card/${encodeURIComponent(name||cardQuery)} → 買取・販売価格
-2. https://pokecazilla.com を「${cardQuery}」で検索 → 価格とカード画像URL
+1. premium.gamepedia.jp で「${name||cardQuery} 買取」を検索
+2. pokecazilla.com で「${cardQuery}」を検索
 
-【必須】JSON形式のみで返してください（前後に文章不要）:
-{"name":"カード名","card_number":"${fullId||number||''}","rarity":"${rarity||''}","type":"${typeHint||'unknown'}","set":"セット名","price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値,"note":"最高買取サイトと価格","tcg_name":"english name","best_site":"サイト名","image_url":"pokecazillaまたはgamepediaのカード画像の直接URL（https://で始まる画像URL、見つからなければ空文字）"}`}];
+JSONのみで回答（前後の文章不要）:
+${jsonSchema}`}];
 
+        let p=null;
         let finalText='';
-        for(let _loop=0;_loop<6;_loop++){
+
+        // web_searchループ
+        for(let _loop=0;_loop<8;_loop++){
             const resp=await fetch('https://api.anthropic.com/v1/messages',{
                 method:'POST',
                 headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
                 body:JSON.stringify({
                     model:'claude-haiku-4-5-20251001',
-                    max_tokens:800,
-                    system:'あなたはポケモンカード価格調査AI。web_searchで指定URLを検索して価格を取得し、JSONのみを返す。JSONの前後に文章を書かない。必ずJSON一行のみ。レアリティ: MUR>MA>SAR>SR>AR>RRR>RR>R>U>C。MAはMEGAドリームexのメガアートカード(¥300-500)、MURはメガウルトラレア(¥50000-)。',
+                    max_tokens:900,
+                    system:'ポケモンカード価格専門家。web_searchで実際の価格を検索してJSONのみで回答。前後の文章不要。価格は0にしない。',
                     tools:[{type:'web_search_20250305',name:'web_search'}],
                     messages
                 })
@@ -853,34 +727,51 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,hol
                 if(data.error.type==='rate_limit_error')throw new Error('レート制限中。少し待ってから再試行してください');
                 throw new Error(data.error.message);
             }
-            messages.push({role:'assistant',content:data.content});
             const textBlocks=data.content.filter(b=>b.type==='text');
             if(textBlocks.length>0)finalText=textBlocks[textBlocks.length-1].text;
             if(data.stop_reason==='end_turn')break;
             if(data.stop_reason==='tool_use'){
+                messages.push({role:'assistant',content:data.content});
                 const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({
                     type:'tool_result',tool_use_id:b.id,
-                    content:'検索結果を受け取りました。JSONのみで価格を返してください。'
+                    content:[{type:'text',text:'検索完了。結果を元にJSONのみで回答してください。'}]
                 }));
                 if(tr.length>0)messages.push({role:'user',content:tr});
             }
         }
 
-        if(!finalText)throw new Error('応答を取得できませんでした');
-        // JSON抽出（あらゆるパターンに対応）
-        let p=null;
-        const text=finalText.replace(/```json|```/g,'').trim();
-        // { } を探して全パターン試す
-        let searchFrom=0;
-        while(searchFrom<text.length&&!p){
-            const a=text.indexOf('{',searchFrom);
-            if(a<0)break;
-            const b=text.lastIndexOf('}');
-            if(b<=a)break;
-            try{p=JSON.parse(text.slice(a,b+1));}catch(e){searchFrom=a+1;}
+        // JSON抽出
+        if(finalText){
+            let s=finalText.replace(/```json|```/g,'').trim();
+            let sf=0;
+            while(sf<s.length&&!p){
+                const a=s.indexOf('{',sf);if(a<0)break;
+                const b=s.lastIndexOf('}');if(b<=a)break;
+                try{p=JSON.parse(s.slice(a,b+1));}catch(e){sf=a+1;}
+            }
         }
-        if(!p){
-            // フォールバック: Claude知識で価格生成
+
+        // ★FIX: prices=0ならClaude知識で補完（web_search不使用）
+        if(!p || ((p.price_nm_min||0)+(p.price_nm_max||0)===0)){
+            try{
+                const _kRaw=await callClaude([{role:'user',content:`ポケモンカード「${name||cardQuery}」(レアリティ:${rarity||'不明'}, 番号:${fullId||number||'不明'}, ${holoLabel||'通常版'})の日本市場（カードラッシュ・トレトク・遊々亭・駿河屋）での2024〜2025年買取・販売相場を教えてください。\nJSONのみで回答（前後文章不要）:\n${jsonSchema}`}],700);
+                let _ks=_kRaw.replace(/```json|```/g,'').trim();
+                const _ka=_ks.indexOf('{'),_kb=_ks.lastIndexOf('}');
+                if(_ka>=0&&_kb>_ka){
+                    try{
+                        const _kp=JSON.parse(_ks.slice(_ka,_kb+1));
+                        if((_kp.price_nm_min||0)+(_kp.price_nm_max||0)>0){
+                            if(!p)p={name:name||cardQuery,card_number:fullId||number||'',rarity:rarity||'',type:typeHint||'unknown',set:'不明',image_url:'',tcg_name:''};
+                            Object.assign(p,_kp);
+                            if(!p.note)p.note='Claude推定価格（カードラッシュ・トレトク等参考）';
+                        }
+                    }catch(_pe){}
+                }
+            }catch(_ke){}
+        }
+
+        // 最終フォールバック
+        if(!p || ((p.price_nm_min||0)+(p.price_nm_max||0)===0)){
             const FLOOR={MUR:50000,MA:300,SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
             const fl=FLOOR[rarity||'']||10;
             p={name:name||cardQuery,card_number:fullId||number||'',rarity:rarity||'',type:typeHint||'unknown',set:'不明',
@@ -888,29 +779,20 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,hol
                price_lp_min:Math.round(fl*0.5),price_lp_max:Math.round(fl*0.9),
                price_mp_min:Math.round(fl*0.3),price_mp_max:Math.round(fl*0.6),
                sell_nm_min:0,sell_nm_max:0,sell_lp_min:0,sell_lp_max:0,
-               note:'価格取得失敗 - レアリティ推定価格',tcg_name:'',best_site:''};
+               note:'推定価格（検索失敗）',tcg_name:'',best_site:''};
         }
 
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max','sell_nm_min','sell_nm_max','sell_lp_min','sell_lp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k])||p[k]<0)p[k]=0;
         });
-        if(p.price_nm_min===0&&p.price_nm_max===0){
-            const FLOOR={MUR:50000,MA:300,SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
-            const fl=FLOOR[p.rarity||rarity||'']||10;
-            p.price_nm_min=Math.round(fl*0.8);p.price_nm_max=Math.round(fl*1.2);
-            p.price_lp_min=Math.round(fl*0.5);p.price_lp_max=Math.round(fl*0.9);
-            p.price_mp_min=Math.round(fl*0.3);p.price_mp_max=Math.round(fl*0.6);
-        }
         if(!p.card_number)p.card_number=fullId||number||'';
         if(!p.name)p.name=name||cardQuery;
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
         p.holoLabel=holoLabel||'';
 
-        // 画像: 1)APIから取得したimage_url 2)pokemon-card.com
+        // 画像URL
         let imgUrl=null;
-        if(p.image_url&&p.image_url.startsWith('http')){
-            imgUrl=p.image_url;
-        }
+        if(p.image_url&&p.image_url.startsWith('http'))imgUrl=p.image_url;
         if(!imgUrl&&setcode&&number){
             const _n=number.split('/')[0].padStart(3,'0');
             imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${(setcodeNorm||setcode).toLowerCase()}/${_n}.jpg`;
@@ -923,6 +805,16 @@ async function lookupAndDisplay(number,name,rarity,setcode,callback,typeHint,hol
     }
 }
 
+// ★FIX: SVGサムネイル生成（画像取得失敗時のフォールバック）
+function makeCardThumbSVG(name,rarity){
+    const bg1={SAR:'#6a0dad',SR:'#1565c0',AR:'#00695c',RRR:'#e65100',RR:'#c62828',R:'#4a4a6a',U:'#2a2a3a',C:'#1a1a2a'}[rarity]||'#2a2a4a';
+    const bg2={SAR:'#3a005a',SR:'#003080',AR:'#003020',RRR:'#804000',RR:'#800000',R:'#1a1a3a',U:'#111',C:'#0a0a1a'}[rarity]||'#13131e';
+    const rLabel=rarity?`<text x="26" y="56" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="8" font-family="sans-serif">${rarity}</text>`:'';
+    const ns=name?((name.length>7?name.slice(0,6)+'…':name)):'?';
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/></linearGradient></defs><rect width="52" height="72" rx="5" fill="url(#cg)"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.8"/><text x="26" y="38" text-anchor="middle" fill="white" font-size="9" font-family="sans-serif">${ns}</text>${rLabel}</svg>`;
+    return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
+}
+
 function priceGridHTML(p){
     const nm=Math.round(((p.price_nm_min||0)+(p.price_nm_max||0))/2);
     const lp=Math.round(((p.price_lp_min||0)+(p.price_lp_max||0))/2);
@@ -933,7 +825,8 @@ function priceGridHTML(p){
     const lp_min=p.price_lp_min||lp;const lp_max=p.price_lp_max||lp;
     const mp_min=p.price_mp_min||mp;const mp_max=p.price_mp_max||mp;
     const isWebDate=p.price_date&&p.price_date!=='2025年8月';
-    const dateLabel=p.price_date?`<div style="text-align:right;font-size:10px;color:${isWebDate?'var(--green)':'var(--muted)'};margin-bottom:4px">${isWebDate?'🌐 Web':'📚 Claude知識'} 価格参照日: ${p.price_date}</div>`:'';
+    const isClaude=p.note&&(p.note.includes('Claude推定')||p.note.includes('検索失敗'));
+    const dateLabel=p.price_date?`<div style="text-align:right;font-size:10px;color:${isClaude?'var(--muted)':isWebDate?'var(--green)':'var(--muted)'};margin-bottom:4px">${isClaude?'🤖 Claude推定':isWebDate?'🌐 Web':'📚 Claude知識'} 価格参照日: ${p.price_date}</div>`:'';
     const sellSection=snm>0?`
         <div style="margin-top:8px">
             <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">💰 販売相場</div>
@@ -959,15 +852,24 @@ function showCardFound(p,imgUrl){
     scanResult.price_nm=nm||0;scanResult.price_lp=lp||0;scanResult.price_mp=mp||0;scanResult.snm=snm||0;scanResult.slp=slp||0;
     const _ci=document.getElementById('card-img');
     const _ph=document.getElementById('card-img-ph');
-    if(imgUrl){
-        scanResult.thumb=imgUrl;
-        _ci.onerror=()=>{_ci.style.display='none';_ph.style.display='flex';_ph.textContent='🃏';};
-        _ci.onload=()=>{scanResult.thumb=imgUrl;}; // onloadでthumbを確定
-        _ci.src=imgUrl;_ci.style.display='block';_ph.style.display='none';
-    } else {
-        _ci.style.display='none';_ph.style.display='flex';_ph.textContent='🃏';
-        scanResult.thumb=null;
-    }
+
+    // ★FIX: 画像エラー時はSVGフォールバック使用
+    const _applyImg=(src)=>{
+        if(!src){const _sv=makeCardThumbSVG(p.name,p.rarity);scanResult.thumb=_sv;_ci.src=_sv;_ci.style.display='block';_ph.style.display='none';return;}
+        scanResult.thumb=src;
+        _ci.onerror=()=>{
+            const _sv=makeCardThumbSVG(p.name,p.rarity);
+            scanResult.thumb=_sv;
+            _ci.onerror=null;
+            _ci.src=_sv;
+        };
+        _ci.onload=()=>{scanResult.thumb=_ci.src;};
+        _ci.src=src;
+        _ci.style.display='block';
+        _ph.style.display='none';
+    };
+    _applyImg(imgUrl);
+
     document.getElementById('card-found-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
     document.getElementById('card-found-name').textContent=p.name;
     document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}${p.holoLabel&&p.holoLabel!=='通常版'?' ✨'+p.holoLabel:''}`;
@@ -983,11 +885,9 @@ function showCardFound(p,imgUrl){
 document.getElementById('save-card-btn').onclick=()=>{
     if(!scanResult){showToast('カードデータがありません。再度検索してください','var(--red)');return;}
     try{
-        // 画像を確実にscanResultに保存
         const _si=document.getElementById('card-img');
-        if(_si&&_si.src&&_si.src.startsWith('http'))scanResult.thumb=_si.src;
+        if(_si&&_si.src&&(_si.src.startsWith('http')||_si.src.startsWith('data:')))scanResult.thumb=_si.src;
         scanResult.holo=currentHoloType||'';
-        // price_nmが未設定の場合の保護
         if(typeof scanResult.price_nm!=='number')scanResult.price_nm=0;
         if(typeof scanResult.price_lp!=='number')scanResult.price_lp=0;
         if(typeof scanResult.price_mp!=='number')scanResult.price_mp=0;
@@ -1001,10 +901,9 @@ document.getElementById('save-card-btn').onclick=()=>{
 function addToCollection(p,qty){
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     if(dup){dup.qty=(dup.qty||1)+qty;dup.price_nm=p.price_nm||0;dup.price_lp=p.price_lp||0;dup.price_mp=p.price_mp||0;dup.sell_nm=p.snm||p.sell_nm||0;dup.sell_lp=p.slp||p.sell_lp||0;if(p.price_date)dup.price_date=p.price_date;dup.date=new Date().toLocaleDateString('ja-JP');if(p.thumb&&!dup.thumb)dup.thumb=p.thumb;if(p.holo)dup.holo=p.holo;saveCards(cards);showToast(`✅ ${dup.name} → ${dup.qty}枚になりました`);}
-    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',holo:p.holo||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,sell_nm:p.snm||p.sell_nm||0,sell_lp:p.slp||p.sell_lp||0,price_date:p.price_date||'2025年8月',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
+    else{cards.unshift({id:Date.now(),name:p.name,rarity:p.rarity||'OTHER',type:p.type||'unknown',card_number:p.card_number||'',holo:p.holo||'',price_nm:p.price_nm,price_lp:p.price_lp,price_mp:p.price_mp,sell_nm:p.snm||p.sell_nm||0,sell_lp:p.slp||p.sell_lp||0,price_date:p.price_date||'',set:p.set||'',note:p.note||'',thumb:p.thumb||null,fav:false,qty:qty,date:new Date().toLocaleDateString('ja-JP')});saveCards(cards);showToast(`✅ ${p.name} を${qty}枚追加しました！`);}
 }
 
-// ===== 手動モード =====
 let manualResult=null,manualQty=1;
 document.getElementById('m-qty-minus').onclick=()=>{if(manualQty>1){manualQty--;document.getElementById('m-qty-display').textContent=manualQty;}};
 document.getElementById('m-qty-plus').onclick=()=>{manualQty++;document.getElementById('m-qty-display').textContent=manualQty;};
@@ -1024,16 +923,18 @@ document.getElementById('manual-search-btn').onclick=async()=>{
         if(!p){document.getElementById('manual-search-btn').textContent='🔍 査定・画像検索';document.getElementById('manual-search-btn').disabled=false;return;}
         manualResult={...p};
         const {html,nm,lp,mp,snm,slp,dateLabel}=priceGridHTML(p);
-        manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;manualResult.snm=snm;manualResult.slp=slp;manualResult.thumb=imgUrl;
+        manualResult.price_nm=nm;manualResult.price_lp=lp;manualResult.price_mp=mp;manualResult.snm=snm;manualResult.slp=slp;
+        const mi=document.getElementById('m-img');
+        const mph=document.getElementById('m-img-ph');
         if(imgUrl){
-            const mi=document.getElementById('m-img');
-            const mph=document.getElementById('m-img-ph');
-            mi.onerror=()=>{mi.style.display='none';mph.style.display='flex';mph.textContent='🃏';};
+            manualResult.thumb=imgUrl;
+            mi.onerror=()=>{const _sv=makeCardThumbSVG(p.name,p.rarity);manualResult.thumb=_sv;mi.onerror=null;mi.src=_sv;mi.style.display='block';mph.style.display='none';};
+            mi.onload=()=>{manualResult.thumb=mi.src;};
             mi.src=imgUrl;mi.style.display='block';mph.style.display='none';
         } else {
-            document.getElementById('m-img').style.display='none';
-            document.getElementById('m-img-ph').style.display='flex';
-            document.getElementById('m-img-ph').textContent='🃏';
+            const _sv=makeCardThumbSVG(p.name,p.rarity);
+            manualResult.thumb=_sv;
+            mi.src=_sv;mi.style.display='block';mph.style.display='none';
         }
         document.getElementById('m-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
         document.getElementById('m-name-result').textContent=p.name;
@@ -1060,7 +961,6 @@ document.getElementById('manual-save-btn').onclick=()=>{
     }catch(e){showToast('追加エラー: '+e.message,'var(--red)');}
 };
 
-// ===== コレクション =====
 let activeRarity='ALL',activeType='ALL',searchQ='',sortMode='date';
 document.getElementById('search-input').addEventListener('input',e=>{searchQ=e.target.value;renderCollection();});
 document.getElementById('sort-select').addEventListener('change',e=>{sortMode=e.target.value;renderCollection();});
@@ -1069,7 +969,6 @@ function renderCollectionStats(all){
     const totalCards=all.reduce((s,c)=>s+(c.qty||1),0);
     const totalNm=all.reduce((s,c)=>s+c.price_nm*(c.qty||1),0);
     const totalSell=all.reduce((s,c)=>s+(c.sell_nm||0)*(c.qty||1),0);
-    const fav=all.filter(c=>c.fav).length;
     document.getElementById('stats-row').innerHTML=`
         <div class="stat-box"><div class="stat-num">${totalCards}</div><div class="stat-label">総枚数</div></div>
         <div class="stat-box"><div class="stat-num" style="font-size:16px">🏷️¥${totalNm>=10000?(totalNm/10000).toFixed(1)+'万':totalNm.toLocaleString()}</div><div class="stat-label">買取合計</div></div>
@@ -1097,14 +996,18 @@ function getFiltered(){
     }
     return cards;
 }
+
 function renderCollection(){
     const all=getCards();renderCollectionStats(all);renderFilters(all);
     const cards=getFiltered(),list=document.getElementById('card-list');
     if(!cards.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">🃏</div>${all.length?'条件に合うカードなし':'まだカードがありません'}</div>`;return;}
-    list.innerHTML=cards.map(c=>`
+    // ★FIX: コレクション画像 - SVGフォールバック使用
+    list.innerHTML=cards.map(c=>{
+        const thumbSrc=c.thumb||makeCardThumbSVG(c.name,c.rarity);
+        const isData=thumbSrc.startsWith('data:');
+        return `
         <div class="card-item">
-            <img class="card-thumb" src="${c.thumb||''}" style="${c.thumb?'':'display:none'}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" onload="this.style.display='block';this.nextElementSibling.style.display='none'">
-            <div class="card-no-thumb" style="${c.thumb?'display:none':''}">🃏</div>
+            <img class="card-thumb" src="${thumbSrc}" ${isData?'':'onerror="this.onerror=null;this.src=makeCardThumbSVG(\''+c.name.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+c.rarity+'\')"'} style="display:block">
             <div class="card-info">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
                     <div class="card-name" style="flex:1">${c.name}</div>
@@ -1131,8 +1034,10 @@ function renderCollection(){
                     </div>
                 </div>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
+
 window.setRarity=r=>{activeRarity=r;renderCollection();};
 window.setType=t=>{activeType=t;renderCollection();};
 window.toggleFav=id=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(c){c.fav=!c.fav;saveCards(cards);renderCollection();}};
@@ -1141,16 +1046,16 @@ window.changeQty=(id,d)=>{const cards=getCards(),c=cards.find(x=>x.id===id);if(!
 
 async function callUpdateAPI(name,rarity){
     const key=getKey();if(!key)throw new Error('APIキーが未設定です');
-    const messages=[{role:'user',content:`「${name}」(${rarity})の最新買取・販売価格をpremium.gamepedia.jp/pokeca/card/${encodeURIComponent(name)} とpokecazilla.comで調べてください。
+    const messages=[{role:'user',content:`「${name}」(${rarity})の最新買取・販売価格をpremium.gamepedia.jp とpokecazilla.comで調べてください。
 JSONのみで返答:{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値,"note":"最高価格サイト","rarity":"${rarity}"}`}];
     let finalText='';
-    for(let i=0;i<5;i++){
+    for(let i=0;i<6;i++){
         const resp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
             body:JSON.stringify({
-                model:'claude-haiku-4-5-20251001',max_tokens:500,
-                system:'ポケモンカード価格調査専門家。指定サイトを検索して最新価格を取得。JSONのみ回答。価格は0を使わない。',
+                model:'claude-haiku-4-5-20251001',max_tokens:600,
+                system:'ポケモンカード価格専門家。指定サイトを検索して最新価格を取得。JSONのみ回答。価格は0にしない。',
                 tools:[{type:'web_search_20250305',name:'web_search'}],
                 messages
             })
@@ -1162,15 +1067,25 @@ JSONのみで返答:{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":
         if(tb.length>0)finalText=tb[tb.length-1].text;
         if(data.stop_reason==='end_turn')break;
         if(data.stop_reason==='tool_use'){
-            const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'検索完了'}));
+            const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:[{type:'text',text:'検索完了'}]}));
             if(tr.length>0)messages.push({role:'user',content:tr});
         }
     }
     let s=finalText.replace(/```json|```/g,'').trim();
     const a=s.indexOf('{'),b=s.lastIndexOf('}');
     if(a>=0&&b>a)s=s.slice(a,b+1);
-    const _wr=JSON.parse(s);
-    // 0円フロア適用
+    let _wr;
+    try{_wr=JSON.parse(s);}catch(_pe){_wr={};}
+    // ★FIX: 価格0ならClaude知識で補完
+    if((_wr.price_nm_min||0)+(_wr.price_nm_max||0)===0){
+        try{
+            const _kRaw2=await callClaude([{role:'user',content:`ポケモンカード「${name}」(${rarity})の日本市場（カードラッシュ・トレトク・遊々亭）2024〜2025年買取・販売相場をJSONのみで:\n{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値}`}],600);
+            let _ks2=_kRaw2.replace(/```json|```/g,'').trim();
+            const _ka2=_ks2.indexOf('{'),_kb2=_ks2.lastIndexOf('}');
+            if(_ka2>=0&&_kb2>_ka2){try{const _kp2=JSON.parse(_ks2.slice(_ka2,_kb2+1));if((_kp2.price_nm_min||0)>0)Object.assign(_wr,_kp2);}catch(_pe2){}}
+        }catch(_ke2){}
+    }
+    // フォールバック
     if((_wr.price_nm_min||0)+(_wr.price_nm_max||0)===0){
         const _F={MUR:50000,MA:300,SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
         const _fl=_F[rarity||'']||10;
@@ -1182,6 +1097,7 @@ JSONのみで返答:{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":
     if(_hasPrice){const _wn=new Date();_wr.price_date=`${_wn.getMonth()+1}月${_wn.getDate()}日`;}
     return _wr;
 }
+
 window.updateSingle=async id=>{
     const cards=getCards(),card=cards.find(c=>c.id===id);if(!card)return;
     showToast('更新中...');
@@ -1189,16 +1105,12 @@ window.updateSingle=async id=>{
         var _nm=Math.round((p.price_nm_min+p.price_nm_max)/2);
         var _lp=Math.round((p.price_lp_min+p.price_lp_max)/2);
         var _mp=Math.round((p.price_mp_min+p.price_mp_max)/2);
-        // 0円ならレアリティフロア適用
-        if(_nm===0){
-            const _F={MUR:50000,MA:300,SAR:3000,SR:1000,AR:500,RRR:300,RR:50,R:20,U:10,C:5,'無印':10,OTHER:10};
-            const _fl=_F[card.rarity||'']||10;
-            _nm=_fl;_lp=Math.round(_fl*0.7);_mp=Math.round(_fl*0.4);
-        }
         card.price_nm=_nm;card.price_lp=_lp;card.price_mp=_mp;
-        if(_nm>0||_lp>0||_mp>0)card.price_date=p.price_date||(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();card.date=new Date().toLocaleDateString('ja-JP');saveCards(cards);renderCollection();showToast(`✅ ${card.name} を更新しました`);}
+        if(_nm>0||_lp>0||_mp>0)card.price_date=p.price_date||(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
+        card.date=new Date().toLocaleDateString('ja-JP');saveCards(cards);renderCollection();showToast(`✅ ${card.name} を更新しました`);}
     catch(e){showToast('エラー: '+e.message,'var(--red)');}
 };
+
 document.getElementById('bulk-update-btn').onclick=async()=>{
     const cards=getCards();if(!cards.length){showToast('カードがありません');return;}
     if(!confirm(`${cards.length}種類を一括更新します。`))return;
@@ -1207,7 +1119,6 @@ document.getElementById('bulk-update-btn').onclick=async()=>{
     saveCards(cards);renderCollection();showToast(`✅ ${updated}種類を更新しました`);
 };
 
-// ===== 統計 =====
 function renderStatScreen(){
     const all=getCards(),el=document.getElementById('stats-content');
     if(!all.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div>データがありません</div>';return;}
@@ -1226,7 +1137,6 @@ function renderStatScreen(){
         <div class="card-box"><div class="section-title">🎨 属性分布</div>${Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<div class="chart-bar-wrap"><div class="chart-bar-label"><span>${typeBadge(t)}</span><span style="color:var(--muted)">${n}枚</span></div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${(n/maxT*100).toFixed(0)}%;background:var(--gold)"></div></div></div>`).join('')}</div>`;
 }
 
-// ===== 編集モーダル =====
 let editingId=null,editQty=1;
 document.getElementById('edit-qty-minus').onclick=()=>{if(editQty>1){editQty--;document.getElementById('edit-qty-display').textContent=editQty;}};
 document.getElementById('edit-qty-plus').onclick=()=>{editQty++;document.getElementById('edit-qty-display').textContent=editQty;};
@@ -1240,6 +1150,8 @@ window.editCard=id=>{
     document.getElementById('edit-price-nm').value=card.price_nm;
     document.getElementById('edit-price-lp').value=card.price_lp;
     document.getElementById('edit-price-mp').value=card.price_mp;
+    document.getElementById('edit-sell-nm').value=card.sell_nm||0;
+    document.getElementById('edit-sell-lp').value=card.sell_lp||0;
     document.getElementById('edit-modal').classList.add('open');
 };
 document.getElementById('edit-save-btn').onclick=()=>{
@@ -1249,7 +1161,6 @@ document.getElementById('edit-save-btn').onclick=()=>{
 };
 document.getElementById('edit-cancel-btn').onclick=()=>document.getElementById('edit-modal').classList.remove('open');
 
-// ===== 設定 =====
 document.getElementById('save-key-btn').onclick=()=>{
     const k=document.getElementById('key-input').value.trim();
     if(!k||k.includes('...')){showToast('キーを入力してください','var(--red)');return;}
