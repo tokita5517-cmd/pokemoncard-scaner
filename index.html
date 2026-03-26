@@ -140,7 +140,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v32</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v31</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -223,7 +223,10 @@
                             <option value="unknown_holo">キラあり（種別不明）</option>
                         </select>
                     </div>
-                    <button class="btn btn-red" id="search-by-number-btn">🔍 このカードを検索</button>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-red" id="search-by-number-btn" style="flex:1">🔍 このカードを検索</button>
+                        <button class="btn btn-dark" id="all-variants-btn" style="flex:1;font-size:13px">🃏 全バリアント表示</button>
+                    </div>
                 </div>
                 <div style="display:flex;gap:8px">
                     <button class="btn btn-red" id="go-btn" style="flex:1">🔍 カードを読み取る</button>
@@ -653,6 +656,149 @@ JSON形式のみで返してください:
     }
     document.getElementById('go-btn').textContent='🔍 カードを読み取る';
     document.getElementById('go-btn').disabled=false;
+};
+
+// ===== 全バリアント表示 =====
+document.getElementById('all-variants-btn').onclick=async()=>{
+    const name=document.getElementById('ocr-name-input')?.value.trim()||'';
+    const setcode=document.getElementById('ocr-setcode-input')?.value.trim()||'';
+    const numA=document.getElementById('ocr-num-a').value.trim();
+    const numB=document.getElementById('ocr-num-b').value.trim();
+    if(!name&&!setcode){showToast('カード名またはセットコードを入力してください','var(--red)');return;}
+    const btn=document.getElementById('all-variants-btn');
+    btn.textContent='検索中...';btn.disabled=true;
+    try{await searchAllVariants(name,setcode,numA,numB);}
+    catch(e){showToast('エラー: '+e.message,'var(--red)');}
+    finally{btn.textContent='🃏 全バリアント表示';btn.disabled=false;}
+};
+
+async function searchAllVariants(name,setcode,numA,numB){
+    const key=getKey();if(!key)throw new Error('APIキーが未設定です');
+    const query=[name,setcode,numA&&numB?`${numA}/${numB}`:''].filter(Boolean).join(' ');
+    const messages=[{role:'user',content:`ポケモンカード「${query}」の全バリアント（種類違い・ホロ違い・同名の全カード）を検索してください。
+
+pokecazilla.com と premium.gamepedia.jp で「${name||query}」を検索して、ヒットした全カードをリストアップ。
+
+JSONのみで返答（前後の文章不要）:
+{"cards":[
+  {"name":"カード名（ホロ種別含む）","card_number":"例:089/062","set":"セット名","rarity":"SAR/SR等","type":"属性","price_nm":買取NM価格数値,"image_url":"カード画像の直接URL（https://で始まるもの）","holo":"mirror/ball_mirror/energy_mirror/master_ball/tera_mirror/空文字"}
+]}`}];
+
+    let finalText='';
+    const el=document.getElementById('variant-select');
+    const list=document.getElementById('variant-list');
+    el.style.display='block';
+    document.getElementById('card-found').style.display='none';
+    list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><span style="font-size:24px">🔍</span><br>検索中...</div>';
+
+    for(let i=0;i<8;i++){
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+            body:JSON.stringify({
+                model:'claude-haiku-4-5-20251001',max_tokens:1200,
+                system:'ポケモンカード全バリアント検索専門家。指定カードの全種類を検索してJSONの配列で返す。前後の文章不要。',
+                tools:[{type:'web_search_20250305',name:'web_search'}],
+                messages
+            })
+        });
+        const data=await resp.json();
+        if(data.error)throw new Error(data.error.message);
+        const tb=data.content.filter(b=>b.type==='text');
+        if(tb.length>0)finalText=tb[tb.length-1].text;
+        if(data.stop_reason==='end_turn')break;
+        if(data.stop_reason==='tool_use'){
+            messages.push({role:'assistant',content:data.content});
+            const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({
+                type:'tool_result',tool_use_id:b.id,
+                content:[{type:'text',text:'検索完了。全バリアントをJSONで返してください。'}]
+            }));
+            if(tr.length>0)messages.push({role:'user',content:tr});
+        }
+    }
+
+    // JSON抽出
+    let cards=[];
+    if(finalText){
+        let s=finalText.replace(/```json|```/g,'').trim();
+        let sf=0;
+        while(sf<s.length&&!cards.length){
+            const a=s.indexOf('{',sf);if(a<0)break;
+            const b=s.lastIndexOf('}');if(b<=a)break;
+            try{const p=JSON.parse(s.slice(a,b+1));if(p.cards&&p.cards.length)cards=p.cards;}catch(e){sf=a+1;}
+        }
+    }
+    // フォールバック: 少なくとも入力データで1件作る
+    if(!cards.length){
+        const numStr=numA&&numB?`${numA}/${numB}`:'';
+        cards=[{name:name||query,card_number:numStr||'',set:setcode||'',rarity:'',type:'unknown',price_nm:0,image_url:'',holo:''}];
+    }
+
+    renderAllVariants(cards,name);
+}
+
+function renderAllVariants(cards,origName){
+    const el=document.getElementById('variant-select');
+    const list=document.getElementById('variant-list');
+    el.style.display='block';
+    window._allVariantCards=cards;
+    window._allVariantOrigName=origName;
+
+    let html=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+        ${cards.length}件見つかりました。カードを選択してください
+    </div>`;
+
+    html+=cards.map((c,i)=>{
+        const thumbSrc=c.image_url&&c.image_url.startsWith('http')?c.image_url:makeCardThumbSVG(c.name||origName,c.rarity||'');
+        const priceStr=c.price_nm>0?`<span style="color:var(--gold);font-family:Oswald,sans-serif;font-size:14px">¥${c.price_nm.toLocaleString()}</span>`:'<span style="color:var(--muted);font-size:12px">価格検索中</span>';
+        return `<div class="av-item" data-idx="${i}" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;transition:border-color .2s;margin-bottom:6px">
+            <img src="${thumbSrc}" style="width:52px;height:72px;object-fit:cover;border-radius:6px;flex-shrink:0"
+                onerror="this.onerror=null;this.src=makeCardThumbSVG('${(c.name||origName).replace(/'/g,"'").replace(/"/g,'&quot;')}','${c.rarity||''}')">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||origName}</div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${[c.set,c.card_number,c.rarity].filter(Boolean).join(' / ')}</div>
+                ${priceStr}
+            </div>
+            <span style="color:var(--muted);font-size:18px;flex-shrink:0">›</span>
+        </div>`;
+    }).join('');
+
+    list.innerHTML=html;
+    list.querySelectorAll('.av-item').forEach(el=>{
+        el.addEventListener('click',function(){selectAllVariant(parseInt(this.dataset.idx));});
+        el.addEventListener('mouseenter',function(){this.style.borderColor='var(--red)';});
+        el.addEventListener('mouseleave',function(){this.style.borderColor='var(--border)';});
+    });
+}
+
+window.selectAllVariant=async function(i){
+    const card=window._allVariantCards[i];
+    const origName=window._allVariantOrigName;
+    document.getElementById('variant-select').style.display='none';
+    // 選択したカードの情報でOCRフォームを更新して詳細検索
+    const parts=(card.card_number||'').split('/');
+    const name=card.name||origName;
+    const rarity=card.rarity||document.getElementById('ocr-rarity-sel')?.value||'';
+    const setcode=card.set||document.getElementById('ocr-setcode-input')?.value||'';
+    currentHoloType=card.holo||'';
+    const typeHint=card.type||document.getElementById('ocr-type-input')?.value||'unknown';
+    // 既に価格データがあればそのまま表示
+    if(card.price_nm>0){
+        const p={
+            name,card_number:card.card_number||'',rarity,type:typeHint,set:card.set||'',
+            price_nm_min:Math.round(card.price_nm*0.9),price_nm_max:Math.round(card.price_nm*1.1),
+            price_lp_min:Math.round(card.price_nm*0.7),price_lp_max:Math.round(card.price_nm*0.9),
+            price_mp_min:Math.round(card.price_nm*0.4),price_mp_max:Math.round(card.price_nm*0.7),
+            sell_nm_min:0,sell_nm_max:0,sell_lp_min:0,sell_lp_max:0,
+            note:'全バリアント検索から選択',best_site:'',image_url:card.image_url||''
+        };
+        showCardFound(p,card.image_url||null);
+    } else {
+        // 価格未取得なら詳細検索
+        await lookupAndDisplay(card.card_number||'',name,rarity,setcode,(result,imgUrl)=>{
+            if(result)showCardFound(result,card.image_url||imgUrl);
+        },typeHint,card.holo||'');
+    }
 };
 
 document.getElementById('search-by-number-btn').onclick=async()=>{
