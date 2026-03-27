@@ -140,7 +140,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v35</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v36</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -782,8 +782,9 @@ function renderAllVariants(cards,origName){
         }
         if(src){
             const tmp=new Image();
+            tmp.referrerPolicy='no-referrer';
             tmp.onload=()=>{
-                if(imgEl)imgEl.src=src;
+                if(imgEl){imgEl.src=src;imgEl.referrerPolicy='no-referrer';}
                 window._allVariantCards[i]._resolvedImg=src;
             };
             tmp.onerror=()=>{};
@@ -972,46 +973,49 @@ ${jsonSchema}`}];
 }
 
 // ===== pokemon-card.com 公式API で画像取得 =====
-// GETリクエストでCORS通過確認済み（2026/3/27）
 const _pkImgBase='https://www.pokemon-card.com';
 const _pkImgCache={};
+// カード裏面・汎用プレースホルダーのパターン（除外用）
+const _pkBackPatterns=['cardback','card_back','noimage','default','placeholder'];
 
 async function fetchTCGCardImage(setcode,number,name){
-    // カード名で検索（最も確実）
-    const searchName=name||'';
-    if(!searchName)return null;
-
-    // キャッシュ確認
-    const cacheKey=`${searchName}_${setcode}_${number}`;
+    if(!name)return null;
+    const cacheKey=`${name}_${setcode}_${number}`;
     if(_pkImgCache[cacheKey]!==undefined)return _pkImgCache[cacheKey]||null;
 
     try{
-        const url=`${_pkImgBase}/card-search/resultAPI.php?keyword=${encodeURIComponent(searchName)}&regulation_sidebar_form=all&sm_and_keyword=true`;
-        const r=await fetch(url);
+        const url=`${_pkImgBase}/card-search/resultAPI.php?keyword=${encodeURIComponent(name)}&regulation_sidebar_form=all&sm_and_keyword=true`;
+        const r=await fetch(url,{referrerPolicy:'no-referrer'});
         const d=await r.json();
         if(!d.cardList||!d.cardList.length){_pkImgCache[cacheKey]=null;return null;}
 
-        // セットコードと番号でマッチング
-        const sc=(setcode||'').toLowerCase();
-        const num=String(parseInt(number)||0);
-        const numPad=num.padStart(3,'0');
+        // カード裏面・プレースホルダーを除外
+        const validCards=d.cardList.filter(c=>{
+            const t=(c.cardThumbFile||'').toLowerCase();
+            return !_pkBackPatterns.some(p=>t.includes(p));
+        });
+        if(!validCards.length){_pkImgCache[cacheKey]=null;return null;}
 
-        // 優先度: セットコード+番号一致 → 番号一致 → 最初の1件
+        const numStr=String(parseInt(number)||0);
+        const numPad=numStr.padStart(3,'0');
+
+        // 1) カード名が完全一致するものを候補に絞る
+        const nameMatched=validCards.filter(c=>
+            (c.cardNameViewText||'')===(name)||
+            (c.cardNameAltText||'')===(name)
+        );
+        const pool=nameMatched.length?nameMatched:validCards;
+
+        // 2) カード番号(パディングなし/あり)がファイル名に含まれるものを優先
         let matched=null;
-
-        // 1) cardThumbFileのパスにセットコードと番号が含まれるものを探す
-        if(sc&&num){
-            matched=d.cardList.find(c=>{
-                const thumb=(c.cardThumbFile||'').toLowerCase();
-                return thumb.includes('/'+sc+'/')&&(thumb.includes('_'+numPad+'_')||thumb.includes('_'+num+'_'));
+        if(numStr&&numStr!=='0'){
+            matched=pool.find(c=>{
+                const t=(c.cardThumbFile||'').toLowerCase();
+                return t.includes(`_${numPad}_`)||t.includes(`_${numStr}_`);
             });
         }
-        // 2) セットコードのみで絞り込み
-        if(!matched&&sc){
-            matched=d.cardList.find(c=>(c.cardThumbFile||'').toLowerCase().includes('/'+sc+'/'));
-        }
-        // 3) 最初の1件
-        if(!matched)matched=d.cardList[0];
+        // 3) 見つからなければ最初のname一致カード
+        if(!matched)matched=pool[0];
 
         const imgUrl=matched?_pkImgBase+matched.cardThumbFile:null;
         _pkImgCache[cacheKey]=imgUrl;
@@ -1070,10 +1074,11 @@ function showCardFound(p,imgUrl){
     const _ci=document.getElementById('card-img');
     const _ph=document.getElementById('card-img-ph');
 
-    // ★FIX: 画像エラー時はSVGフォールバック使用
+    // ★FIX: 画像エラー時はSVGフォールバック使用 + referrerpolicy=no-referrer でホットリンク回避
     const _applyImg=(src)=>{
         if(!src){const _sv=makeCardThumbSVG(p.name,p.rarity);scanResult.thumb=_sv;_ci.src=_sv;_ci.style.display='block';_ph.style.display='none';return;}
         scanResult.thumb=src;
+        _ci.referrerPolicy='no-referrer';
         _ci.onerror=()=>{
             const _sv=makeCardThumbSVG(p.name,p.rarity);
             scanResult.thumb=_sv;
