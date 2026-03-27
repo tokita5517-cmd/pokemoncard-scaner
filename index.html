@@ -140,7 +140,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v36</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v38</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -973,10 +973,10 @@ ${jsonSchema}`}];
 }
 
 // ===== pokemon-card.com 公式API で画像取得 =====
+// URL例: /assets/images/card_images/large/SV3a/044133_T_PARASORUONEESAN.jpg
+// フォルダ名 = setcode（大文字小文字混在）で絞り込み
 const _pkImgBase='https://www.pokemon-card.com';
 const _pkImgCache={};
-// カード裏面・汎用プレースホルダーのパターン（除外用）
-const _pkBackPatterns=['cardback','card_back','noimage','default','placeholder'];
 
 async function fetchTCGCardImage(setcode,number,name){
     if(!name)return null;
@@ -989,35 +989,19 @@ async function fetchTCGCardImage(setcode,number,name){
         const d=await r.json();
         if(!d.cardList||!d.cardList.length){_pkImgCache[cacheKey]=null;return null;}
 
-        // カード裏面・プレースホルダーを除外
-        const validCards=d.cardList.filter(c=>{
-            const t=(c.cardThumbFile||'').toLowerCase();
-            return !_pkBackPatterns.some(p=>t.includes(p));
-        });
-        if(!validCards.length){_pkImgCache[cacheKey]=null;return null;}
-
-        const numStr=String(parseInt(number)||0);
-        const numPad=numStr.padStart(3,'0');
-
-        // 1) カード名が完全一致するものを候補に絞る
-        const nameMatched=validCards.filter(c=>
-            (c.cardNameViewText||'')===(name)||
-            (c.cardNameAltText||'')===(name)
-        );
-        const pool=nameMatched.length?nameMatched:validCards;
-
-        // 2) カード番号(パディングなし/あり)がファイル名に含まれるものを優先
+        // 1) setcodeでフォルダ名絞り込み（sv3a → /SV3a/ にマッチ）
+        const sc=(setcode||'').toLowerCase();
         let matched=null;
-        if(numStr&&numStr!=='0'){
-            matched=pool.find(c=>{
-                const t=(c.cardThumbFile||'').toLowerCase();
-                return t.includes(`_${numPad}_`)||t.includes(`_${numStr}_`);
-            });
+        if(sc){
+            matched=d.cardList.find(c=>
+                (c.cardThumbFile||'').toLowerCase().includes('/'+sc+'/')
+            );
         }
-        // 3) 見つからなければ最初のname一致カード
-        if(!matched)matched=pool[0];
+        // 2) setcodeなし or マッチなし → 先頭を使う
+        if(!matched)matched=d.cardList[0];
+        if(!matched){_pkImgCache[cacheKey]=null;return null;}
 
-        const imgUrl=matched?_pkImgBase+matched.cardThumbFile:null;
+        const imgUrl=_pkImgBase+matched.cardThumbFile;
         _pkImgCache[cacheKey]=imgUrl;
         return imgUrl;
     }catch(e){
