@@ -140,7 +140,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v31</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v35</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -744,16 +744,13 @@ function renderAllVariants(cards,origName){
     window._allVariantCards=cards;
     window._allVariantOrigName=origName;
 
-    let html=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-        ${cards.length}件見つかりました。カードを選択してください
-    </div>`;
-
+    // まずSVGで表示してから非同期で画像を差し替え
+    let html=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">${cards.length}件見つかりました。カードを選択してください</div>`;
     html+=cards.map((c,i)=>{
-        const thumbSrc=c.image_url&&c.image_url.startsWith('http')?c.image_url:makeCardThumbSVG(c.name||origName,c.rarity||'');
-        const priceStr=c.price_nm>0?`<span style="color:var(--gold);font-family:Oswald,sans-serif;font-size:14px">¥${c.price_nm.toLocaleString()}</span>`:'<span style="color:var(--muted);font-size:12px">価格検索中</span>';
+        const svgSrc=makeCardThumbSVG(c.name||origName,c.rarity||'');
+        const priceStr=c.price_nm>0?`<span style="color:var(--gold);font-family:Oswald,sans-serif;font-size:14px">¥${c.price_nm.toLocaleString()}</span>`:'<span style="color:var(--muted);font-size:12px">--</span>';
         return `<div class="av-item" data-idx="${i}" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;transition:border-color .2s;margin-bottom:6px">
-            <img src="${thumbSrc}" style="width:52px;height:72px;object-fit:cover;border-radius:6px;flex-shrink:0"
-                onerror="this.onerror=null;this.src=makeCardThumbSVG('${(c.name||origName).replace(/'/g,"'").replace(/"/g,'&quot;')}','${c.rarity||''}')">
+            <img id="av-img-${i}" src="${svgSrc}" style="width:52px;height:72px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border)">
             <div style="flex:1;min-width:0">
                 <div style="font-size:13px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name||origName}</div>
                 <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${[c.set,c.card_number,c.rarity].filter(Boolean).join(' / ')}</div>
@@ -769,20 +766,43 @@ function renderAllVariants(cards,origName){
         el.addEventListener('mouseenter',function(){this.style.borderColor='var(--red)';});
         el.addEventListener('mouseleave',function(){this.style.borderColor='var(--border)';});
     });
+
+    // 非同期で各カードの画像をpokemon-card.com APIから取得して差し替え
+    cards.forEach(async(c,i)=>{
+        const imgEl=document.getElementById(`av-img-${i}`);
+        if(!imgEl)return;
+        let src=null;
+        // 1) Claudeが返したimage_url（https://www.pokemon-card.com のみ信頼）
+        if(c.image_url&&c.image_url.startsWith('https://www.pokemon-card.com'))src=c.image_url;
+        // 2) pokemon-card.com API（カード名で検索）
+        if(!src){
+            const parts=(c.card_number||'').split('/');
+            const sc=(c.set||'').toLowerCase().replace(/\s.*/,'');
+            src=await fetchTCGCardImage(sc,parts[0]||'',c.name||origName);
+        }
+        if(src){
+            const tmp=new Image();
+            tmp.onload=()=>{
+                if(imgEl)imgEl.src=src;
+                window._allVariantCards[i]._resolvedImg=src;
+            };
+            tmp.onerror=()=>{};
+            tmp.src=src;
+        }
+    });
 }
 
 window.selectAllVariant=async function(i){
     const card=window._allVariantCards[i];
     const origName=window._allVariantOrigName;
     document.getElementById('variant-select').style.display='none';
-    // 選択したカードの情報でOCRフォームを更新して詳細検索
-    const parts=(card.card_number||'').split('/');
     const name=card.name||origName;
     const rarity=card.rarity||document.getElementById('ocr-rarity-sel')?.value||'';
-    const setcode=card.set||document.getElementById('ocr-setcode-input')?.value||'';
+    const setcode=(card.set||document.getElementById('ocr-setcode-input')?.value||'').toLowerCase().replace(/\s.*/,'');
     currentHoloType=card.holo||'';
     const typeHint=card.type||document.getElementById('ocr-type-input')?.value||'unknown';
-    // 既に価格データがあればそのまま表示
+    // 解決済み画像があればそれを使う
+    const resolvedImg=card._resolvedImg||card.image_url||null;
     if(card.price_nm>0){
         const p={
             name,card_number:card.card_number||'',rarity,type:typeHint,set:card.set||'',
@@ -790,13 +810,12 @@ window.selectAllVariant=async function(i){
             price_lp_min:Math.round(card.price_nm*0.7),price_lp_max:Math.round(card.price_nm*0.9),
             price_mp_min:Math.round(card.price_nm*0.4),price_mp_max:Math.round(card.price_nm*0.7),
             sell_nm_min:0,sell_nm_max:0,sell_lp_min:0,sell_lp_max:0,
-            note:'全バリアント検索から選択',best_site:'',image_url:card.image_url||''
+            note:'全バリアント検索から選択',best_site:'',image_url:resolvedImg||''
         };
-        showCardFound(p,card.image_url||null);
+        showCardFound(p,resolvedImg);
     } else {
-        // 価格未取得なら詳細検索
         await lookupAndDisplay(card.card_number||'',name,rarity,setcode,(result,imgUrl)=>{
-            if(result)showCardFound(result,card.image_url||imgUrl);
+            if(result)showCardFound(result,resolvedImg||imgUrl);
         },typeHint,card.holo||'');
     }
 };
@@ -936,18 +955,70 @@ ${jsonSchema}`}];
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
         p.holoLabel=holoLabel||'';
 
-        // 画像URL
+        // 画像URL: TCG API優先 → Claudeが返したURL → SVGフォールバック
         let imgUrl=null;
-        if(p.image_url&&p.image_url.startsWith('http'))imgUrl=p.image_url;
-        if(!imgUrl&&setcode&&number){
-            const _n=number.split('/')[0].padStart(3,'0');
-            imgUrl=`https://www.pokemon-card.com/assets/images/card_images/large/${(setcodeNorm||setcode).toLowerCase()}/${_n}.jpg`;
-        }
+        // 1) Pokemon TCG API (CORS対応・確実)
+        const _sc=(setcodeNorm||setcode||'').toLowerCase();
+        const _num=(number||'').split('/')[0];
+        if(_sc&&_num){imgUrl=await fetchTCGCardImage(_sc,_num,p.name||name);}
+        // 2) Claudeが返したimage_url
+        if(!imgUrl&&p.image_url&&p.image_url.startsWith('http'))imgUrl=p.image_url;
 
         callback(p,imgUrl);
     }catch(e){
         showToast('検索エラー: '+e.message,'var(--red)');
         callback(null,null);
+    }
+}
+
+// ===== pokemon-card.com 公式API で画像取得 =====
+// GETリクエストでCORS通過確認済み（2026/3/27）
+const _pkImgBase='https://www.pokemon-card.com';
+const _pkImgCache={};
+
+async function fetchTCGCardImage(setcode,number,name){
+    // カード名で検索（最も確実）
+    const searchName=name||'';
+    if(!searchName)return null;
+
+    // キャッシュ確認
+    const cacheKey=`${searchName}_${setcode}_${number}`;
+    if(_pkImgCache[cacheKey]!==undefined)return _pkImgCache[cacheKey]||null;
+
+    try{
+        const url=`${_pkImgBase}/card-search/resultAPI.php?keyword=${encodeURIComponent(searchName)}&regulation_sidebar_form=all&sm_and_keyword=true`;
+        const r=await fetch(url);
+        const d=await r.json();
+        if(!d.cardList||!d.cardList.length){_pkImgCache[cacheKey]=null;return null;}
+
+        // セットコードと番号でマッチング
+        const sc=(setcode||'').toLowerCase();
+        const num=String(parseInt(number)||0);
+        const numPad=num.padStart(3,'0');
+
+        // 優先度: セットコード+番号一致 → 番号一致 → 最初の1件
+        let matched=null;
+
+        // 1) cardThumbFileのパスにセットコードと番号が含まれるものを探す
+        if(sc&&num){
+            matched=d.cardList.find(c=>{
+                const thumb=(c.cardThumbFile||'').toLowerCase();
+                return thumb.includes('/'+sc+'/')&&(thumb.includes('_'+numPad+'_')||thumb.includes('_'+num+'_'));
+            });
+        }
+        // 2) セットコードのみで絞り込み
+        if(!matched&&sc){
+            matched=d.cardList.find(c=>(c.cardThumbFile||'').toLowerCase().includes('/'+sc+'/'));
+        }
+        // 3) 最初の1件
+        if(!matched)matched=d.cardList[0];
+
+        const imgUrl=matched?_pkImgBase+matched.cardThumbFile:null;
+        _pkImgCache[cacheKey]=imgUrl;
+        return imgUrl;
+    }catch(e){
+        _pkImgCache[cacheKey]=null;
+        return null;
     }
 }
 
