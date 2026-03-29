@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v41</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v43</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -867,8 +867,8 @@ ${jsonSchema}`}];
         let p=null;
         let finalText='';
 
-        // web_searchループ
-        for(let _loop=0;_loop<8;_loop++){
+        // web_searchループ（最大5回に削減してAPI節約）
+        for(let _loop=0;_loop<5;_loop++){
             const resp=await fetch('https://api.anthropic.com/v1/messages',{
                 method:'POST',
                 headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -882,7 +882,13 @@ ${jsonSchema}`}];
             });
             const data=await resp.json();
             if(data.error){
-                if(data.error.type==='rate_limit_error')throw new Error('レート制限中。少し待ってから再試行してください');
+                if(data.error.type==='rate_limit_error'){
+                    // レート制限時は15秒待って1回だけリトライ
+                    showToast('⏳ レート制限中。15秒待って再試行...','var(--muted)');
+                    await new Promise(r=>setTimeout(r,15000));
+                    continue;
+                }
+                throw new Error(data.error.message);
                 throw new Error(data.error.message);
             }
             const textBlocks=data.content.filter(b=>b.type==='text');
@@ -967,8 +973,13 @@ ${jsonSchema}`}];
 }
 
 // ===== pokemon-card.com 公式API で画像取得 =====
+// Cloudflare Workerプロキシ経由でホットリンク保護を回避
 const _pkImgBase='https://www.pokemon-card.com';
+const _pkProxy='https://pokeca-proxy.tokita5517.workers.dev/';
 const _pkImgCache={};
+
+// プロキシ経由でURLを呼び出す
+function _proxyUrl(url){return _pkProxy+'?url='+encodeURIComponent(url);}
 
 async function fetchTCGCardImage(setcode,number,name){
     if(!name)return null;
@@ -976,8 +987,8 @@ async function fetchTCGCardImage(setcode,number,name){
     if(_pkImgCache[cacheKey]!==undefined)return _pkImgCache[cacheKey]||null;
 
     try{
-        const url=`${_pkImgBase}/card-search/resultAPI.php?keyword=${encodeURIComponent(name)}&regulation_sidebar_form=all&sm_and_keyword=true`;
-        const r=await fetch(url,{referrerPolicy:'no-referrer'});
+        const apiUrl=_pkImgBase+`/card-search/resultAPI.php?keyword=${encodeURIComponent(name)}&regulation_sidebar_form=all&sm_and_keyword=true`;
+        const r=await fetch(_proxyUrl(apiUrl));
         const d=await r.json();
         if(!d.cardList||!d.cardList.length){_pkImgCache[cacheKey]=null;return null;}
 
@@ -991,7 +1002,8 @@ async function fetchTCGCardImage(setcode,number,name){
         if(!matched)matched=d.cardList[0];
         if(!matched){_pkImgCache[cacheKey]=null;return null;}
 
-        const imgUrl=_pkImgBase+matched.cardThumbFile;
+        // 画像URLもプロキシ経由に変換
+        const imgUrl=_proxyUrl(_pkImgBase+matched.cardThumbFile);
         _pkImgCache[cacheKey]=imgUrl;
         return imgUrl;
     }catch(e){
@@ -1245,7 +1257,7 @@ async function callUpdateAPI(name,rarity){
     const messages=[{role:'user',content:`「${name}」(${rarity})の最新買取・販売価格をpremium.gamepedia.jp とpokecazilla.comで調べてください。
 JSONのみで返答:{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":数値,"price_lp_max":数値,"price_mp_min":数値,"price_mp_max":数値,"sell_nm_min":数値,"sell_nm_max":数値,"sell_lp_min":数値,"sell_lp_max":数値,"note":"最高価格サイト","rarity":"${rarity}"}`}];
     let finalText='';
-    for(let i=0;i<6;i++){
+    for(let i=0;i<4;i++){
         const resp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -1257,7 +1269,10 @@ JSONのみで返答:{"price_nm_min":数値,"price_nm_max":数値,"price_lp_min":
             })
         });
         const data=await resp.json();
-        if(data.error)throw new Error(data.error.message);
+        if(data.error){
+            if(data.error.type==='rate_limit_error'){await new Promise(r=>setTimeout(r,10000));continue;}
+            throw new Error(data.error.message);
+        }
         messages.push({role:'assistant',content:data.content});
         const tb=data.content.filter(b=>b.type==='text');
         if(tb.length>0)finalText=tb[tb.length-1].text;
