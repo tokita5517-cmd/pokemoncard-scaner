@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v40</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v41</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -768,18 +768,19 @@ function renderAllVariants(cards,origName){
         el.addEventListener('mouseleave',function(){this.style.borderColor='var(--border)';});
     });
 
-    // 非同期で各カードの画像をpokemon-card.com APIから取得してBlob化
+    // 非同期で各カードの画像をpokemon-card.com APIから取得
     cards.forEach(async(c,i)=>{
         const imgEl=document.getElementById(`av-img-${i}`);
         if(!imgEl)return;
         const parts=(c.card_number||'').split('/');
         const sc=(c.set||'').toLowerCase().replace(/\s.*/,'');
-        const rawUrl=await fetchTCGCardImage(sc,parts[0]||'',c.name||origName);
-        if(!rawUrl)return;
-        const blobUrl=await loadCardImageAsBlob(rawUrl);
-        if(blobUrl&&imgEl){
-            imgEl.src=blobUrl;
-            window._allVariantCards[i]._resolvedImg=blobUrl;
+        const src=await fetchTCGCardImage(sc,parts[0]||'',c.name||origName);
+        if(src&&imgEl){
+            imgEl.referrerPolicy='no-referrer';
+            imgEl.crossOrigin='anonymous';
+            imgEl.onerror=()=>{imgEl.src=makeCardThumbSVG(c.name||origName,c.rarity||'');};
+            imgEl.src=src;
+            window._allVariantCards[i]._resolvedImg=src;
         }
     });
 }
@@ -942,17 +943,20 @@ ${jsonSchema}`}];
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max','sell_nm_min','sell_nm_max','sell_lp_min','sell_lp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k])||p[k]<0)p[k]=0;
         });
+        // 価格サニティチェック: 販売 < 買取 は逆転バグ → 販売を0にリセット
+        const _bnm=Math.round(((p.price_nm_min||0)+(p.price_nm_max||0))/2);
+        const _snm=Math.round(((p.sell_nm_min||0)+(p.sell_nm_max||0))/2);
+        if(_snm>0&&_snm<_bnm){p.sell_nm_min=0;p.sell_nm_max=0;p.sell_lp_min=0;p.sell_lp_max=0;}
         if(!p.card_number)p.card_number=fullId||number||'';
         if(!p.name)p.name=name||cardQuery;
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
         p.holoLabel=holoLabel||'';
 
-        // 画像: pokemon-card.com API → BlobURLに変換してホットリンク回避
+        // 画像: pokemon-card.com API でURL取得（img要素で直接表示）
         let imgUrl=null;
         const _sc=(setcodeNorm||setcode||'').toLowerCase();
         if(p.name||name){
-            const _rawUrl=await fetchTCGCardImage(_sc,number,p.name||name);
-            if(_rawUrl)imgUrl=await loadCardImageAsBlob(_rawUrl);
+            imgUrl=await fetchTCGCardImage(_sc,number,p.name||name);
         }
 
         callback(p,imgUrl);
@@ -964,8 +968,7 @@ ${jsonSchema}`}];
 
 // ===== pokemon-card.com 公式API で画像取得 =====
 const _pkImgBase='https://www.pokemon-card.com';
-const _pkImgCache={};  // imgUrl キャッシュ
-const _pkBlobCache={}; // BlobURL キャッシュ
+const _pkImgCache={};
 
 async function fetchTCGCardImage(setcode,number,name){
     if(!name)return null;
@@ -993,23 +996,6 @@ async function fetchTCGCardImage(setcode,number,name){
         return imgUrl;
     }catch(e){
         _pkImgCache[cacheKey]=null;
-        return null;
-    }
-}
-
-// 画像URLをfetchしてBlobURLに変換（ホットリンク保護を確実に回避）
-async function loadCardImageAsBlob(imgUrl){
-    if(!imgUrl)return null;
-    if(_pkBlobCache[imgUrl]!==undefined)return _pkBlobCache[imgUrl]||null;
-    try{
-        const r=await fetch(imgUrl,{referrerPolicy:'no-referrer'});
-        if(!r.ok){_pkBlobCache[imgUrl]=null;return null;}
-        const blob=await r.blob();
-        const blobUrl=URL.createObjectURL(blob);
-        _pkBlobCache[imgUrl]=blobUrl;
-        return blobUrl;
-    }catch(e){
-        _pkBlobCache[imgUrl]=null;
         return null;
     }
 }
