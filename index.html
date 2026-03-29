@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v39</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v40</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -768,28 +768,18 @@ function renderAllVariants(cards,origName){
         el.addEventListener('mouseleave',function(){this.style.borderColor='var(--border)';});
     });
 
-    // 非同期で各カードの画像をpokemon-card.com APIから取得して差し替え
+    // 非同期で各カードの画像をpokemon-card.com APIから取得してBlob化
     cards.forEach(async(c,i)=>{
         const imgEl=document.getElementById(`av-img-${i}`);
         if(!imgEl)return;
-        let src=null;
-        // 1) Claudeが返したimage_url（https://www.pokemon-card.com のみ信頼）
-        if(c.image_url&&c.image_url.startsWith('https://www.pokemon-card.com'))src=c.image_url;
-        // 2) pokemon-card.com API（カード名で検索）
-        if(!src){
-            const parts=(c.card_number||'').split('/');
-            const sc=(c.set||'').toLowerCase().replace(/\s.*/,'');
-            src=await fetchTCGCardImage(sc,parts[0]||'',c.name||origName);
-        }
-        if(src){
-            const tmp=new Image();
-            tmp.referrerPolicy='no-referrer';
-            tmp.onload=()=>{
-                if(imgEl){imgEl.src=src;imgEl.referrerPolicy='no-referrer';}
-                window._allVariantCards[i]._resolvedImg=src;
-            };
-            tmp.onerror=()=>{};
-            tmp.src=src;
+        const parts=(c.card_number||'').split('/');
+        const sc=(c.set||'').toLowerCase().replace(/\s.*/,'');
+        const rawUrl=await fetchTCGCardImage(sc,parts[0]||'',c.name||origName);
+        if(!rawUrl)return;
+        const blobUrl=await loadCardImageAsBlob(rawUrl);
+        if(blobUrl&&imgEl){
+            imgEl.src=blobUrl;
+            window._allVariantCards[i]._resolvedImg=blobUrl;
         }
     });
 }
@@ -957,14 +947,13 @@ ${jsonSchema}`}];
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
         p.holoLabel=holoLabel||'';
 
-        // 画像URL: TCG API優先 → Claudeが返したURL → SVGフォールバック
+        // 画像: pokemon-card.com API → BlobURLに変換してホットリンク回避
         let imgUrl=null;
-        // 1) Pokemon TCG API (CORS対応・確実)
         const _sc=(setcodeNorm||setcode||'').toLowerCase();
-        const _num=(number||'').split('/')[0];
-        if(_sc&&_num){imgUrl=await fetchTCGCardImage(_sc,_num,p.name||name);}
-        // 2) Claudeが返したimage_url
-        if(!imgUrl&&p.image_url&&p.image_url.startsWith('http'))imgUrl=p.image_url;
+        if(p.name||name){
+            const _rawUrl=await fetchTCGCardImage(_sc,number,p.name||name);
+            if(_rawUrl)imgUrl=await loadCardImageAsBlob(_rawUrl);
+        }
 
         callback(p,imgUrl);
     }catch(e){
@@ -974,14 +963,13 @@ ${jsonSchema}`}];
 }
 
 // ===== pokemon-card.com 公式API で画像取得 =====
-// URL例: /assets/images/card_images/large/SV3a/044133_T_PARASORUONEESAN.jpg
-// フォルダ名 = setcode（大文字小文字混在）で絞り込み
 const _pkImgBase='https://www.pokemon-card.com';
-const _pkImgCache={};
+const _pkImgCache={};  // imgUrl キャッシュ
+const _pkBlobCache={}; // BlobURL キャッシュ
 
 async function fetchTCGCardImage(setcode,number,name){
     if(!name)return null;
-    const cacheKey=`${name}_${setcode}_${number}`;
+    const cacheKey=`${name}_${setcode}`;
     if(_pkImgCache[cacheKey]!==undefined)return _pkImgCache[cacheKey]||null;
 
     try{
@@ -990,7 +978,6 @@ async function fetchTCGCardImage(setcode,number,name){
         const d=await r.json();
         if(!d.cardList||!d.cardList.length){_pkImgCache[cacheKey]=null;return null;}
 
-        // 1) setcodeでフォルダ名絞り込み（sv3a → /SV3a/ にマッチ）
         const sc=(setcode||'').toLowerCase();
         let matched=null;
         if(sc){
@@ -998,7 +985,6 @@ async function fetchTCGCardImage(setcode,number,name){
                 (c.cardThumbFile||'').toLowerCase().includes('/'+sc+'/')
             );
         }
-        // 2) setcodeなし or マッチなし → 先頭を使う
         if(!matched)matched=d.cardList[0];
         if(!matched){_pkImgCache[cacheKey]=null;return null;}
 
@@ -1007,6 +993,23 @@ async function fetchTCGCardImage(setcode,number,name){
         return imgUrl;
     }catch(e){
         _pkImgCache[cacheKey]=null;
+        return null;
+    }
+}
+
+// 画像URLをfetchしてBlobURLに変換（ホットリンク保護を確実に回避）
+async function loadCardImageAsBlob(imgUrl){
+    if(!imgUrl)return null;
+    if(_pkBlobCache[imgUrl]!==undefined)return _pkBlobCache[imgUrl]||null;
+    try{
+        const r=await fetch(imgUrl,{referrerPolicy:'no-referrer'});
+        if(!r.ok){_pkBlobCache[imgUrl]=null;return null;}
+        const blob=await r.blob();
+        const blobUrl=URL.createObjectURL(blob);
+        _pkBlobCache[imgUrl]=blobUrl;
+        return blobUrl;
+    }catch(e){
+        _pkBlobCache[imgUrl]=null;
         return null;
     }
 }
