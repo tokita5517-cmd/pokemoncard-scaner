@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v49</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v50</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -1158,28 +1158,24 @@ function showCardFound(p,imgUrl){
     const _ci=document.getElementById('card-img');
     const _ph=document.getElementById('card-img-ph');
 
-    // ★撮影写真を優先してサムネに使用（APIの画像より実物を優先）
+    // 撮影写真を表示・保存の両方に優先して使用
     const _applyImg=(src)=>{
-        // 撮影写真があればそれを使う（カメラモードの場合）
         const _photoThumb=window._capturedThumb||null;
-        const _displaySrc=src; // 大きい表示用はAPI画像のまま
-        const _saveSrc=_photoThumb||src; // 保存用は撮影写真を優先
+        // 表示・保存ともに撮影写真を優先、なければAPI画像、それもなければSVG
+        const _useSrc=_photoThumb||src||null;
 
-        if(!_displaySrc&&!_photoThumb){
+        if(!_useSrc){
             const _sv=makeCardThumbSVG(p.name,p.rarity);
             scanResult.thumb=_sv;_ci.src=_sv;_ci.style.display='block';_ph.style.display='none';return;
         }
-        scanResult.thumb=_saveSrc; // コレクション保存には撮影写真を使う
+        scanResult.thumb=_useSrc;
         _ci.referrerPolicy='no-referrer';
-        const _showSrc=_displaySrc||_photoThumb;
         _ci.onerror=()=>{
-            // API画像失敗→撮影写真→SVGの順でフォールバック
-            if(_photoThumb&&_ci.src!==_photoThumb){_ci.onerror=null;_ci.src=_photoThumb;scanResult.thumb=_photoThumb;return;}
             const _sv=makeCardThumbSVG(p.name,p.rarity);
             scanResult.thumb=_sv;_ci.onerror=null;_ci.src=_sv;
         };
-        _ci.onload=()=>{if(!_photoThumb)scanResult.thumb=_ci.src;};
-        _ci.src=_showSrc;
+        _ci.onload=()=>{scanResult.thumb=_ci.src;};
+        _ci.src=_useSrc;
         _ci.style.display='block';
         _ph.style.display='none';
     };
