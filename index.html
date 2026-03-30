@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v45</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v46</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -565,25 +565,32 @@ async function showHoloVariantSelect(num,name,rarity,setcode,typeHint){
     el.style.display='block';
     document.getElementById('card-found').style.display='none';
 
-    function makeCardSVG(label,bg1,bg2){
-        const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72" viewBox="0 0 52 72">
-            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/>
-            </linearGradient></defs>
-            <rect width="52" height="72" rx="4" fill="url(#g)"/>
-            <rect x="3" y="3" width="46" height="66" rx="3" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-            <text x="26" y="42" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">${label}</text>
-            <text x="26" y="60" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8" font-family="sans-serif">${setcode||''}</text>
-        </svg>`;
+    function makeHoloSVG(type, sc){
+        const s=sc||'';
+        const svgs={
+            // 通常版：シンプルなグレー
+            '': `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3a3a5a"/><stop offset="100%" stop-color="#1a1a3a"/></linearGradient></defs><rect width="52" height="72" rx="5" fill="url(#bg)"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/><text x="26" y="36" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-size="18" font-family="sans-serif">🃏</text><text x="26" y="58" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7" font-family="sans-serif">${s}</text></svg>`,
+            // ミラーホロ：全面レインボーグラデ
+            'mirror': `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff0080"/><stop offset="25%" stop-color="#ffaa00"/><stop offset="50%" stop-color="#00ff88"/><stop offset="75%" stop-color="#0088ff"/><stop offset="100%" stop-color="#aa00ff"/></linearGradient></defs><rect width="52" height="72" rx="5" fill="url(#bg)" opacity="0.85"/><line x1="0" y1="14" x2="52" y2="14" stroke="rgba(255,255,255,0.15)" stroke-width="1"/><line x1="0" y1="28" x2="52" y2="28" stroke="rgba(255,255,255,0.15)" stroke-width="1"/><line x1="0" y1="42" x2="52" y2="42" stroke="rgba(255,255,255,0.15)" stroke-width="1"/><line x1="0" y1="56" x2="52" y2="56" stroke="rgba(255,255,255,0.15)" stroke-width="1"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"/><text x="26" y="36" text-anchor="middle" fill="white" font-size="16" font-family="sans-serif">✨</text><text x="26" y="58" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="7" font-family="sans-serif">${s}</text></svg>`,
+            // ボールミラー：モンスターボール柄
+            'ball_mirror': `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><rect width="52" height="72" rx="5" fill="#1a2a4a"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><circle cx="26" cy="36" r="18" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><line x1="8" y1="36" x2="44" y2="36" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><circle cx="26" cy="36" r="5" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/><circle cx="26" cy="36" r="3" fill="rgba(255,255,255,0.6)"/><path d="M8 36 A18 18 0 0 1 44 36" fill="rgba(220,50,50,0.5)"/><text x="26" y="64" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7" font-family="sans-serif">${s}</text></svg>`,
+            // エネルギーミラー：エネルギーマーク
+            'energy_mirror': `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a2000"/><stop offset="100%" stop-color="#1a0800"/></linearGradient></defs><rect width="52" height="72" rx="5" fill="url(#bg)"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(255,160,0,0.4)" stroke-width="1"/><circle cx="26" cy="34" r="16" fill="rgba(255,140,0,0.25)" stroke="rgba(255,160,0,0.5)" stroke-width="1.5"/><polygon points="26,16 32,34 26,30 20,34" fill="rgba(255,200,0,0.9)"/><text x="26" y="60" text-anchor="middle" fill="rgba(255,160,0,0.7)" font-size="7" font-family="sans-serif">${s}</text></svg>`,
+            // マスターボールミラー：マスターボール柄（紫）
+            'master_ball': `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5a0a9a"/><stop offset="100%" stop-color="#2a005a"/></linearGradient></defs><rect width="52" height="72" rx="5" fill="url(#bg)"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(180,100,255,0.4)" stroke-width="1"/><circle cx="26" cy="34" r="16" fill="none" stroke="rgba(200,150,255,0.5)" stroke-width="1.5"/><line x1="10" y1="34" x2="42" y2="34" stroke="rgba(200,150,255,0.5)" stroke-width="1.5"/><circle cx="26" cy="34" r="4" fill="rgba(220,180,255,0.8)"/><ellipse cx="20" cy="26" rx="4" ry="3" fill="rgba(255,255,255,0.6)"/><text x="26" y="60" text-anchor="middle" fill="rgba(180,120,255,0.7)" font-size="7" font-family="sans-serif">${s}</text></svg>`,
+            // テラスタルミラー：ダイヤ柄
+            'tera_mirror': `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="72"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#006a8a"/><stop offset="100%" stop-color="#002a4a"/></linearGradient></defs><rect width="52" height="72" rx="5" fill="url(#bg)"/><rect x="2" y="2" width="48" height="68" rx="4" fill="none" stroke="rgba(0,220,255,0.4)" stroke-width="1"/><polygon points="26,16 38,32 26,52 14,32" fill="none" stroke="rgba(0,220,255,0.7)" stroke-width="1.5"/><polygon points="26,22 34,32 26,44 18,32" fill="rgba(0,200,255,0.25)"/><line x1="14" y1="32" x2="38" y2="32" stroke="rgba(0,220,255,0.4)" stroke-width="1"/><text x="26" y="63" text-anchor="middle" fill="rgba(0,200,255,0.7)" font-size="7" font-family="sans-serif">${s}</text></svg>`,
+        };
+        const svg=svgs[type]||svgs[''];
         return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
     }
     const holoCardImgs={
-        '':makeCardSVG('🃏','#3a3a5a','#1a1a3a'),
-        'mirror':makeCardSVG('✨','#8a7000','#4a3a00'),
-        'ball_mirror':makeCardSVG('⚪','#3a4a6a','#1a2a4a'),
-        'energy_mirror':makeCardSVG('⚡','#8a6000','#4a3000'),
-        'master_ball':makeCardSVG('🟣','#6a0a9a','#3a005a'),
-        'tera_mirror':makeCardSVG('💎','#007a8a','#003a4a'),
+        '':makeHoloSVG('',setcode),
+        'mirror':makeHoloSVG('mirror',setcode),
+        'ball_mirror':makeHoloSVG('ball_mirror',setcode),
+        'energy_mirror':makeHoloSVG('energy_mirror',setcode),
+        'master_ball':makeHoloSVG('master_ball',setcode),
+        'tera_mirror':makeHoloSVG('tera_mirror',setcode),
     };
 
     var holoHtml='<div style="font-size:12px;color:#7070a0;margin-bottom:10px">ホログラム種別を選んでください</div>';
