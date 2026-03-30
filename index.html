@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v43</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v45</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -177,7 +177,10 @@
                     </div>
                     <div style="margin-bottom:8px">
                         <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">左下の英数字（例:sv8a, M2a）</span></label>
-                        <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a, sv7a" style="font-family:Oswald,sans-serif;letter-spacing:1px">
+                        <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a, sv7a" 
+                            style="font-family:Oswald,sans-serif;letter-spacing:1px"
+                            list="setcode-list" autocomplete="off">
+                        <datalist id="setcode-list"></datalist>
                     </div>
                     <div style="margin-bottom:8px">
                         <label class="form-label">カード番号</label>
@@ -414,6 +417,34 @@ const saveCards=c=>localStorage.setItem('pokeca_cards',JSON.stringify(c));
 const rarityBadge=r=>`<span class="rarity-badge ${RARITY_CLASS[r]||'r-OTHER'}">${r||'?'}</span>`;
 const typeBadge=t=>`<span class="type-badge t-${t||'unknown'}">${TYPE_LABELS[t]||'❓'}</span>`;
 
+// ===== セットコード記憶システム =====
+// 既知のセットコードプリセット（新しい順）
+const KNOWN_SETCODES=[
+    // MEGA
+    'M4','M3','M2a','M1',
+    // スカーレット&バイオレット
+    'sv10','sv9a','sv9','sv8a','sv8','sv7a','sv7','sv6a','sv6',
+    'sv5a','sv5k','sv5','sv4a','sv4k','sv4','sv3a','sv3','sv2a','sv2','sv1s','sv1',
+    // ソード&シールド
+    's9a','s9','s8a','s8','s7v','s7r','s7d','s6h','s6a',
+    's5a','s5r','s5i','s4a','s4','s3a','s3','s2','s1w','s1h',
+];
+function getSetcodeSuggestions(){
+    const saved=JSON.parse(localStorage.getItem('pokeca_setcodes')||'[]');
+    // 使用履歴 + 既知リスト（重複除去）
+    return [...new Set([...saved,...KNOWN_SETCODES])];
+}
+function saveSetcode(sc){
+    if(!sc)return;
+    const saved=JSON.parse(localStorage.getItem('pokeca_setcodes')||'[]');
+    if(!saved.includes(sc)){saved.unshift(sc);localStorage.setItem('pokeca_setcodes',JSON.stringify(saved.slice(0,30)));}
+}
+function updateSetcodeDatalist(){
+    const dl=document.getElementById('setcode-list');
+    if(!dl)return;
+    dl.innerHTML=getSetcodeSuggestions().map(s=>`<option value="${s}">`).join('');
+}
+
 function showToast(msg,color='var(--green)'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -434,6 +465,8 @@ function setMode(m){
     document.getElementById('camera-mode').style.display=m==='camera'?'block':'none';
     document.getElementById('manual-mode').style.display=m==='manual'?'block':'none';
 }
+// 起動時にdatalist初期化
+updateSetcodeDatalist();
 
 const imgInp=document.getElementById('img'),pre=document.getElementById('preview');
 let b64=null,scanResult=null,addQty=1,currentHoloType='';
@@ -651,6 +684,7 @@ JSON形式のみで返してください:
         const rarityVal=ocr.rarity||'';
         if(rarityEl){for(let opt of rarityEl.options){if(opt.value===rarityVal||opt.text===rarityVal){rarityEl.value=opt.value;break;}}}
         document.getElementById('ocr-edit-form').style.display='block';
+        updateSetcodeDatalist();
         showToast('✅ 読み取り完了！確認して検索してください');
     }catch(e){
         showToast('エラー: '+e.message,'var(--red)');
@@ -805,7 +839,14 @@ window.selectAllVariant=async function(i){
             sell_nm_min:0,sell_nm_max:0,sell_lp_min:0,sell_lp_max:0,
             note:'全バリアント検索から選択',best_site:'',image_url:resolvedImg||''
         };
-        showCardFound(p,resolvedImg);
+        // 画像が未解決なら今から取得
+        if(!resolvedImg){
+            fetchTCGCardImage(setcode,card.card_number?.split('/')[0]||'',name).then(img=>{
+                if(img)showCardFound(p,img);else showCardFound(p,null);
+            });
+        } else {
+            showCardFound(p,resolvedImg);
+        }
     } else {
         await lookupAndDisplay(card.card_number||'',name,rarity,setcode,(result,imgUrl)=>{
             if(result)showCardFound(result,resolvedImg||imgUrl);
@@ -824,6 +865,7 @@ document.getElementById('search-by-number-btn').onclick=async()=>{
     const holoType=currentHoloType;
     const setcode=document.getElementById('ocr-setcode-input')?.value.trim()||'';
     if(!num&&!name){showToast('番号またはカード名を入力してください','var(--red)');return;}
+    if(setcode)saveSetcode(setcode); // セットコードを記憶
     document.getElementById('search-by-number-btn').textContent='検索中...';
     document.getElementById('search-by-number-btn').disabled=true;
     try{
@@ -949,10 +991,10 @@ ${jsonSchema}`}];
         ['price_nm_min','price_nm_max','price_lp_min','price_lp_max','price_mp_min','price_mp_max','sell_nm_min','sell_nm_max','sell_lp_min','sell_lp_max'].forEach(k=>{
             if(typeof p[k]!=='number'||isNaN(p[k])||p[k]<0)p[k]=0;
         });
-        // 価格サニティチェック: 販売 < 買取 は逆転バグ → 販売を0にリセット
+        // 販売価格サニティチェック: 販売が買取の50%未満なら疑わしい→リセット
         const _bnm=Math.round(((p.price_nm_min||0)+(p.price_nm_max||0))/2);
         const _snm=Math.round(((p.sell_nm_min||0)+(p.sell_nm_max||0))/2);
-        if(_snm>0&&_snm<_bnm){p.sell_nm_min=0;p.sell_nm_max=0;p.sell_lp_min=0;p.sell_lp_max=0;}
+        if(_snm>0&&_bnm>0&&_snm<_bnm*0.5){p.sell_nm_min=0;p.sell_nm_max=0;p.sell_lp_min=0;p.sell_lp_max=0;}
         if(!p.card_number)p.card_number=fullId||number||'';
         if(!p.name)p.name=name||cardQuery;
         p.price_date=(()=>{const n=new Date();return`${n.getMonth()+1}月${n.getDate()}日`;})();
@@ -984,13 +1026,14 @@ function _proxyUrl(url){return _pkProxy+'?url='+encodeURIComponent(url);}
 async function fetchTCGCardImage(setcode,number,name){
     if(!name)return null;
     const cacheKey=`${name}_${setcode}`;
-    if(_pkImgCache[cacheKey]!==undefined)return _pkImgCache[cacheKey]||null;
+    if(_pkImgCache[cacheKey])return _pkImgCache[cacheKey]; // 成功結果のみキャッシュ
 
     try{
         const apiUrl=_pkImgBase+`/card-search/resultAPI.php?keyword=${encodeURIComponent(name)}&regulation_sidebar_form=all&sm_and_keyword=true`;
         const r=await fetch(_proxyUrl(apiUrl));
+        if(!r.ok)return null;
         const d=await r.json();
-        if(!d.cardList||!d.cardList.length){_pkImgCache[cacheKey]=null;return null;}
+        if(!d.cardList||!d.cardList.length)return null;
 
         const sc=(setcode||'').toLowerCase();
         let matched=null;
@@ -1000,15 +1043,13 @@ async function fetchTCGCardImage(setcode,number,name){
             );
         }
         if(!matched)matched=d.cardList[0];
-        if(!matched){_pkImgCache[cacheKey]=null;return null;}
+        if(!matched)return null;
 
-        // 画像URLもプロキシ経由に変換
         const imgUrl=_proxyUrl(_pkImgBase+matched.cardThumbFile);
-        _pkImgCache[cacheKey]=imgUrl;
+        _pkImgCache[cacheKey]=imgUrl; // 成功時のみキャッシュ
         return imgUrl;
     }catch(e){
-        _pkImgCache[cacheKey]=null;
-        return null;
+        return null; // 失敗時はキャッシュしない→次回リトライ可能
     }
 }
 
@@ -1080,8 +1121,7 @@ function showCardFound(p,imgUrl){
 
     document.getElementById('card-found-badges').innerHTML=`${rarityBadge(p.rarity)} ${typeBadge(p.type)}`;
     document.getElementById('card-found-name').textContent=p.name;
-    document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}${p.holoLabel&&p.holoLabel!=='通常版'?' ✨'+p.holoLabel:''}`;
-    document.getElementById('card-found-note').innerHTML=`${p.best_site?`<span style="color:var(--gold);font-weight:700">🏆 最高: ${p.best_site}</span><br>`:''}${p.note||''}`;
+    document.getElementById('card-found-set').textContent=`📦 ${p.set||'不明'} / ${p.card_number||''}${p.holoLabel&&p.holoLabel!=='通常版'?' ✨'+p.holoLabel:''}`;    document.getElementById('card-found-note').innerHTML=`${p.best_site?`<span style="color:var(--gold);font-weight:700">🏆 最高: ${p.best_site}</span><br>`:''}${p.note||''}`;
     document.getElementById('card-found-prices').innerHTML=dateLabel+html;
     const cards=getCards(),dup=cards.find(c=>c.name===p.name);
     const dupEl=document.getElementById('dup-notice');
