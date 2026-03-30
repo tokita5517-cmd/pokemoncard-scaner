@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v46</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v47</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -177,9 +177,14 @@
                     </div>
                     <div style="margin-bottom:8px">
                         <label class="form-label">セットコード <span style="color:var(--muted);font-size:10px">左下の英数字（例:sv8a, M2a）</span></label>
-                        <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a, sv7a" 
-                            style="font-family:Oswald,sans-serif;letter-spacing:1px"
-                            list="setcode-list" autocomplete="off">
+                        <div style="display:flex;gap:6px">
+                            <input class="form-input" id="ocr-setcode-input" placeholder="例: M2a, sv8a" 
+                                style="font-family:Oswald,sans-serif;letter-spacing:1px;flex:1"
+                                list="setcode-list" autocomplete="off" inputmode="text">
+                            <select id="ocr-setcode-select" class="form-select" style="width:90px;flex-shrink:0;font-family:Oswald,sans-serif;font-size:13px;padding:8px 6px">
+                                <option value="">選択</option>
+                            </select>
+                        </div>
                         <datalist id="setcode-list"></datalist>
                     </div>
                     <div style="margin-bottom:8px">
@@ -441,8 +446,19 @@ function saveSetcode(sc){
 }
 function updateSetcodeDatalist(){
     const dl=document.getElementById('setcode-list');
-    if(!dl)return;
-    dl.innerHTML=getSetcodeSuggestions().map(s=>`<option value="${s}">`).join('');
+    const sel=document.getElementById('ocr-setcode-select');
+    const suggestions=getSetcodeSuggestions();
+    if(dl)dl.innerHTML=suggestions.map(s=>`<option value="${s}">`).join('');
+    if(sel){
+        sel.innerHTML='<option value="">選択</option>'+suggestions.map(s=>`<option value="${s}">${s}</option>`).join('');
+        sel.onchange=function(){
+            if(this.value){
+                const inp=document.getElementById('ocr-setcode-input');
+                if(inp)inp.value=this.value;
+                this.value=''; // リセット
+            }
+        };
+    }
 }
 
 function showToast(msg,color='var(--green)'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1074,8 +1090,12 @@ function priceGridHTML(p){
     const nm=Math.round(((p.price_nm_min||0)+(p.price_nm_max||0))/2);
     const lp=Math.round(((p.price_lp_min||0)+(p.price_lp_max||0))/2);
     const mp=Math.round(((p.price_mp_min||0)+(p.price_mp_max||0))/2);
-    const snm=Math.round(((p.sell_nm_min||0)+(p.sell_nm_max||0))/2);
-    const slp=Math.round(((p.sell_lp_min||0)+(p.sell_lp_max||0))/2);
+    let snm=Math.round(((p.sell_nm_min||0)+(p.sell_nm_max||0))/2);
+    let slp=Math.round(((p.sell_lp_min||0)+(p.sell_lp_max||0))/2);
+    let smp=Math.round(((p.sell_mp_min||0)+(p.sell_mp_max||0))/2);
+    // 販売LP/MPが0でNMがある場合は比率から推定
+    if(snm>0&&slp===0)slp=Math.round(snm*0.75);
+    if(snm>0&&smp===0)smp=Math.round(snm*0.55);
     const nm_min=p.price_nm_min||nm;const nm_max=p.price_nm_max||nm;
     const lp_min=p.price_lp_min||lp;const lp_max=p.price_lp_max||lp;
     const mp_min=p.price_mp_min||mp;const mp_max=p.price_mp_max||mp;
@@ -1085,9 +1105,10 @@ function priceGridHTML(p){
     const sellSection=snm>0?`
         <div style="margin-top:8px">
             <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">💰 販売相場</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val" style="color:#4fc3f7">¥${snm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${(p.sell_nm_min||0).toLocaleString()}〜¥${(p.sell_nm_max||0).toLocaleString()}</div></div>
-                <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val" style="color:#4fc3f7">¥${slp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${(p.sell_lp_min||0).toLocaleString()}〜¥${(p.sell_lp_max||0).toLocaleString()}</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                <div class="price-box"><div class="price-box-label">⭐ NM</div><div class="price-box-val" style="color:#4fc3f7">¥${snm.toLocaleString()}</div></div>
+                <div class="price-box"><div class="price-box-label">✨ LP</div><div class="price-box-val" style="color:#4fc3f7">¥${slp.toLocaleString()}</div></div>
+                <div class="price-box"><div class="price-box-label">📦 MP</div><div class="price-box-val" style="color:#4fc3f7;font-size:13px">¥${smp.toLocaleString()}</div></div>
             </div>
         </div>`:'';
     return {html:`<div>
