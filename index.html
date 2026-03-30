@@ -141,7 +141,7 @@
 <body>
 
 <div id="screen-scan" class="screen active">
-    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v47</span></h1>
+    <div class="header"><h1>📸 ポケカ査定DX <span style="font-size:13px;color:var(--muted);font-family:Oswald,sans-serif;letter-spacing:1px;vertical-align:middle">v49</span></h1>
     <p style="font-size:11px;color:var(--muted)">モードを選んで査定しよう</p></div>
 
     <div class="mode-selector">
@@ -494,6 +494,7 @@ imgInp.onchange=e=>{
     const f=e.target.files[0];if(!f)return;
     const img=new Image(),url=URL.createObjectURL(f);
     img.onload=()=>{
+        // メイン画像（OCR用）
         const canvas=document.createElement('canvas');
         const maxW=900;
         const scale=Math.min(1,maxW/img.width);
@@ -501,6 +502,17 @@ imgInp.onchange=e=>{
         canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
         b64=canvas.toDataURL('image/jpeg',.88).split(',')[1];
         pre.src=canvas.toDataURL('image/jpeg',.88);
+
+        // サムネイル用（90x126px、コレクション保存に使用）
+        const thumbCanvas=document.createElement('canvas');
+        // カードの縦横比を保持しつつ90x126に収める
+        const thumbW=90,thumbH=126;
+        const tScale=Math.min(thumbW/img.width,thumbH/img.height);
+        thumbCanvas.width=Math.round(img.width*tScale);
+        thumbCanvas.height=Math.round(img.height*tScale);
+        thumbCanvas.getContext('2d').drawImage(img,0,0,thumbCanvas.width,thumbCanvas.height);
+        window._capturedThumb=thumbCanvas.toDataURL('image/jpeg',0.75); // 撮影写真サムネ
+
         pre.style.display='block';
         document.getElementById('cam-guide-wrap').style.display='none';
         document.getElementById('cam-shoot-btn').style.display='none';
@@ -525,6 +537,7 @@ function resetScan(){
     document.getElementById('card-found').style.display='none';
     document.getElementById('dup-notice').style.display='none';
     b64=null;scanResult=null;imgInp.value='';addQty=1;
+    window._capturedThumb=null; // 撮影写真もクリア
     document.getElementById('qty-display').textContent='1';
     const nameEl=document.getElementById('ocr-name-input');
     if(nameEl)nameEl.value='';
@@ -1093,18 +1106,34 @@ function priceGridHTML(p){
     let snm=Math.round(((p.sell_nm_min||0)+(p.sell_nm_max||0))/2);
     let slp=Math.round(((p.sell_lp_min||0)+(p.sell_lp_max||0))/2);
     let smp=Math.round(((p.sell_mp_min||0)+(p.sell_mp_max||0))/2);
-    // 販売LP/MPが0でNMがある場合は比率から推定
-    if(snm>0&&slp===0)slp=Math.round(snm*0.75);
-    if(snm>0&&smp===0)smp=Math.round(snm*0.55);
-    const nm_min=p.price_nm_min||nm;const nm_max=p.price_nm_max||nm;
-    const lp_min=p.price_lp_min||lp;const lp_max=p.price_lp_max||lp;
-    const mp_min=p.price_mp_min||mp;const mp_max=p.price_mp_max||mp;
+
+    // 買取価格サニティ: NM >= LP >= MP を強制
+    const buyMax=Math.max(nm,lp,mp);
+    const buyMin=Math.min(nm>0?nm:999999,lp>0?lp:999999,mp>0?mp:999999);
+    const buyMid=nm+lp+mp-buyMax-(buyMin===999999?0:buyMin);
+    const [nmF,lpF,mpF]=buyMax>0?[buyMax,Math.round(buyMax*0.82),Math.round(buyMax*0.65)]:[nm,lp,mp];
+    // 元データが既に正しい順なら使う、逆転してたら修正
+    const nmOk=nm>=lp&&lp>=mp&&nm>0;
+    const nmFin=nmOk?nm:nmF;
+    const lpFin=nmOk?lp:lpF;
+    const mpFin=nmOk?mp:mpF;
+
+    const nm_min=p.price_nm_min||(nmOk?nm:nmF);const nm_max=p.price_nm_max||(nmOk?nm:nmF);
+    const lp_min=p.price_lp_min||(nmOk?lp:lpF);const lp_max=p.price_lp_max||(nmOk?lp:lpF);
+    const mp_min=p.price_mp_min||(nmOk?mp:mpF);const mp_max=p.price_mp_max||(nmOk?mp:mpF);
+
+    // 販売価格: 0なら買取から推定（ポケカ相場は買取の約1.5〜2倍が目安）
+    if(snm===0&&nmFin>0)snm=Math.round(nmFin*1.6);
+    if(slp===0&&snm>0)slp=Math.round(snm*0.8);
+    if(smp===0&&snm>0)smp=Math.round(snm*0.65);
+    const sellEstimated=(p.sell_nm_min||0)+(p.sell_nm_max||0)===0; // 推定フラグ
+
     const isWebDate=p.price_date&&p.price_date!=='2025年8月';
     const isClaude=p.note&&(p.note.includes('Claude推定')||p.note.includes('検索失敗'));
     const dateLabel=p.price_date?`<div style="text-align:right;font-size:10px;color:${isClaude?'var(--muted)':isWebDate?'var(--green)':'var(--muted)'};margin-bottom:4px">${isClaude?'🤖 Claude推定':isWebDate?'🌐 Web':'📚 Claude知識'} 価格参照日: ${p.price_date}</div>`:'';
-    const sellSection=snm>0?`
+    const sellSection=nmFin>0?`
         <div style="margin-top:8px">
-            <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">💰 販売相場</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">💰 販売相場${sellEstimated?' <span style="font-weight:400;color:var(--muted)">(買取から推定)</span>':''}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
                 <div class="price-box"><div class="price-box-label">⭐ NM</div><div class="price-box-val" style="color:#4fc3f7">¥${snm.toLocaleString()}</div></div>
                 <div class="price-box"><div class="price-box-label">✨ LP</div><div class="price-box-val" style="color:#4fc3f7">¥${slp.toLocaleString()}</div></div>
@@ -1114,11 +1143,11 @@ function priceGridHTML(p){
     return {html:`<div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700">🏷️ 買取相場</div>
         <div class="price-grid">
-            <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nm.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
-            <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
-            <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
+            <div class="price-box"><div class="price-box-label">⭐ 超美品 NM</div><div class="price-box-val">¥${nmFin.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${nm_min.toLocaleString()}〜¥${nm_max.toLocaleString()}</div></div>
+            <div class="price-box"><div class="price-box-label">✨ 美品 LP</div><div class="price-box-val">¥${lpFin.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${lp_min.toLocaleString()}〜¥${lp_max.toLocaleString()}</div></div>
+            <div class="price-box"><div class="price-box-label">📦 並品 MP</div><div class="price-box-val price-box-val low">¥${mpFin.toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">¥${mp_min.toLocaleString()}〜¥${mp_max.toLocaleString()}</div></div>
         </div>${sellSection}
-    </div>`,nm,lp,mp,snm,slp,dateLabel};
+    </div>`,nm:nmFin,lp:lpFin,mp:mpFin,snm,slp,dateLabel};
 }
 
 function showCardFound(p,imgUrl){
@@ -1129,19 +1158,28 @@ function showCardFound(p,imgUrl){
     const _ci=document.getElementById('card-img');
     const _ph=document.getElementById('card-img-ph');
 
-    // ★FIX: 画像エラー時はSVGフォールバック使用 + referrerpolicy=no-referrer でホットリンク回避
+    // ★撮影写真を優先してサムネに使用（APIの画像より実物を優先）
     const _applyImg=(src)=>{
-        if(!src){const _sv=makeCardThumbSVG(p.name,p.rarity);scanResult.thumb=_sv;_ci.src=_sv;_ci.style.display='block';_ph.style.display='none';return;}
-        scanResult.thumb=src;
-        _ci.referrerPolicy='no-referrer';
-        _ci.onerror=()=>{
+        // 撮影写真があればそれを使う（カメラモードの場合）
+        const _photoThumb=window._capturedThumb||null;
+        const _displaySrc=src; // 大きい表示用はAPI画像のまま
+        const _saveSrc=_photoThumb||src; // 保存用は撮影写真を優先
+
+        if(!_displaySrc&&!_photoThumb){
             const _sv=makeCardThumbSVG(p.name,p.rarity);
-            scanResult.thumb=_sv;
-            _ci.onerror=null;
-            _ci.src=_sv;
+            scanResult.thumb=_sv;_ci.src=_sv;_ci.style.display='block';_ph.style.display='none';return;
+        }
+        scanResult.thumb=_saveSrc; // コレクション保存には撮影写真を使う
+        _ci.referrerPolicy='no-referrer';
+        const _showSrc=_displaySrc||_photoThumb;
+        _ci.onerror=()=>{
+            // API画像失敗→撮影写真→SVGの順でフォールバック
+            if(_photoThumb&&_ci.src!==_photoThumb){_ci.onerror=null;_ci.src=_photoThumb;scanResult.thumb=_photoThumb;return;}
+            const _sv=makeCardThumbSVG(p.name,p.rarity);
+            scanResult.thumb=_sv;_ci.onerror=null;_ci.src=_sv;
         };
-        _ci.onload=()=>{scanResult.thumb=_ci.src;};
-        _ci.src=src;
+        _ci.onload=()=>{if(!_photoThumb)scanResult.thumb=_ci.src;};
+        _ci.src=_showSrc;
         _ci.style.display='block';
         _ph.style.display='none';
     };
